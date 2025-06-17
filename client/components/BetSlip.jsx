@@ -112,152 +112,171 @@ const BetSlip = () => {
     const isTabDisabled = (tab) => {
         if (tab === 'combination') return bets.length < 2;
         if (tab === 'system') return bets.length < 3;
-        return false;
-    }; return (
-        <div className="fixed bottom-0 right-5 z-50" ref={betSlipRef}>
-            {!isExpanded ? (
-                // Collapsed State
-                <div
-                    onClick={handleToggle}
-                    className="bg-gray-900 text-white  shadow-2xl cursor-pointer hover:bg-gray-800 transition-all duration-200 p-3  w-96"
-                >
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                            <div className="bg-yellow-500 text-black rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-                                {bets.length}
-                            </div>
-                            <div className="flex justify-between font-semibold items-center">
-                                <span className="text-sm text-gray-400">
-                                    {bets.length === 1 ? 'Single bet' :  `Combination (${bets.length} bets)`}
-                                </span>
+        return false;    }; 
 
-                            </div>
-
-                        </div>
-                        <ChevronUp className="h-4 w-4 text-gray-400" />
-                    </div>
-
-                </div>
-            ) : (                // Expanded State
-                <div className="w-96 bg-gray-900 text-white shadow-2xl">
-                    {/* Header */}
-                    <div className="bg-gray-800 px-3 py-2 rounded-t-lg ">
-                        <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-white font-semibold text-sm">Bet Slip</h3>
+    return (        <div className="fixed bottom-0 right-5 z-50" ref={betSlipRef}>
+            <style jsx>{`
+                .betslip-container {
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                    transform-origin: bottom right;
+                    will-change: max-height, opacity;
+                }
+                
+                .scale-98 {
+                    transform: scale(0.98);
+                }
+            `}</style>              
+            <div className={`w-96 bg-gray-900 text-white shadow-2xl  betslip-container transition-all duration-500 ease-in-out ${
+                isExpanded 
+                    ? 'max-h-[600px] opacity-100 scale-100' 
+                    : 'max-h-[60px] opacity-95 scale-98 overflow-hidden'
+            }`}>
+                {!isExpanded ? (
+                    // Collapsed State
+                    <div
+                        onClick={handleToggle}
+                        className="cursor-pointer hover:bg-gray-800 transition-all duration-300 p-3 rounded-lg"
+                    >
+                        <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2">
-                                <button
-                                    onClick={() => dispatch(collapseBetSlip())}
-                                    className="text-white hover:text-gray-300 transition-colors cursor-pointer"
-                                >
-                                    <ChevronDown className="h-4 w-4" />
-                                </button>
-                                <button
-                                    onClick={() => dispatch(closeBetSlip())}
-                                    className="text-white hover:text-gray-300 transition-colors cursor-pointer"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
+                                <div className="bg-yellow-500 text-black rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold transition-all duration-300 hover:scale-110">
+                                    {bets.length}
+                                </div>
+                                <div className="flex justify-between font-semibold items-center">
+                                    <span className="text-sm text-gray-400">
+                                        {bets.length === 1 ? 'Single bet' :  `Combination (${bets.length} bets)`}
+                                    </span>
+                                </div>
+                            </div>
+                            <ChevronUp className="h-4 w-4 text-gray-400 transition-all duration-300 hover:text-yellow-400" />
+                        </div>
+                    </div>                ) : (
+                    // Expanded State  
+                    <div className="transition-all duration-300 ease-in-out">
+                        {/* Header */}
+                        <div className="bg-gray-800 px-3 py-2 rounded-t-lg ">
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-white font-semibold text-sm">Bet Slip</h3>
+                                <div className="flex items-center space-x-2">
+                                    <button
+                                        onClick={() => dispatch(collapseBetSlip())}
+                                        className="text-white hover:text-gray-300 transition-all duration-200 cursor-pointer hover:scale-110"
+                                    >
+                                        <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                                    </button>
+                                    <button
+                                        onClick={() => dispatch(closeBetSlip())}
+                                        className="text-white hover:text-gray-300 transition-all duration-200 cursor-pointer hover:scale-110 hover:rotate-90"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Tabs */}
+                            {/*TODO: Add system in the array to make a system tab then uncommenet the system component and the active tab condition for system  */}
+                            <div className="flex space-x-0.5">
+                                {['singles', 'combination'].map((tab) => {
+                                    const count = getTabCount(tab);
+                                    const disabled = isTabDisabled(tab);
+
+                                    return (
+                                        <button
+                                            key={tab}
+                                            onClick={() => !disabled && handleTabChange(tab)}
+                                            disabled={disabled}
+                                            className={`flex-1 px-2 py-1 text-xs font-medium transition-all duration-200 ${activeTab === tab
+                                                ? 'bg-white text-black'
+                                                : disabled
+                                                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                                    : 'bg-gray-600 text-white hover:bg-gray-500'
+                                                }`}
+                                        >
+                                            <div className="capitalize">{tab}</div>
+                                            {count > 0 && (
+                                                <div className="text-xs">({count})</div>
+                                            )}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
-                        {/* Tabs */}
+                        {/* Content */}
+                        <div className="px-3 py-2 max-h-64 overflow-y-auto dropdown-scrollbar transition-all duration-300">
+                            {activeTab === 'singles' && (
+                                <SinglesBets
+                                    bets={bets}
+                                    stakes={betSlip.stake.singles}
+                                    onStakeChange={handleSingleStakeChange}
+                                    onRemoveBet={handleRemoveBet}
+                                />
+                            )}
 
-                        {/*TODO: Add system in the array to make a system tab then uncommenet the system component and the active tab condition for system  */}                        <div className="flex space-x-0.5">
-                            {['singles', 'combination'].map((tab) => {
-                                const count = getTabCount(tab);
-                                const disabled = isTabDisabled(tab);
+                            {activeTab === 'combination' && bets.length >= 2 && (
+                                <CombinationBet
+                                    bets={bets}
+                                    stake={betSlip.stake.combination}
+                                    onStakeChange={handleCombinationStakeChange}
+                                    onRemoveBet={handleRemoveBet}
+                                />
+                            )}
 
-                                return (
-                                    <button
-                                        key={tab}
-                                        onClick={() => !disabled && handleTabChange(tab)}
-                                        disabled={disabled}
-                                        className={`flex-1 px-2 py-1 text-xs font-medium transition-all ${activeTab === tab
-                                            ? 'bg-white text-black'
-                                            : disabled
-                                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                                                : 'bg-gray-600 text-white hover:bg-gray-500'
-                                            }`}
-                                    >
-                                        <div className="capitalize">{tab}</div>
-                                        {count > 0 && (
-                                            <div className="text-xs">({count})</div>
-                                        )}
-                                    </button>
-                                );
-                            })}
+                            {/* {activeTab === 'system' && bets.length >= 3 && (
+                                <SystemBet
+                                    bets={bets}
+                                    stake={betSlip.stake.system}
+                                    onStakeChange={handleSystemStakeChange}
+                                    onRemoveBet={handleRemoveBet}
+                                />
+                            )} */}
                         </div>
-                    </div>                    {/* Content */}
-                    <div className="px-3 py-2 max-h-64  overflow-y-auto dropdown-scrollbar">
-                        {activeTab === 'singles' && (
-                            <SinglesBets
-                                bets={bets}
-                                stakes={betSlip.stake.singles}
-                                onStakeChange={handleSingleStakeChange}
-                                onRemoveBet={handleRemoveBet}
-                            />
-                        )}
 
-                        {activeTab === 'combination' && bets.length >= 2 && (
-                            <CombinationBet
-                                bets={bets}
-                                stake={betSlip.stake.combination}
-                                onStakeChange={handleCombinationStakeChange}
-                                onRemoveBet={handleRemoveBet}
-                            />
-                        )}
+                        {/* Footer */}
+                        <div className="border-t border-gray-700 px-3 py-2 transition-all duration-300">
+                            {/* Clear Betslip */}
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs text-gray-400">Clear betslip</span>
+                                <button
+                                    onClick={handleClearAll}
+                                    className="text-xs text-white hover:text-gray-300 transition-colors duration-200"
+                                >
+                                    Clear
+                                </button>
+                            </div>
 
-                        {/* {activeTab === 'system' && bets.length >= 3 && (
-                            <SystemBet
-                                bets={bets}
-                                stake={betSlip.stake.system}
-                                onStakeChange={handleSystemStakeChange}
-                                onRemoveBet={handleRemoveBet}
-                            />
-                        )} */}
-                    </div>                    {/* Footer */}
-                    <div className="border-t border-gray-700 px-3 py-2">
-                        {/* Clear Betslip */}
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs text-gray-400">Clear betslip</span>
-                            <button
-                                onClick={handleClearAll}
-                                className="text-xs text-white hover:text-gray-300"
+                            {/* Total Stake */}
+                            <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs text-gray-300">Total stake:</span>
+                                <span className="text-xs font-medium">€{betSlip.totalStake.toFixed(2)}</span>
+                            </div>
+
+                            {/* Potential Payout */}
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs text-gray-300">Potential payout:</span>
+                                <span className="text-sm font-bold text-yellow-400">€{betSlip.potentialReturn.toFixed(2)}</span>
+                            </div>
+
+                            {/* Approve Odds Change */}
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs text-gray-400">Approve odds change</span>
+                                <Switch
+                                    checked={betSlip.approveOddsChange}
+                                    onCheckedChange={handleApproveOddsChange}
+                                    className="scale-75"
+                                />
+                            </div>
+
+                            {/* Place Bet Button */}
+                            <Button
+                                className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 transition-all duration-200"
+                                disabled={betSlip.totalStake === 0}
                             >
-                                Clear
-                            </button>
+                                Place Bet
+                            </Button>
                         </div>
-
-                        {/* Total Stake */}
-                        <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-gray-300">Total stake:</span>
-                            <span className="text-xs font-medium">€{betSlip.totalStake.toFixed(2)}</span>
-                        </div>
-
-                        {/* Potential Payout */}
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs text-gray-300">Potential payout:</span>
-                            <span className="text-sm font-bold text-yellow-400">€{betSlip.potentialReturn.toFixed(2)}</span>
-                        </div>
-
-                        {/* Approve Odds Change */}
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs text-gray-400">Approve odds change</span>
-                            <Switch
-                                checked={betSlip.approveOddsChange}
-                                onCheckedChange={handleApproveOddsChange}
-                                className="scale-75"
-                            />
-                        </div>                        {/* Place Bet Button */}
-                        <Button
-                            className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2"
-                            disabled={betSlip.totalStake === 0}
-                        >
-                            Place Bet
-                        </Button>
-                    </div>
-                </div>
-            )}
+                    </div>                )}
+            </div>
         </div>
     );
 };
@@ -265,10 +284,10 @@ const BetSlip = () => {
 // Singles Bets Component
 const SinglesBets = ({ bets, stakes, onStakeChange, onRemoveBet }) => {
     return (
-        <div className="space-y-3">
-            {bets.map((bet) => (
-                <div key={bet.id} className="bg-gray-800  px-3 py-2">
-                    
+        <div className="space-y-3">            {bets.map((bet, index) => (                <div 
+                    key={bet.id} 
+                    className="bg-gray-800 px-3 py-2 rounded-lg transition-all duration-200 ease-out hover:bg-gray-750"
+                >
                     <div className="flex items-start justify-between mb-2 ">
                         <div className="flex-1">
                             <div className="text-xs text-gray-400 mb-1">
@@ -276,39 +295,31 @@ const SinglesBets = ({ bets, stakes, onStakeChange, onRemoveBet }) => {
                             </div>
                             <div className="text-sm font-medium mb-1">
                                 {bet.selection === '1' ? bet.match.team1 : bet.selection === '2' ? bet.match.team2 : 'Draw'}
-                            </div>
-                            <div className="text-xs text-gray-400">
+                            </div>                            <div className="text-xs text-gray-400">
                                 {bet.type} • {bet.match.time}
                             </div>
-                        </div>
-                        <button
+                        </div>                        <button
                             onClick={() => onRemoveBet(bet.id)}
-                            className="text-gray-400 hover:text-white ml-2"
+                            className="text-gray-400 hover:text-white ml-2 transition-colors duration-200"
                         >
                             <X className="h-3 w-3" />
                         </button>
                     </div>
 
-
-
-
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2 flex-1">
-                            <div className="bg-yellow-500 text-black px-2 py-1 rounded text-xs font-bold">
+                        <div className="flex items-center space-x-2 flex-1">                            <div className="bg-yellow-500 text-black px-2 py-1 rounded text-xs font-bold transition-colors duration-200 hover:bg-yellow-400">
                                 {bet.odds}
                             </div>                            <Input
                                 placeholder="0.00"
                                 value={stakes[bet.id] || ''}
                                 onChange={(e) => onStakeChange(bet.id, e.target.value)}
-                                className="flex-1 h-6 p-0 px-1 !text-[11px] bg-gray-700 border-gray-600 text-white"
+                                className="flex-1 h-6 p-0 px-1 !text-[11px] bg-gray-700 border-gray-600 text-white transition-colors duration-200 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
                                 step="0.01"
                                 min="0"
                             />
                         </div>
-                    </div>
-
-                    {stakes[bet.id] > 0 && (
-                        <div className="text-xs text-gray-400 mt-1">
+                    </div>                    {stakes[bet.id] > 0 && (
+                        <div className="text-xs text-gray-400 mt-1 transition-opacity duration-300">
                             Potential: €{(stakes[bet.id] * bet.odds).toFixed(2)}
                         </div>
                     )}
@@ -323,13 +334,13 @@ const CombinationBet = ({ bets, stake, onStakeChange, onRemoveBet }) => {
     const combinedOdds = bets.reduce((acc, bet) => acc * bet.odds, 1);
 
     return (
-        <div className="space-y-3">
-            <div className="text-sm font-medium text-center">
+        <div className="space-y-3">            <div className="text-sm font-medium text-center transition-all duration-300">
                 Combination ({bets.length} selections)
-            </div>
-
-            {bets.map((bet) => (
-                <div key={bet.id} className="bg-gray-800 rounded p-2">
+            </div>            {bets.map((bet, index) => (
+                <div 
+                    key={bet.id} 
+                    className="bg-gray-800 rounded-lg p-2 transition-all duration-200 ease-out hover:bg-gray-750"
+                >
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
                             <div className="text-xs text-gray-400 mb-1">
@@ -340,14 +351,14 @@ const CombinationBet = ({ bets, stake, onStakeChange, onRemoveBet }) => {
                             </div>
                             <div className="flex items-center justify-between mt-1">
                                 <span className="text-xs text-gray-400">{bet.type}</span>
-                                <div className="bg-yellow-500 text-black px-1.5 py-0.5 rounded text-xs font-bold">
+                                <div className="bg-yellow-500 text-black px-1.5 py-0.5 rounded text-xs font-bold transition-all duration-200 hover:bg-yellow-400 hover:scale-105">
                                     {bet.odds}
                                 </div>
                             </div>
                         </div>
                         <button
                             onClick={() => onRemoveBet(bet.id)}
-                            className="text-gray-400 hover:text-white ml-2"
+                            className="text-gray-400 hover:text-white ml-2 transition-all duration-200 hover:scale-110 hover:rotate-90"
                         >
                             <X className="h-3 w-3" />
                         </button>
@@ -355,10 +366,10 @@ const CombinationBet = ({ bets, stake, onStakeChange, onRemoveBet }) => {
                 </div>
             ))}
 
-            <div className="bg-gray-800 rounded p-3">
+            <div className="bg-gray-800 rounded p-3 animate-in slide-in-from-bottom duration-300" style={{ animationDelay: `${bets.length * 100 + 200}ms`, animationFillMode: 'both' }}>
                 <div className="flex items-center justify-between mb-2">
                     <span className="text-sm">Total Odds:</span>
-                    <div className="bg-yellow-500 text-black px-2 py-1 rounded text-sm font-bold">
+                    <div className="bg-yellow-500 text-black px-2 py-1 rounded text-sm font-bold transition-all duration-200 hover:bg-yellow-400 hover:scale-105">
                         {combinedOdds.toFixed(2)}
                     </div>
                 </div>
@@ -366,10 +377,9 @@ const CombinationBet = ({ bets, stake, onStakeChange, onRemoveBet }) => {
                 <div className="flex items-center space-x-2">
                     <span className="text-sm">Stake:</span>
                     <Input
-                      
                         value={stake}
                         onChange={(e) => onStakeChange(e.target.value)}
-                        className="flex-1 h-6 p-0 px-1 !text-[11px] bg-gray-700 border-gray-600 text-white"
+                        className="flex-1 h-6 p-0 px-1 !text-[11px] bg-gray-700 border-gray-600 text-white transition-all duration-200 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 focus:scale-105"
                         step="0.01"
                         min="0"
                     />

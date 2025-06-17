@@ -19,7 +19,6 @@ export const signup = createAsyncThunk(
     }
   }
 );
-
 export const login = createAsyncThunk(
   "auth/login",
   async (credentials, { rejectWithValue }) => {
@@ -37,7 +36,6 @@ export const login = createAsyncThunk(
     }
   }
 );
-
 export const logout = createAsyncThunk(
   "auth/logout",
   async (_, { rejectWithValue }) => {
@@ -55,7 +53,6 @@ export const logout = createAsyncThunk(
     }
   }
 );
-
 export const getMe = createAsyncThunk(
   "auth/getMe",
   async (_, { rejectWithValue }) => {
@@ -73,7 +70,6 @@ export const getMe = createAsyncThunk(
     }
   }
 );
-
 export const refreshToken = createAsyncThunk(
   "auth/refreshToken",
   async (_, { rejectWithValue }) => {
@@ -91,7 +87,6 @@ export const refreshToken = createAsyncThunk(
     }
   }
 );
-
 export const updateProfile = createAsyncThunk(
   "auth/updateProfile",
   async (profileData, { rejectWithValue }) => {
@@ -109,7 +104,6 @@ export const updateProfile = createAsyncThunk(
     }
   }
 );
-
 export const changePassword = createAsyncThunk(
   "auth/changePassword",
   async (passwordData, { rejectWithValue }) => {
@@ -127,6 +121,8 @@ export const changePassword = createAsyncThunk(
     }
   }
 );
+
+
 
 const initialState = {
   user: null,
@@ -260,10 +256,14 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
         state.message = null;
-      })
-      .addCase(updateProfile.fulfilled, (state, action) => {
+      })      .addCase(updateProfile.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.user;
+        // Merge the updated user data instead of replacing completely
+        if (state.user && action.payload.user) {
+          state.user = { ...state.user, ...action.payload.user };
+        } else {
+          state.user = action.payload.user;
+        }
         state.message = action.payload.message;
         state.error = null;
       })
@@ -293,7 +293,10 @@ const authSlice = createSlice({
 export const { clearError, clearMessage, clearAuth, setInitialized } =
   authSlice.actions;
 
-// Selectors
+
+
+
+  
 export const selectAuth = (state) => state.auth;
 export const selectUser = (state) => state.auth.user;
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;

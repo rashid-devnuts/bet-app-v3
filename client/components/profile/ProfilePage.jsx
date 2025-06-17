@@ -136,25 +136,30 @@ const handleInputChange = useCallback((field, value) => {
       
       // Simple age check (approximate) - avoid complex date calculations
       if (age < 18) {
-        errors.dateOfBirth = "You must be at least 18 years old"
-      }
+        errors.dateOfBirth = "You must be at least 18 years old"}
     }
-    if (dataToValidate)
     
     return { errors, isValid: Object.keys(errors).length === 0 }
   }, []) // Remove formData dependency
+  
   const handleSave = useCallback(async () => {
+    console.log('🔄 Starting profile update...')
+    
     // Validate the form before submitting
     const validation = validateForm(formData)
+    console.log('✅ Validation result:', validation)
     setFormErrors(validation.errors)
     
-    if (!validation.isValid) return // Don't proceed if the form is invalid
+    if (!validation.isValid) {
+      console.log('❌ Validation failed, stopping')
+      return // Don't proceed if the form is invalid
+    }
 
     try {
       // Prepare the data for the API call efficiently
       const updateData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        firstName: formData.firstName?.trim(),
+        lastName: formData.lastName?.trim(),
         phoneNumber: formData.phoneNumber?.trim() || undefined,
         gender: formData.gender || undefined,
       }
@@ -169,13 +174,20 @@ const handleInputChange = useCallback((field, value) => {
         }
       }
       
+      console.log('📤 Sending update data:', updateData)
+      
       // Dispatch the update profile action
-      await dispatch(updateProfile(updateData)).unwrap()
+      const result = await dispatch(updateProfile(updateData)).unwrap()
+      console.log('✅ Update successful:', result)
       
       // If successful, exit editing mode
       setIsEditing(false)
     } catch (error) {
-      // Error is handled by Redux, no need to do anything here      console.error('Profile update failed:', error)
+      console.error('❌ Profile update failed:', error)
+      // Error is handled by Redux, but let's also check what the error is
+      if (error?.message) {
+        console.error('Error message:', error.message)
+      }
     }
   }, [dispatch, validateForm, formData])
   
@@ -254,10 +266,10 @@ const handleInputChange = useCallback((field, value) => {
   ], [])
 
   const days = useMemo(() => Array.from({ length: 31 }, (_, i) => ({ value: i + 1, label: (i + 1).toString() })), [])
-  
-  const years = useMemo(() => Array.from({ length: 100 }, (_, i) => {
+    const years = useMemo(() => Array.from({ length: 100 }, (_, i) => {
     const year = new Date().getFullYear() - 18 - i
-    return { value: year, label: year.toString() }  }), [])
+    return { value: year, label: year.toString() }
+  }), [])
 
   // Auto-clear success messages after 5 seconds
   useEffect(() => {
@@ -278,8 +290,7 @@ const handleInputChange = useCallback((field, value) => {
       }, 8000) // Clear error message after 8 seconds
       
       return () => clearTimeout(timer)
-    }
-  }, [error, dispatch])
+    }  }, [error, dispatch])
 
   if (!user) {
     return (
@@ -295,6 +306,7 @@ const handleInputChange = useCallback((field, value) => {
       </div>
     )
   }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-3 sm:p-4 lg:p-6 max-w-7xl">
@@ -302,43 +314,41 @@ const handleInputChange = useCallback((field, value) => {
         <div className="mb-6 lg:mb-8 ">
           <div className="flex flex-col space-y-4 lg:space-y-0 sm:flex-row sm:justify-between items-center   lg:gap-6">
             {/* Profile Header with Avatar */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-              <Avatar className="h-16 w-16 sm:h-20 sm:w-20 mx-auto sm:mx-0">
-                <AvatarImage src={user.profileImage || "/placeholder.svg"} alt={`${user.firstName} ${user.lastName}`} />                <AvatarFallback className="text-lg  font-semibold bg-primary text-primary-foreground">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">              <Avatar className="h-16 w-16 sm:h-20 sm:w-20 mx-auto sm:mx-0">
+                <AvatarImage src={user?.profileImage || "/placeholder.svg"} alt={`${user?.firstName || ''} ${user?.lastName || ''}`} />
+                <AvatarFallback className="text-lg  font-semibold bg-primary text-primary-foreground">
                   {getInitials()}
                 </AvatarFallback>
               </Avatar>
               <div className="text-center sm:text-left">
                 <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-                  {user.firstName} {user.lastName}
+                  {user?.firstName || ''} {user?.lastName || ''}
                 </h1>
-                <p className="text-muted-foreground mt-1 text-sm break-all sm:break-normal">{user.email}</p>
+                <p className="text-muted-foreground mt-1 text-sm break-all sm:break-normal">{user?.email || ''}</p>
                 <div className="flex items-center justify-center sm:justify-start gap-2 mt-2 flex-wrap">
-                  <Badge variant={user.isActive ? "secondary" : "destructive"} className={`text-xs ${user.isActive ? "bg-base text-white" : ""}`}>
-                    {user.isActive ? "Active" : "Inactive"}
+                  <Badge variant={user?.isActive ? "secondary" : "destructive"} className={`text-xs ${user?.isActive ? "bg-base text-white" : ""}`}>
+                    {user?.isActive ? "Active" : "Inactive"}
                   </Badge>
                   <Badge variant="outline" className="text-xs capitalize">
-                    {user.role}
+                    {user?.role || ''}
                   </Badge>
                 </div>
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Action Buttons */}            
             <div className="flex gap-2 justify-center lg:justify-end ">
               {!isEditing ? (
-                <Button onClick={() => 
-                {
+                <Button onClick={() => {
                   setIsEditing(true)
                   setFormErrors({})
                   dispatch(clearError())
                   dispatch(clearMessage())
-                }
-                
-                } variant="outline" className="flex items-center gap-2 py-2 px-3 text-[13px] w-full sm:w-auto">
+                }} variant="outline" className="flex items-center gap-2 py-2 px-3 text-[13px] w-full sm:w-auto">
                   <Edit className="h-4 w-4" />
                   Edit Profile
-                </Button>              ) : (
+                </Button>
+              ) : (
                 <div className="flex gap-2 w-full sm:w-auto">
                   <Button 
                     onClick={handleSave} 

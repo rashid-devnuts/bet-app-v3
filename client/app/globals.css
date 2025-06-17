@@ -245,6 +245,86 @@
   }
 }
 
+/* Custom BetSlip Animations */
+@keyframes betslip-expand {
+  from {
+    max-height: 60px;
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+  to {
+    max-height: 600px;
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes betslip-collapse {
+  from {
+    max-height: 600px;
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    max-height: 60px;
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.betslip-expand-animation {
+  animation: betslip-expand 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.betslip-collapse-animation {
+  animation: betslip-collapse 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.betslip-item-enter {
+  animation: fadeInUp 0.3s ease-out forwards;
+}
+
+.betslip-content-enter {
+  animation: slideInFromBottom 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Smooth transitions for hover effects */
+.betslip-hover-scale {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.betslip-hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Enhanced focus states */
+.betslip-input:focus {
+  transform: scale(1.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 html,
 body {
   height: 100%;

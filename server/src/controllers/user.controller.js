@@ -18,10 +18,15 @@ const getUserProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         const updatedUser = await UserService.updateUserById(req.user.id, req.body);
-        res.json(updatedUser);
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            user: updatedUser
+        });
     } catch (error) {
         console.error('Error in updateProfile:', error);
         res.status(error.status || 500).json({
+            success: false,
             message: error.message || 'Error updating user profile'
         });
     }

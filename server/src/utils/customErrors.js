@@ -11,7 +11,6 @@ class CustomError extends Error {
     this.statusCode = statusCode;
     this.errorCode = errorCode;
     this.isOperational = true;
-
     Error.captureStackTrace(this, this.constructor);
   }
 }

@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
         <ReduxProvider>
           <AuthProvider>
             <SidebarProvider>
-              <LayoutWrapper>{children}</LayoutWrapper>
+              {/* <LayoutWrapper>{children}</LayoutWrapper> */}
               <div className="bg-gray-100 h-screen flex flex-col">
                 {/* Header */}
                 <div className="flex-shrink-0">

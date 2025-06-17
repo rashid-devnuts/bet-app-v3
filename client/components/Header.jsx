@@ -12,7 +12,6 @@ import { useCustomSidebar } from '@/contexts/SidebarContext.js';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectIsAuthenticated, selectUser, selectIsLoading, logout } from '@/lib/features/auth/authSlice';
 import { toast } from 'sonner';
-
 const Header = () => {
     const { toggleMobileSidebar } = useCustomSidebar();
     const dispatch = useDispatch();
@@ -74,10 +73,10 @@ const Header = () => {
                         >
                             <span className="text-lg">☰</span>
                         </button>
-                        <div className="text-xl lg:text-2xl font-bold">
+                        <Link href={"/"} className="text-xl lg:text-2xl font-bold">
                             BETTING
                             <div className="text-xs text-green-200">KINDRED</div>
-                        </div>                        {/* Mobile menu button */}
+                        </Link>                        {/* Mobile menu button */}
                     </div>
                     <div className="flex items-center space-x-2 lg:space-x-3">
                         {isAuthenticated ? (
