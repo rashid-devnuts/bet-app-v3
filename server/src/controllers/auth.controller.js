@@ -1,5 +1,5 @@
 import User from "../models/User.js";
-import UserService from "../services/UserService.js";
+import UserService from "../services/user.service.js";
 import {
   generateToken,
   generateRefreshToken,
@@ -43,13 +43,13 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error);
-    
+
     // Handle custom errors from UserService
     if (error.isOperational) {
       return res.status(error.statusCode).json({
         success: false,
         message: error.message,
-        errorCode: error.errorCode
+        errorCode: error.errorCode,
       });
     }
 
@@ -98,13 +98,13 @@ export const getMe = async (req, res) => {
     });
   } catch (error) {
     console.error("Get profile error:", error);
-    
+
     // Handle custom errors from UserService
     if (error.isOperational) {
       return res.status(error.statusCode).json({
         success: false,
         message: error.message,
-        errorCode: error.errorCode
+        errorCode: error.errorCode,
       });
     }
 
@@ -132,7 +132,7 @@ export const refreshToken = async (req, res) => {
 
     // Verify refresh token
     const decoded = verifyToken(refreshToken);
-    
+
     // Use UserService to get user by ID
     const user = await UserService.getUserById(decoded.userId);
 
@@ -149,13 +149,13 @@ export const refreshToken = async (req, res) => {
     });
   } catch (error) {
     console.error("Refresh token error:", error);
-    
+
     // Handle custom errors from UserService
     if (error.isOperational) {
       return res.status(401).json({
         success: false,
         message: "Invalid refresh token",
-        errorCode: error.errorCode
+        errorCode: error.errorCode,
       });
     }
 

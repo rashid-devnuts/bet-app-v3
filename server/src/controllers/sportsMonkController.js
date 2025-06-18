@@ -1,4 +1,4 @@
-import sportsMonksService from "../services/SportsMonksService.js";
+import sportsMonksService from "../services/SportsMonks.service.js";
 import { asyncHandler } from "../utils/customErrors.js";
 
 export const getLeagues = asyncHandler(async (req, res) => {

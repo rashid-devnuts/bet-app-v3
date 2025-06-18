@@ -4,10 +4,11 @@ import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import connectDB from "./config/database.js";
-import { notFound, errorHandler } from "./middlewares/index.js";
+import { notFound, errorHandler, requireAdmin } from "./middlewares/index.js";
 import sportsMonkRouter from "./routes/sportsMonk.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import financeRoutes from "./routes/finance.routes.js";
 const app = express();
 const PORT = process.env.PORT || 4000;
 
@@ -43,10 +44,10 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-// Add more routes here as needed
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/sportsmonk", sportsMonkRouter);
+app.use("/api/finance", requireAdmin, financeRoutes);
 
 // 404 handler - must be after all routes
 app.use(notFound);
