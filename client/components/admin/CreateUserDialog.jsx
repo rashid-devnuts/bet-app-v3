@@ -312,13 +312,15 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
                                 variant="outline"
                                 onClick={onClose}
                                 disabled={isLoading}
+                                className="h-10 bg-gray-300 hover:bg-gray-400 text-white rounded-none px-4"
                             >
                                 Cancel
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={isLoading}
-                                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                                // className="bg-primary text-primary-foreground hover:bg-primary/90"
+                                className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-none px-4"
                             >
                                 {isLoading ? "Creating User..." : "Create User"}
                             </Button>
