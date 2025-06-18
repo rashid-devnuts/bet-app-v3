@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { DollarSign, ArrowDown, ArrowUp } from "lucide-react";
+import { DollarSign, ArrowDown, ArrowUp, X, Loader2, CheckCircle, PlusCircle, MinusCircle } from "lucide-react";
 
 export default function TransactionDialog({ isOpen, onClose, user }) {
   const dispatch = useDispatch();
@@ -196,8 +196,9 @@ export default function TransactionDialog({ isOpen, onClose, user }) {
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
-              className="h-10 bg-gray-300 hover:bg-gray-400 text-white rounded-none px-4"
+              className="h-10 border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 rounded-none px-4"
             >
+              <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
             <Button 
@@ -209,11 +210,17 @@ export default function TransactionDialog({ isOpen, onClose, user }) {
             >
               {isSubmitting ? (
                 <>
-                  <span className="animate-spin mr-2">⏳</span>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Processing...
                 </>
               ) : (
-                formData.type === "deposit" ? "Deposit Funds" : "Withdraw Funds"
+                <>
+                  {formData.type === "deposit" 
+                    ? <PlusCircle className="h-4 w-4 mr-2" />
+                    : <MinusCircle className="h-4 w-4 mr-2" />
+                  }
+                  {formData.type === "deposit" ? "Deposit Funds" : "Withdraw Funds"}
+                </>
               )}
             </Button>
           </div>

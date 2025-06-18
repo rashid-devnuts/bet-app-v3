@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Eye, EyeOff, X } from "lucide-react"
+import { Eye, EyeOff, X, Loader2, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -100,27 +100,72 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Create New User</DialogTitle>
-                </DialogHeader>
+            <DialogContent className="max-w-2xl overflow-hidden">
+                <div className="max-h-[80vh] overflow-y-auto pr-6 mr-[-24px] pb-4">
+                    <DialogHeader className="mb-4">
+                        <DialogTitle>Create New User</DialogTitle>
+                    </DialogHeader>
 
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        {/* Name Fields */}
-                        <div className="grid grid-cols-2 gap-4">
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                            {/* Name Fields */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="firstName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm font-medium text-gray-700">
+                                                First name <span className="text-red-500">*</span>
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="text"
+                                                    placeholder="First name"
+                                                    className="border border-gray-200 rounded-none w-full"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage className="text-xs" />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="lastName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm font-medium text-gray-700">
+                                                Last name <span className="text-red-500">*</span>
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="text"
+                                                    placeholder="Last name"
+                                                    className="border border-gray-200 rounded-none w-full"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage className="text-xs" />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            {/* Email Field */}
                             <FormField
                                 control={form.control}
-                                name="firstName"
+                                name="email"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel className="text-sm font-medium text-gray-700">
-                                            First name <span className="text-red-500">*</span>
+                                            Email <span className="text-red-500">*</span>
                                         </FormLabel>
                                         <FormControl>
                                             <Input
-                                                type="text"
-                                                placeholder="First name"
+                                                type="email"
+                                                placeholder="user@email.com"
                                                 className="border border-gray-200 rounded-none w-full"
                                                 {...field}
                                             />
@@ -130,18 +175,19 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
                                 )}
                             />
 
+                            {/* Phone Number Field */}
                             <FormField
                                 control={form.control}
-                                name="lastName"
+                                name="phoneNumber"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel className="text-sm font-medium text-gray-700">
-                                            Last name <span className="text-red-500">*</span>
+                                            Phone Number <span className="text-red-500">*</span>
                                         </FormLabel>
                                         <FormControl>
                                             <Input
-                                                type="text"
-                                                placeholder="Last name"
+                                                type="tel"
+                                                placeholder="+1234567890"
                                                 className="border border-gray-200 rounded-none w-full"
                                                 {...field}
                                             />
@@ -150,216 +196,183 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
                                     </FormItem>
                                 )}
                             />
-                        </div>
 
-                        {/* Email Field */}
-                        <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-sm font-medium text-gray-700">
-                                        Email <span className="text-red-500">*</span>
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="email"
-                                            placeholder="user@email.com"
-                                            className="border border-gray-200 rounded-none w-full"
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage className="text-xs" />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Phone Number Field */}
-                        <FormField
-                            control={form.control}
-                            name="phoneNumber"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-sm font-medium text-gray-700">
-                                        Phone Number <span className="text-red-500">*</span>
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="tel"
-                                            placeholder="+1234567890"
-                                            className="border border-gray-200 rounded-none w-full"
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage className="text-xs" />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Password Field */}
-                        <FormField
-                            control={form.control}
-                            name="password"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-sm font-medium text-gray-700">
-                                        Password <span className="text-red-500">*</span>
-                                    </FormLabel>
-                                    <FormControl>
-                                        <div className="relative">
-                                            <Input
-                                                type={showPassword ? "text" : "password"}
-                                                placeholder="••••••••"
-                                                className="border border-gray-200 rounded-none w-full"
-                                                {...field}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={togglePasswordVisibility}
-                                                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
-                                            >
-                                                {showPassword ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
-                                                <span className="text-xs">Show</span>
-                                            </button>
+                            {/* Password Field */}
+                            <FormField
+                                control={form.control}
+                                name="password"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-medium text-gray-700">
+                                            Password <span className="text-red-500">*</span>
+                                        </FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <Input
+                                                    type={showPassword ? "text" : "password"}
+                                                    placeholder="••••••••"
+                                                    className="border border-gray-200 rounded-none w-full"
+                                                    {...field}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={togglePasswordVisibility}
+                                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                                                >
+                                                    {showPassword ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
+                                                    <span className="text-xs">Show</span>
+                                                </button>
+                                            </div>
+                                        </FormControl>
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            Minimum 8 characters, including at least 1 lowercase letter, 1 uppercase letter, 1 number, and 1 special character.
                                         </div>
-                                    </FormControl>
-                                    <div className="text-xs text-gray-500 mt-1">
-                                        Minimum 8 characters, including at least 1 lowercase letter, 1 uppercase letter, 1 number, and 1 special character.
-                                    </div>
-                                    <FormMessage className="text-xs" />
-                                </FormItem>
-                            )} />
+                                        <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )} />
 
-                        {/* Gender Field */}
-                        <FormField
-                            control={form.control}
-                            name="gender"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-sm font-medium text-gray-700">
-                                        Gender <span className="text-red-500">*</span>
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Select value={field.value} onValueChange={field.onChange}>
-                                            <SelectTrigger className="w-full rounded-none">
-                                                <SelectValue placeholder="Select a gender" />
-                                            </SelectTrigger>
-                                            <SelectContent className="rounded-none">
-                                                {genders.map((gender) => (
-                                                    <SelectItem key={gender.value} value={gender.value}>
-                                                        {gender.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </FormControl>
-                                    <FormMessage className="text-xs" />
-                                </FormItem>
-                            )}
-                        />
+                            {/* Gender Field */}
+                            <FormField
+                                control={form.control}
+                                name="gender"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-medium text-gray-700">
+                                            Gender <span className="text-red-500">*</span>
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Select value={field.value} onValueChange={field.onChange}>
+                                                <SelectTrigger className="w-full rounded-none">
+                                                    <SelectValue placeholder="Select a gender" />
+                                                </SelectTrigger>
+                                                <SelectContent className="rounded-none">
+                                                    {genders.map((gender) => (
+                                                        <SelectItem key={gender.value} value={gender.value}>
+                                                            {gender.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormControl>
+                                        <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )}
+                            />
 
-                        {/* Role Field */}
-                        <FormField
-                            control={form.control}
-                            name="role"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-sm font-medium text-gray-700">
-                                        Role <span className="text-red-500">*</span>
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Select value={field.value} onValueChange={field.onChange}>
-                                            <SelectTrigger className="w-full rounded-none">
-                                                <SelectValue placeholder="Select a role" />
-                                            </SelectTrigger>
-                                            <SelectContent className="rounded-none">
-                                                {roles.map((role) => (
-                                                    <SelectItem key={role.value} value={role.value}>
-                                                        {role.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </FormControl>
-                                    <FormMessage className="text-xs" />
-                                </FormItem>
-                            )}
-                        />
+                            {/* Role Field */}
+                            <FormField
+                                control={form.control}
+                                name="role"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-medium text-gray-700">
+                                            Role <span className="text-red-500">*</span>
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Select value={field.value} onValueChange={field.onChange}>
+                                                <SelectTrigger className="w-full rounded-none">
+                                                    <SelectValue placeholder="Select a role" />
+                                                </SelectTrigger>
+                                                <SelectContent className="rounded-none">
+                                                    {roles.map((role) => (
+                                                        <SelectItem key={role.value} value={role.value}>
+                                                            {role.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormControl>
+                                        <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )}
+                            />
 
-                        {/* Active Status Field */}
-                        {/* <FormField
-                            control={form.control}
-                            name="isActive"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-sm font-medium text-gray-700">
-                                        Account Status <span className="text-red-500">*</span>
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Select value={field.value ? "true" : "false"} onValueChange={(value) => field.onChange(value === "true")} className="rounded-none" >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select account status" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="true">Active</SelectItem>
-                                                <SelectItem value="false">Inactive</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </FormControl>
-                                    <FormMessage className="text-xs" />
-                                </FormItem>
-                            )}
-                        /> */}
-                        <FormField
-                            control={form.control}
-                            name="isActive"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-sm font-medium text-gray-700">
-                                        Account Status <span className="text-red-500">*</span>
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Select
-                                            value={field.value ? "true" : "false"}
-                                            onValueChange={(value) => field.onChange(value === "true")}
-                                        >
-                                            <SelectTrigger className="w-full rounded-none">
-                                                <SelectValue placeholder="Select account status" />
-                                            </SelectTrigger>
-                                            <SelectContent className="rounded-none">
-                                                <SelectItem value="true">Active</SelectItem>
-                                                <SelectItem value="false">Inactive</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </FormControl>
-                                    <FormMessage className="text-xs" />
-                                </FormItem>
-                            )}
-                        />
+                            {/* Active Status Field */}
+                            {/* <FormField
+                                control={form.control}
+                                name="isActive"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-medium text-gray-700">
+                                            Account Status <span className="text-red-500">*</span>
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Select value={field.value ? "true" : "false"} onValueChange={(value) => field.onChange(value === "true")} className="rounded-none" >
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Select account status" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="true">Active</SelectItem>
+                                                    <SelectItem value="false">Inactive</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </FormControl>
+                                        <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )}
+                            /> */}
+                            <FormField
+                                control={form.control}
+                                name="isActive"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-medium text-gray-700">
+                                            Account Status <span className="text-red-500">*</span>
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Select
+                                                value={field.value ? "true" : "false"}
+                                                onValueChange={(value) => field.onChange(value === "true")}
+                                            >
+                                                <SelectTrigger className="w-full rounded-none">
+                                                    <SelectValue placeholder="Select account status" />
+                                                </SelectTrigger>
+                                                <SelectContent className="rounded-none">
+                                                    <SelectItem value="true">Active</SelectItem>
+                                                    <SelectItem value="false">Inactive</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </FormControl>
+                                        <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )}
+                            />
 
 
-                        {/* Action Buttons */}
-                        <div className="flex justify-end space-x-3 pt-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={onClose}
-                                disabled={isLoading}
-                                className="h-10 bg-gray-300 hover:bg-gray-400 text-white rounded-none px-4"
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                type="submit"
-                                disabled={isLoading}
-                                // className="bg-primary text-primary-foreground hover:bg-primary/90"
-                                className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-none px-4"
-                            >
-                                {isLoading ? "Creating User..." : "Create User"}
-                            </Button>
-                        </div>
-                    </form>
-                </Form>
+                            {/* Action Buttons */}
+                            <div className="flex justify-end space-x-3 pt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={onClose}
+                                    disabled={isLoading}
+                                    className="h-10 border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 rounded-none px-4"
+                                >
+                                    <X className="h-4 w-4 mr-2" />
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    // className="bg-primary text-primary-foreground hover:bg-primary/90"
+                                    className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-none px-4"
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                            Creating User...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UserPlus className="h-4 w-4 mr-2" />
+                                            Create User
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </form>
+                    </Form>
+                </div>
             </DialogContent>
         </Dialog>
     )

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Pin, Users, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pin, Users, Settings, DollarSign } from 'lucide-react';
 import { useCustomSidebar } from '../../contexts/SidebarContext.js';
 import { useSelector } from 'react-redux';
 import { selectUser } from '@/lib/features/auth/authSlice';
@@ -27,6 +27,11 @@ const Sidebar = () => {
             title: 'Bet Management',
             href: '/admin/bet-management',
             icon: ChevronRight
+        },
+        {
+            title: 'Finance',
+            href: '/admin/finance',
+            icon: DollarSign
         },
         {
             title: 'Settings',
