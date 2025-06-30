@@ -29,7 +29,7 @@ const SidebarWrapper = () => {
 
     // Desktop sidebar
     return (
-        <div className={`hidden lg:block lg:h-[calc(100vh-108px)] lg:z-10 transition-all duration-300 ${isCollapsed ? 'lg:w-16' : 'lg:w-48'
+        <div className={`hidden lg:block lg:h-[calc(100vh-108px)] lg:z-10 transition-all duration-300 ${isCollapsed ? 'lg:w-16' : 'lg:w-56'
             }`}>
             <Sidebar />
         </div>

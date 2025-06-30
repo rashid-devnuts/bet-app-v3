@@ -1,0 +1,2087 @@
+{
+  "success": true,
+  "message": "Leagues fetched successfully",
+  "data": [
+    {
+      "id": 2,
+      "sport_id": 1,
+      "country_id": 41,
+      "name": "Champions League",
+      "active": true,
+      "short_code": "UEFA CL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/2.png",
+      "type": "league",
+      "sub_type": "cup_international",
+      "last_played_at": "2025-05-31 19:00:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": {
+        "id": 41,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/eu.png",
+        "official_name": "Europe"
+      }
+    },
+    {
+      "id": 5,
+      "sport_id": 1,
+      "country_id": 41,
+      "name": "Europa League",
+      "active": true,
+      "short_code": "UEFA EL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/5/5.png",
+      "type": "league",
+      "sub_type": "cup_international",
+      "last_played_at": "2025-05-21 19:00:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": {
+        "id": 41,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/eu.png",
+        "official_name": "Europe"
+      }
+    },
+    {
+      "id": 8,
+      "sport_id": 1,
+      "country_id": 462,
+      "name": "Premier League",
+      "active": true,
+      "short_code": "UK PL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/8/8.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-25 15:00:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": {
+        "id": 462,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/en.png",
+        "official_name": "England"
+      }
+    },
+    {
+      "id": 9,
+      "sport_id": 1,
+      "country_id": 462,
+      "name": "Championship",
+      "active": true,
+      "short_code": "UK Champ",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/9/9.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-24 14:01:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 462,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/en.png",
+        "official_name": "England"
+      }
+    },
+    {
+      "id": 12,
+      "sport_id": 1,
+      "country_id": 462,
+      "name": "League One",
+      "active": true,
+      "short_code": "UK L1",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/12/12.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-25 12:01:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 462,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/en.png",
+        "official_name": "England"
+      }
+    },
+    {
+      "id": 14,
+      "sport_id": 1,
+      "country_id": 462,
+      "name": "League Two",
+      "active": true,
+      "short_code": "UK L2",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/14/14.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-26 14:01:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 462,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/en.png",
+        "official_name": "England"
+      }
+    },
+    {
+      "id": 17,
+      "sport_id": 1,
+      "country_id": 462,
+      "name": "National League",
+      "active": true,
+      "short_code": "UK NL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/17/17.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-01 14:00:00",
+      "category": 3,
+      "has_jerseys": false,
+      "country": {
+        "id": 462,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/en.png",
+        "official_name": "England"
+      }
+    },
+    {
+      "id": 23,
+      "sport_id": 1,
+      "country_id": 462,
+      "name": "Community Shield",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/23/23.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2024-08-10 14:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 462,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/en.png",
+        "official_name": "England"
+      }
+    },
+    {
+      "id": 24,
+      "sport_id": 1,
+      "country_id": 462,
+      "name": "FA Cup",
+      "active": true,
+      "short_code": "UK FA Cup",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/24/24.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2025-05-17 15:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 462,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/en.png",
+        "official_name": "England"
+      }
+    },
+    {
+      "id": 27,
+      "sport_id": 1,
+      "country_id": 462,
+      "name": "Carabao Cup",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/27/27.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2025-03-16 16:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 462,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/en.png",
+        "official_name": "England"
+      }
+    },
+    {
+      "id": 45,
+      "sport_id": 1,
+      "country_id": 462,
+      "name": "Women's Super League",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/13/45.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-10 11:30:00",
+      "category": 3,
+      "has_jerseys": false,
+      "country": {
+        "id": 462,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/en.png",
+        "official_name": "England"
+      }
+    },
+    {
+      "id": 72,
+      "sport_id": 1,
+      "country_id": 38,
+      "name": "Eredivisie",
+      "active": true,
+      "short_code": "NLD E",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/72.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-25 16:00:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": {
+        "id": 38,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/nl.png",
+        "official_name": "Netherlands"
+      }
+    },
+    {
+      "id": 74,
+      "sport_id": 1,
+      "country_id": 38,
+      "name": "Eerste Divisie",
+      "active": true,
+      "short_code": "NLD ED",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/10/74.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-09 18:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 38,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/nl.png",
+        "official_name": "Netherlands"
+      }
+    },
+    {
+      "id": 78,
+      "sport_id": 1,
+      "country_id": 38,
+      "name": "KNVB Beker",
+      "active": true,
+      "short_code": "NLD Cup",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/14/78.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2025-04-21 16:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 38,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/nl.png",
+        "official_name": "Netherlands"
+      }
+    },
+    {
+      "id": 82,
+      "sport_id": 1,
+      "country_id": 11,
+      "name": "Bundesliga",
+      "active": true,
+      "short_code": "GER BI",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/18/82.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-17 13:30:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": {
+        "id": 11,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/de.png",
+        "official_name": "Federal Republic of Germany"
+      }
+    },
+    {
+      "id": 85,
+      "sport_id": 1,
+      "country_id": 11,
+      "name": "2. Bundesliga",
+      "active": true,
+      "short_code": "GER BII",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/21/85.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-18 13:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 11,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/de.png",
+        "official_name": "Federal Republic of Germany"
+      }
+    },
+    {
+      "id": 109,
+      "sport_id": 1,
+      "country_id": 11,
+      "name": "DFB Pokal",
+      "active": true,
+      "short_code": "GER Cup",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/13/109.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2025-05-24 18:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 11,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/de.png",
+        "official_name": "Federal Republic of Germany"
+      }
+    },
+    {
+      "id": 181,
+      "sport_id": 1,
+      "country_id": 143,
+      "name": "Admiral Bundesliga",
+      "active": true,
+      "short_code": "AUT BL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/21/181.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-01 15:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 143,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/at.png",
+        "official_name": "Republic of Austria"
+      }
+    },
+    {
+      "id": 208,
+      "sport_id": 1,
+      "country_id": 556,
+      "name": "Pro League",
+      "active": true,
+      "short_code": "BEL FDA",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/16/208.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-29 16:30:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": {
+        "id": 556,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/be.png",
+        "official_name": "Kingdom of Belgium"
+      }
+    },
+    {
+      "id": 211,
+      "sport_id": 1,
+      "country_id": 556,
+      "name": "Challenger Pro League",
+      "active": true,
+      "short_code": "BEL FAD",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/19/211.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-11 14:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 556,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/be.png",
+        "official_name": "Kingdom of Belgium"
+      }
+    },
+    {
+      "id": 229,
+      "sport_id": 1,
+      "country_id": 224,
+      "name": "First League",
+      "active": true,
+      "short_code": "BGR FL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/5/229.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-31 15:30:00",
+      "category": 3,
+      "has_jerseys": false,
+      "country": {
+        "id": 224,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/bg.png",
+        "official_name": "Republic of Bulgaria"
+      }
+    },
+    {
+      "id": 244,
+      "sport_id": 1,
+      "country_id": 266,
+      "name": "1. HNL",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/20/244.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-25 15:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 266,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/hr.png",
+        "official_name": "Republic of Croatia"
+      }
+    },
+    {
+      "id": 262,
+      "sport_id": 1,
+      "country_id": 245,
+      "name": "Chance Liga",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/6/262.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-25 14:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 245,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/cz.png",
+        "official_name": "Czech Republic"
+      }
+    },
+    {
+      "id": 271,
+      "sport_id": 1,
+      "country_id": 320,
+      "name": "Superliga",
+      "active": true,
+      "short_code": "DNK SL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/271.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-01 16:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 320,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/dk.png",
+        "official_name": "Kingdom of Denmark"
+      }
+    },
+    {
+      "id": 274,
+      "sport_id": 1,
+      "country_id": 320,
+      "name": "First Division",
+      "active": true,
+      "short_code": "DNK D1",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/18/274.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-23 17:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 320,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/dk.png",
+        "official_name": "Kingdom of Denmark"
+      }
+    },
+    {
+      "id": 292,
+      "sport_id": 1,
+      "country_id": 1233,
+      "name": "Veikkausliiga",
+      "active": true,
+      "short_code": "FIN VL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/4/292.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-28 20:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 1233,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/fi.png",
+        "official_name": "Republic of Finland"
+      }
+    },
+    {
+      "id": 301,
+      "sport_id": 1,
+      "country_id": 17,
+      "name": "Ligue 1",
+      "active": true,
+      "short_code": "FRA L1",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/13/301.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-17 19:00:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": {
+        "id": 17,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/fr.png",
+        "official_name": "French Republic"
+      }
+    },
+    {
+      "id": 304,
+      "sport_id": 1,
+      "country_id": 17,
+      "name": "Ligue 2",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/16/304.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2020-12-22 19:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 17,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/fr.png",
+        "official_name": "French Republic"
+      }
+    },
+    {
+      "id": 307,
+      "sport_id": 1,
+      "country_id": 17,
+      "name": "Coupe de France",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/19/307.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2025-05-24 19:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 17,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/fr.png",
+        "official_name": "French Republic"
+      }
+    },
+    {
+      "id": 310,
+      "sport_id": 1,
+      "country_id": 17,
+      "name": "Coupe de la Ligue",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/22/310.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2010-07-30 18:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 17,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/fr.png",
+        "official_name": "French Republic"
+      }
+    },
+    {
+      "id": 325,
+      "sport_id": 1,
+      "country_id": 125,
+      "name": "Super League",
+      "active": true,
+      "short_code": "GRC SL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/5/325.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-22 17:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 125,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/gr.png",
+        "official_name": "Hellenic Republic"
+      }
+    },
+    {
+      "id": 372,
+      "sport_id": 1,
+      "country_id": 802,
+      "name": "Ligat ha'Al",
+      "active": true,
+      "short_code": "ISR PL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/20/372.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-24 17:30:00",
+      "category": 3,
+      "has_jerseys": false,
+      "country": {
+        "id": 802,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/il.png",
+        "official_name": "State of Israel"
+      }
+    },
+    {
+      "id": 384,
+      "sport_id": 1,
+      "country_id": 251,
+      "name": "Serie A",
+      "active": true,
+      "short_code": "ITA SA",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/0/384.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-25 18:45:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": {
+        "id": 251,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/it.png",
+        "official_name": "Italian Republic"
+      }
+    },
+    {
+      "id": 387,
+      "sport_id": 1,
+      "country_id": 251,
+      "name": "Serie B",
+      "active": true,
+      "short_code": "ITA SB",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/3/387.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-15 18:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 251,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/it.png",
+        "official_name": "Italian Republic"
+      }
+    },
+    {
+      "id": 390,
+      "sport_id": 1,
+      "country_id": 251,
+      "name": "Coppa Italia",
+      "active": true,
+      "short_code": "ITA Coppa",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/6/390.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2025-05-14 19:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 251,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/it.png",
+        "official_name": "Italian Republic"
+      }
+    },
+    {
+      "id": 444,
+      "sport_id": 1,
+      "country_id": 1578,
+      "name": "Eliteserien",
+      "active": true,
+      "short_code": "NOR TL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/28/444.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-29 17:15:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 1578,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/no.png",
+        "official_name": "Kingdom of Norway"
+      }
+    },
+    {
+      "id": 453,
+      "sport_id": 1,
+      "country_id": 2,
+      "name": "Ekstraklasa",
+      "active": true,
+      "short_code": "POL E",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/5/453.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-24 15:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 2,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/pl.png",
+        "official_name": "Republic of Poland"
+      }
+    },
+    {
+      "id": 462,
+      "sport_id": 1,
+      "country_id": 20,
+      "name": "Liga Portugal",
+      "active": true,
+      "short_code": "PRT PL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/14/462.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-17 17:00:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": {
+        "id": 20,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/pt.png",
+        "official_name": "Portuguese Republic"
+      }
+    },
+    {
+      "id": 468,
+      "sport_id": 1,
+      "country_id": 20,
+      "name": "Taça De Portugal",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/20/468.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2025-05-25 16:15:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 20,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/pt.png",
+        "official_name": "Portuguese Republic"
+      }
+    },
+    {
+      "id": 474,
+      "sport_id": 1,
+      "country_id": 155,
+      "name": "Liga 1",
+      "active": true,
+      "short_code": "ROM L1",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/26/474.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-24 18:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 155,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ro.png",
+        "official_name": "Romania"
+      }
+    },
+    {
+      "id": 486,
+      "sport_id": 1,
+      "country_id": 227,
+      "name": "Premier League",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/6/486.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-24 13:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 227,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ru.png",
+        "official_name": "Russian Federation"
+      }
+    },
+    {
+      "id": 489,
+      "sport_id": 1,
+      "country_id": 227,
+      "name": "FNL",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/9/489.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-24 10:00:00",
+      "category": 3,
+      "has_jerseys": false,
+      "country": {
+        "id": 227,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ru.png",
+        "official_name": "Russian Federation"
+      }
+    },
+    {
+      "id": 492,
+      "sport_id": 1,
+      "country_id": 227,
+      "name": "Russian Cup",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/12/492.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2025-06-01 15:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 227,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ru.png",
+        "official_name": "Russian Federation"
+      }
+    },
+    {
+      "id": 498,
+      "sport_id": 1,
+      "country_id": 227,
+      "name": "Youth League",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/18/498.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-27 16:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 227,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ru.png",
+        "official_name": "Russian Federation"
+      }
+    },
+    {
+      "id": 501,
+      "sport_id": 1,
+      "country_id": 1161,
+      "name": "Premiership",
+      "active": true,
+      "short_code": "SCO P",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/501.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-18 14:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 1161,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/scotland.png",
+        "official_name": "Scotland"
+      }
+    },
+    {
+      "id": 513,
+      "sport_id": 1,
+      "country_id": 1161,
+      "name": "Premiership Play-Offs",
+      "active": true,
+      "short_code": "SCO P PO",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/1/513.png",
+      "type": "league",
+      "sub_type": "play-offs",
+      "last_played_at": "2025-05-26 19:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 1161,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/scotland.png",
+        "official_name": "Scotland"
+      }
+    },
+    {
+      "id": 564,
+      "sport_id": 1,
+      "country_id": 32,
+      "name": "La Liga",
+      "active": true,
+      "short_code": "ESP PL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/20/564.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-25 19:00:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": {
+        "id": 32,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/es.png",
+        "official_name": "Kingdom of Spain"
+      }
+    },
+    {
+      "id": 567,
+      "sport_id": 1,
+      "country_id": 32,
+      "name": "La Liga 2",
+      "active": true,
+      "short_code": "ESP S",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/23/567.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-21 19:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 32,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/es.png",
+        "official_name": "Kingdom of Spain"
+      }
+    },
+    {
+      "id": 570,
+      "sport_id": 1,
+      "country_id": 32,
+      "name": "Copa Del Rey",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/26/570.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2025-04-26 20:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 32,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/es.png",
+        "official_name": "Kingdom of Spain"
+      }
+    },
+    {
+      "id": 573,
+      "sport_id": 1,
+      "country_id": 47,
+      "name": "Allsvenskan",
+      "active": true,
+      "short_code": "SWE AL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/29/573.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-29 14:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 47,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/se.png",
+        "official_name": "Kingdom of Sweden"
+      }
+    },
+    {
+      "id": 591,
+      "sport_id": 1,
+      "country_id": 62,
+      "name": "Super League",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/15/591.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-24 16:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 62,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ch.png",
+        "official_name": "Swiss Confederation"
+      }
+    },
+    {
+      "id": 600,
+      "sport_id": 1,
+      "country_id": 404,
+      "name": "Super Lig",
+      "active": true,
+      "short_code": "TUR SL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/24/600.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2023-12-19 17:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 404,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/tr.png",
+        "official_name": "Republic of Turkey"
+      }
+    },
+    {
+      "id": 603,
+      "sport_id": 1,
+      "country_id": 404,
+      "name": "1. Lig",
+      "active": true,
+      "short_code": "TUR L1",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/27/603.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-29 17:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 404,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/tr.png",
+        "official_name": "Republic of Turkey"
+      }
+    },
+    {
+      "id": 609,
+      "sport_id": 1,
+      "country_id": 86,
+      "name": "Premier League",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/1/609.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-25 15:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 86,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ua.png",
+        "official_name": "Ukraine"
+      }
+    },
+    {
+      "id": 636,
+      "sport_id": 1,
+      "country_id": 44,
+      "name": "Liga Profesional de Fútbol",
+      "active": true,
+      "short_code": "ARG PD",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/28/636.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-01 20:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 44,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ar.png",
+        "official_name": "Argentine Republic"
+      }
+    },
+    {
+      "id": 648,
+      "sport_id": 1,
+      "country_id": 5,
+      "name": "Serie A",
+      "active": true,
+      "short_code": "BRA CB",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/8/648.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-13 00:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 5,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/br.png",
+        "official_name": "Federative Republic of Brazil"
+      }
+    },
+    {
+      "id": 651,
+      "sport_id": 1,
+      "country_id": 5,
+      "name": "Serie B",
+      "active": true,
+      "short_code": "BRA CB SB",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/11/651.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-29 22:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 5,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/br.png",
+        "official_name": "Federative Republic of Brazil"
+      }
+    },
+    {
+      "id": 654,
+      "sport_id": 1,
+      "country_id": 5,
+      "name": "Copa do Brasil",
+      "active": true,
+      "short_code": "BRA CdB",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/14/654.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2025-05-23 00:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 5,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/br.png",
+        "official_name": "Federative Republic of Brazil"
+      }
+    },
+    {
+      "id": 743,
+      "sport_id": 1,
+      "country_id": 458,
+      "name": "Liga MX",
+      "active": true,
+      "short_code": "MEX AL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/7/743.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-26 01:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 458,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/mx.png",
+        "official_name": "United Mexican States"
+      }
+    },
+    {
+      "id": 746,
+      "sport_id": 1,
+      "country_id": 458,
+      "name": "Copa MX",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/10/746.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2016-09-29 02:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 458,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/mx.png",
+        "official_name": "United Mexican States"
+      }
+    },
+    {
+      "id": 770,
+      "sport_id": 1,
+      "country_id": 158,
+      "name": "Primera Division",
+      "active": true,
+      "short_code": "URY CL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/2/770.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-29 21:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 158,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/uy.png",
+        "official_name": "Oriental Republic of Uruguay"
+      }
+    },
+    {
+      "id": 779,
+      "sport_id": 1,
+      "country_id": 3483,
+      "name": "Major League Soccer",
+      "active": true,
+      "short_code": "USA MLS",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/11/779.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-30 01:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 3483,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/us.png",
+        "official_name": "United States of America"
+      }
+    },
+    {
+      "id": 788,
+      "sport_id": 1,
+      "country_id": 3483,
+      "name": "NASL",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/20/788.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2017-11-05 22:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 3483,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/us.png",
+        "official_name": "United States of America"
+      }
+    },
+    {
+      "id": 806,
+      "sport_id": 1,
+      "country_id": 146,
+      "name": "Premier League",
+      "active": true,
+      "short_code": "ZAF PL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/6/806.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-29 10:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 146,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/za.png",
+        "official_name": "Republic of South Africa"
+      }
+    },
+    {
+      "id": 827,
+      "sport_id": 1,
+      "country_id": 23,
+      "name": "Ligue 1",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/27/827.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-19 18:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 23,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ci.png",
+        "official_name": "Republic of Côte d'Ivoire"
+      }
+    },
+    {
+      "id": 830,
+      "sport_id": 1,
+      "country_id": 886,
+      "name": "Premier League",
+      "active": true,
+      "short_code": "EGY D1",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/30/830.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-31 17:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 886,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/eg.png",
+        "official_name": "Arab Republic of Egypt"
+      }
+    },
+    {
+      "id": 860,
+      "sport_id": 1,
+      "country_id": 1424,
+      "name": "Botola Pro",
+      "active": true,
+      "short_code": "MAR G1",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/28/860.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-12 19:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 1424,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ma.png",
+        "official_name": "Kingdom of Morocco"
+      }
+    },
+    {
+      "id": 902,
+      "sport_id": 1,
+      "country_id": 488,
+      "name": "Persian Gulf Pro League",
+      "active": true,
+      "short_code": "IRN PL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/6/902.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-15 16:30:00",
+      "category": 3,
+      "has_jerseys": false,
+      "country": {
+        "id": 488,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ir.png",
+        "official_name": "Islamic Republic of Iran"
+      }
+    },
+    {
+      "id": 938,
+      "sport_id": 1,
+      "country_id": 74505,
+      "name": "Stars League",
+      "active": true,
+      "short_code": "QAT SL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/10/938.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-04-18 15:30:00",
+      "category": 3,
+      "has_jerseys": false,
+      "country": {
+        "id": 74505,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/qa.png",
+        "official_name": "State of Qatar"
+      }
+    },
+    {
+      "id": 944,
+      "sport_id": 1,
+      "country_id": 35376,
+      "name": "Pro League",
+      "active": true,
+      "short_code": "SAU PL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/16/944.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-02-28 19:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 35376,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/sa.png",
+        "official_name": "Kingdom of Saudi Arabia"
+      }
+    },
+    {
+      "id": 950,
+      "sport_id": 1,
+      "country_id": 35376,
+      "name": "Kings Cup",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/22/950.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2025-05-30 18:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 35376,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/sa.png",
+        "official_name": "Kingdom of Saudi Arabia"
+      }
+    },
+    {
+      "id": 959,
+      "sport_id": 1,
+      "country_id": 2802,
+      "name": "Uae League",
+      "active": true,
+      "short_code": "UAE PL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/31/959.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-25 16:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 2802,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ae.png",
+        "official_name": "United Arab Emirates"
+      }
+    },
+    {
+      "id": 968,
+      "sport_id": 1,
+      "country_id": 479,
+      "name": "J-League",
+      "active": true,
+      "short_code": "JPN JL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/8/968.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-29 09:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 479,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/jp.png",
+        "official_name": "Japan"
+      }
+    },
+    {
+      "id": 983,
+      "sport_id": 1,
+      "country_id": 1004,
+      "name": "Canadian Soccer League",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/23/983.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-29 20:00:00",
+      "category": 3,
+      "has_jerseys": false,
+      "country": {
+        "id": 1004,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ca.png",
+        "official_name": "Canada"
+      }
+    },
+    {
+      "id": 989,
+      "sport_id": 1,
+      "country_id": 5618,
+      "name": "Super League",
+      "active": true,
+      "short_code": "CHN SL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/29/989.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-29 11:35:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 5618,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/cn.png",
+        "official_name": "People's Republic of China"
+      }
+    },
+    {
+      "id": 1007,
+      "sport_id": 1,
+      "country_id": 153732,
+      "name": "Indian Super League",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/15/1007.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-04-12 14:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 153732,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/in.png",
+        "official_name": "Republic of India"
+      }
+    },
+    {
+      "id": 1034,
+      "sport_id": 1,
+      "country_id": 712,
+      "name": "K League 1",
+      "active": true,
+      "short_code": "KOR KL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/10/1034.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-29 10:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 712,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/kr.png",
+        "official_name": "Republic of Korea"
+      }
+    },
+    {
+      "id": 1073,
+      "sport_id": 1,
+      "country_id": 69697,
+      "name": "V-League",
+      "active": true,
+      "short_code": "VNM VL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/17/1073.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-22 10:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 69697,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/vn.png",
+        "official_name": "Socialist Republic of Vietnam"
+      }
+    },
+    {
+      "id": 1082,
+      "sport_id": 1,
+      "country_id": 99474,
+      "name": "Friendly International",
+      "active": true,
+      "short_code": "INTERNATIONAL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/26/1082.png",
+      "type": "league",
+      "sub_type": "friendly",
+      "last_played_at": "2025-06-11 00:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": { "id": 99474, "image": null, "official_name": null }
+    },
+    {
+      "id": 1085,
+      "sport_id": 1,
+      "country_id": 11240938,
+      "name": "AFC Champions League Elite",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/29/1085.png",
+      "type": "league",
+      "sub_type": "cup_international",
+      "last_played_at": "2025-05-03 16:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": { "id": 11240938, "image": null, "official_name": "Asia" }
+    },
+    {
+      "id": 1088,
+      "sport_id": 1,
+      "country_id": 11240938,
+      "name": "AFC Champions League Two",
+      "active": true,
+      "short_code": "AFC Cup",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/0/1088.png",
+      "type": "league",
+      "sub_type": "cup_international",
+      "last_played_at": "2025-05-18 12:00:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": { "id": 11240938, "image": null, "official_name": "Asia" }
+    },
+    {
+      "id": 1101,
+      "sport_id": 1,
+      "country_id": 99474,
+      "name": "Club Friendlies 1",
+      "active": true,
+      "short_code": "Elite CF",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/13/1101.png",
+      "type": "league",
+      "sub_type": "friendly",
+      "last_played_at": "2025-03-23 10:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": { "id": 99474, "image": null, "official_name": null }
+    },
+    {
+      "id": 1107,
+      "sport_id": 1,
+      "country_id": 147,
+      "name": "CAF Champions League",
+      "active": true,
+      "short_code": "CAF CL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/19/1107.png",
+      "type": "league",
+      "sub_type": "cup_international",
+      "last_played_at": "2025-06-01 17:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": { "id": 147, "image": null, "official_name": "Africa" }
+    },
+    {
+      "id": 1116,
+      "sport_id": 1,
+      "country_id": 11555657,
+      "name": "Copa Sudamericana",
+      "active": true,
+      "short_code": "SA Copa",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/28/1116.png",
+      "type": "league",
+      "sub_type": "cup_international",
+      "last_played_at": "2025-05-30 00:30:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": { "id": 11555657, "image": null, "official_name": null }
+    },
+    {
+      "id": 1122,
+      "sport_id": 1,
+      "country_id": 11555657,
+      "name": "Copa Libertadores",
+      "active": true,
+      "short_code": "SA Copa",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/2/1122.png",
+      "type": "league",
+      "sub_type": "cup_international",
+      "last_played_at": "2025-05-30 00:30:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": { "id": 11555657, "image": null, "official_name": null }
+    },
+    {
+      "id": 1123,
+      "sport_id": 1,
+      "country_id": 99474,
+      "name": "OFC Champions League",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/3/1123.png",
+      "type": "league",
+      "sub_type": "cup_international",
+      "last_played_at": "2025-04-12 07:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": { "id": 99474, "image": null, "official_name": null }
+    },
+    {
+      "id": 1128,
+      "sport_id": 1,
+      "country_id": 556,
+      "name": "Super Cup",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/8/1128.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2024-07-20 18:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 556,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/be.png",
+        "official_name": "Kingdom of Belgium"
+      }
+    },
+    {
+      "id": 1328,
+      "sport_id": 1,
+      "country_id": 41,
+      "name": "Uefa Super Cup",
+      "active": true,
+      "short_code": "UEFA S Cup",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/16/1328.png",
+      "type": "league",
+      "sub_type": "cup_international",
+      "last_played_at": "2013-08-30 18:45:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 41,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/eu.png",
+        "official_name": "Europe"
+      }
+    },
+    {
+      "id": 1329,
+      "sport_id": 1,
+      "country_id": 41,
+      "name": "UEFA Youth League",
+      "active": true,
+      "short_code": "UEFA YL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/17/1329.png",
+      "type": "league",
+      "sub_type": "cup_international",
+      "last_played_at": "2025-04-28 16:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 41,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/eu.png",
+        "official_name": "Europe"
+      }
+    },
+    {
+      "id": 1356,
+      "sport_id": 1,
+      "country_id": 98,
+      "name": "A-League Men",
+      "active": true,
+      "short_code": "AUS AL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/12/1356.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2022-02-23 06:25:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 98,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/au.png",
+        "official_name": "Commonwealth of Australia"
+      }
+    },
+    {
+      "id": 1371,
+      "sport_id": 1,
+      "country_id": 41,
+      "name": "UEFA Europa League Play-offs",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/27/1371.png",
+      "type": "league",
+      "sub_type": "play-offs",
+      "last_played_at": "2019-05-26 14:42:38",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 41,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/eu.png",
+        "official_name": "Europe"
+      }
+    },
+    {
+      "id": 1419,
+      "sport_id": 1,
+      "country_id": 41,
+      "name": "UEFA Women's Champions League",
+      "active": true,
+      "short_code": "UEFA CLW",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/11/1419.png",
+      "type": "league",
+      "sub_type": "cup_international",
+      "last_played_at": "2025-05-24 16:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 41,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/eu.png",
+        "official_name": "Europe"
+      }
+    },
+    {
+      "id": 1434,
+      "sport_id": 1,
+      "country_id": 41,
+      "name": "Atlantic Cup",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/26/1434.png",
+      "type": "league",
+      "sub_type": "cup_international",
+      "last_played_at": "2025-02-10 16:00:00",
+      "category": 3,
+      "has_jerseys": false,
+      "country": {
+        "id": 41,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/eu.png",
+        "official_name": "Europe"
+      }
+    },
+    {
+      "id": 1452,
+      "sport_id": 1,
+      "country_id": 99474,
+      "name": "FIFA Intercontinental Cup",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/12/1452.png",
+      "type": "league",
+      "sub_type": "cup_international",
+      "last_played_at": "2024-12-18 17:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": { "id": 99474, "image": null, "official_name": null }
+    },
+    {
+      "id": 1479,
+      "sport_id": 1,
+      "country_id": 24143344,
+      "name": "Concacaf League",
+      "active": true,
+      "short_code": "CONCACAF",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/7/1479.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2019-08-28 02:00:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": {
+        "id": 24143344,
+        "image": null,
+        "official_name": "North & Central America"
+      }
+    },
+    {
+      "id": 1502,
+      "sport_id": 1,
+      "country_id": 44,
+      "name": "Super Cup",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/30/1502.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2024-03-14 00:10:00",
+      "category": 3,
+      "has_jerseys": false,
+      "country": {
+        "id": 44,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ar.png",
+        "official_name": "Argentine Republic"
+      }
+    },
+    {
+      "id": 1583,
+      "sport_id": 1,
+      "country_id": 98,
+      "name": "A-League Women",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/15/1583.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-05-18 05:15:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 98,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/au.png",
+        "official_name": "Commonwealth of Australia"
+      }
+    },
+    {
+      "id": 1631,
+      "sport_id": 1,
+      "country_id": 5,
+      "name": "Brasileiro Women",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/31/1631.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-06-18 18:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 5,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/br.png",
+        "official_name": "Federative Republic of Brazil"
+      }
+    },
+    {
+      "id": 1658,
+      "sport_id": 1,
+      "country_id": 44,
+      "name": "Copa de la Superliga",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/26/1658.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2024-04-12 22:30:00",
+      "category": 3,
+      "has_jerseys": false,
+      "country": {
+        "id": 44,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ar.png",
+        "official_name": "Argentine Republic"
+      }
+    },
+    {
+      "id": 1659,
+      "sport_id": 1,
+      "country_id": 320,
+      "name": "Superliga Play-offs",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/27/1659.png",
+      "type": "league",
+      "sub_type": "play-offs",
+      "last_played_at": "2019-05-19 14:00:00",
+      "category": 3,
+      "has_jerseys": false,
+      "country": {
+        "id": 320,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/dk.png",
+        "official_name": "Kingdom of Denmark"
+      }
+    },
+    {
+      "id": 1673,
+      "sport_id": 1,
+      "country_id": 17,
+      "name": "Ligue 1 Play-offs",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/9/1673.png",
+      "type": "league",
+      "sub_type": "play-offs",
+      "last_played_at": "2025-05-29 18:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 17,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/fr.png",
+        "official_name": "French Republic"
+      }
+    },
+    {
+      "id": 1681,
+      "sport_id": 1,
+      "country_id": 62,
+      "name": "Super League Play-offs",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/17/1681.png",
+      "type": "league",
+      "sub_type": "play-offs",
+      "last_played_at": "2025-05-30 18:30:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 62,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ch.png",
+        "official_name": "Swiss Confederation"
+      }
+    },
+    {
+      "id": 1682,
+      "sport_id": 1,
+      "country_id": 224,
+      "name": "Parva Liga - Play-offs",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/18/1682.png",
+      "type": "league",
+      "sub_type": "play-offs",
+      "last_played_at": "2025-05-30 16:00:00",
+      "category": 2,
+      "has_jerseys": false,
+      "country": {
+        "id": 224,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/bg.png",
+        "official_name": "Republic of Bulgaria"
+      }
+    },
+    {
+      "id": 1691,
+      "sport_id": 1,
+      "country_id": 86,
+      "name": "Premier League - Playoffs",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/27/1691.png",
+      "type": "league",
+      "sub_type": "play-offs",
+      "last_played_at": "2025-05-31 22:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 86,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ua.png",
+        "official_name": "Ukraine"
+      }
+    },
+    {
+      "id": 1798,
+      "sport_id": 1,
+      "country_id": 5,
+      "name": "Supercopa do Brasil",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/6/1798.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2025-02-02 19:00:00",
+      "category": 3,
+      "has_jerseys": false,
+      "country": {
+        "id": 5,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/br.png",
+        "official_name": "Federative Republic of Brazil"
+      }
+    },
+    {
+      "id": 1885,
+      "sport_id": 1,
+      "country_id": 3483,
+      "name": "Nwsl Challenge Cup Women",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/league_placeholder.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2025-03-08 01:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 3483,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/us.png",
+        "official_name": "United States of America"
+      }
+    },
+    {
+      "id": 1989,
+      "sport_id": 1,
+      "country_id": 74505,
+      "name": "Qatar Prince Cup",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/league_placeholder.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2025-05-10 16:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 74505,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/qa.png",
+        "official_name": "State of Qatar"
+      }
+    },
+    {
+      "id": 1990,
+      "sport_id": 1,
+      "country_id": 2802,
+      "name": "Super Cup",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/league_placeholder.png",
+      "type": "league",
+      "sub_type": "domestic_cup",
+      "last_played_at": "2024-12-13 15:45:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": {
+        "id": 2802,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/ae.png",
+        "official_name": "United Arab Emirates"
+      }
+    },
+    {
+      "id": 2286,
+      "sport_id": 1,
+      "country_id": 41,
+      "name": "Europa Conference League",
+      "active": true,
+      "short_code": "UEFA ECL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/14/2286.png",
+      "type": "league",
+      "sub_type": "cup_international",
+      "last_played_at": "2025-05-28 19:00:00",
+      "category": 1,
+      "has_jerseys": false,
+      "country": {
+        "id": 41,
+        "image": "https://cdn.sportmonks.com/images/countries/png/short/eu.png",
+        "official_name": "Europe"
+      }
+    },
+    {
+      "id": 2450,
+      "sport_id": 1,
+      "country_id": 99474,
+      "name": "Club Friendlies 2",
+      "active": true,
+      "short_code": "EU F",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/18/2450.png",
+      "type": "league",
+      "sub_type": "friendly",
+      "last_played_at": "2024-10-11 14:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": { "id": 99474, "image": null, "official_name": null }
+    },
+    {
+      "id": 2451,
+      "sport_id": 1,
+      "country_id": 99474,
+      "name": "Club Friendlies 3",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/19/2451.png",
+      "type": "league",
+      "sub_type": "friendly",
+      "last_played_at": "2025-06-29 16:00:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": { "id": 99474, "image": null, "official_name": null }
+    },
+    {
+      "id": 2452,
+      "sport_id": 1,
+      "country_id": 99474,
+      "name": "Club Friendlies 4",
+      "active": true,
+      "short_code": null,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/20/2452.png",
+      "type": "league",
+      "sub_type": "friendly",
+      "last_played_at": "2025-02-19 17:15:00",
+      "category": 4,
+      "has_jerseys": false,
+      "country": { "id": 99474, "image": null, "official_name": null }
+    }
+  ],
+  "timestamp": "2025-06-30T06:41:59.888Z"
+}

@@ -2,65 +2,21 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiClient from "@/config/axios";
 
 // Async thunk for fetching leagues
-export const fetchLeagues = createAsyncThunk(
-  "leagues/fetchLeagues",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await apiClient.get("/sportsmonk/leagues");
-      return response.data.data;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.error?.message || "Failed to fetch leagues"
-      );
-    }
-  }
-);
 
 // Async thunk for fetching popular leagues for sidebar
 export const fetchPopularLeagues = createAsyncThunk(
   "leagues/fetchPopularLeagues",
-  async (limit = 15, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get("/fixtures/leagues/popular", {
-        params: { limit: 25 },
-      });
+      console.log("Fetching popular leagues for sidebar...");
 
-      const leagues = response.data.data || [];
+      // Updated endpoint to fetch all leagues
+      const response = await apiClient.get("/sportsmonk/leagues");
+
+      const leagues = response.data.data;
       return leagues;
     } catch (error) {
       // Return fallback data if API fails
-      const fallbackLeagues = [
-        {
-          id: "odds-boost",
-          name: "Odds Boost",
-          icon: "💫",
-          count: null,
-          image_path: null,
-        },
-        {
-          id: "champions-league",
-          name: "Champions League",
-          icon: "⚽",
-          count: null,
-          image_path: null,
-        },
-        {
-          id: "premier-league",
-          name: "Premier League",
-          icon: "⚽",
-          count: null,
-          image_path: null,
-        },
-        { id: "nba", name: "NBA", icon: "🏀", count: null, image_path: null },
-        { id: "nhl", name: "NHL", icon: "🏒", count: null, image_path: null },
-        {
-          id: "la-liga",
-          name: "La Liga",
-          icon: "⚽",
-          count: null,
-          image_path: null,
-        },
-      ];
 
       console.warn(
         "Failed to fetch popular leagues, using fallback data:",
@@ -116,18 +72,7 @@ const leaguesSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchLeagues.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchLeagues.fulfilled, (state, action) => {
-        state.loading = false;
-        state.data = action.payload;
-      })
-      .addCase(fetchLeagues.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
+
       // Popular leagues cases
       .addCase(fetchPopularLeagues.pending, (state) => {
         state.popularLoading = true;

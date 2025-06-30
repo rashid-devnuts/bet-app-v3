@@ -3,10 +3,18 @@ import { asyncHandler } from "../utils/customErrors.js";
 
 export const getLeagues = asyncHandler(async (req, res) => {
   const leagues = await sportsMonksService.getLeagues();
+  const filteredLeagues = leagues.map((league) => ({
+    ...league,
+    country: {
+      id: league.country?.id,
+      image: league.country?.image_path,
+      official_name: league.country?.official_name,
+    },
+  }));
   res.status(200).json({
     success: true,
     message: "Leagues fetched successfully",
-    data: leagues,
+    data: filteredLeagues,
     timestamp: new Date().toISOString(),
   });
 });

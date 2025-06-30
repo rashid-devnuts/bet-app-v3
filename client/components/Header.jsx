@@ -12,19 +12,24 @@ import { useCustomSidebar } from '@/contexts/SidebarContext.js';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectIsAuthenticated, selectUser, selectIsLoading, logout } from '@/lib/features/auth/authSlice';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+
 const Header = () => {
     const { toggleMobileSidebar } = useCustomSidebar();
     const dispatch = useDispatch();
     const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
-
+    const router = useRouter();
     // Redux selectors
     const isAuthenticated = useSelector(selectIsAuthenticated);
     const user = useSelector(selectUser);
-    const isLoading = useSelector(selectIsLoading); const handleLogout = async () => {
+    const isLoading = useSelector(selectIsLoading);
+    const handleLogout = async () => {
         try {
             await dispatch(logout()).unwrap();
             toast.success("Logged out successfully");
             setShowLogoutDialog(false);
+            router.push('/');
+
         } catch (error) {
             toast.error("Logout failed");
             setShowLogoutDialog(false);

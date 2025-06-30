@@ -1,6 +1,7 @@
 import axios from "axios";
 import https from "https";
 import { CustomError } from "../utils/customErrors.js";
+import NodeCache from "node-cache";
 
 class SportsMonksService {
   //INFO: This is for initializing the SportsMonks API client
@@ -45,24 +46,69 @@ class SportsMonksService {
         return Promise.reject(error);
       }
     );
+
+    this.cache = new NodeCache();
   }
+
   async getLeagues() {
     try {
-      const response = await this.client.get("/football/leagues", {
-        params: {
-          include: "country",
-        },
-      });
-      if (!response.data?.data || response.data.data.length === 0) {
+      // Check cache first
+      const cachedLeagues = this.cache.get("leagues");
+      if (cachedLeagues) {
+        console.log("Returning leagues from cache:", cachedLeagues.length);
+        return cachedLeagues;
+      }
+      let allLeagues = [];
+      let page = 1;
+      const perPage = 50; // Max results per page with includes
+
+      while (true) {
+        const response = await this.client.get("/football/leagues", {
+          params: {
+            include: "country",
+            per_page: perPage,
+            page: page,
+          },
+        });
+
+        //INFO: Check if response contains data
+        if (!response.data?.data || response.data.data.length === 0) {
+          if (allLeagues.length === 0) {
+            throw new CustomError(
+              "SportsMonks API: No leagues found",
+              404,
+              "LEAGUES_NOT_FOUND"
+            );
+          }
+          break;
+        }
+
+        //INFO: Append leagues from current page
+        allLeagues = allLeagues.concat(response.data.data);
+        console.log(
+          `Fetched page ${page}: ${response.data.data.length} leagues (Total: ${allLeagues.length})`
+        );
+
+        //INFO: Exit if no more pages
+        if (!response.data.pagination?.has_more) {
+          break;
+        }
+
+        page++; //INFO: Move to next page
+      }
+
+      if (allLeagues.length === 0) {
         throw new CustomError(
           "SportsMonks API: No leagues found",
           404,
           "LEAGUES_NOT_FOUND"
         );
       }
-      console.log("Leagues fetched successfully:", response.data.data.length);
 
-      return response.data.data;
+      // Store in cache for 1 day (86400 seconds)
+      this.cache.set("leagues", allLeagues, 60 * 60 * 24);
+      console.log("All leagues fetched successfully:", allLeagues.length);
+      return allLeagues;
     } catch (error) {
       console.error("Error fetching leagues:", error);
 

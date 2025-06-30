@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Pin, Users, Settings, DollarSign } from 'lucide-react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, Pin, Users, Settings, DollarSign, X, Search, Globe, TrendingUp } from 'lucide-react';
 import { useCustomSidebar } from '../../contexts/SidebarContext.js';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUser } from '@/lib/features/auth/authSlice';
@@ -13,7 +13,22 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
 
+const POPULAR_LEAGUE_NAMES = [
+    'Premier League',
+    'Champions League',
+    'La Liga',
+    'Serie A',
+    'Bundesliga',
+    'Ligue 1',
+    'Europa League',
+    'World Cup',
+    'Copa America',
+    'MLS',
+    'Eredivisie',
+    'Liga Portugal',
+];
 
 const Sidebar = () => {
     const context = useCustomSidebar();
@@ -31,9 +46,57 @@ const Sidebar = () => {
     // Fetch popular leagues data on component mount (only for regular users)
     useEffect(() => {
         if (user?.role !== 'admin') {
-            dispatch(fetchPopularLeagues(15)); // Request 15 leagues instead of default 10
+            dispatch(fetchPopularLeagues());
         }
     }, [dispatch, user?.role]);
+
+    // Add state for search and expanded countries
+    const [search, setSearch] = useState('');
+    const [expandedCountries, setExpandedCountries] = useState({}); // All collapsed by default
+
+    // Group leagues by country and filter by search
+    const groupedLeagues = useMemo(() => {
+        if (!popularLeagues || !Array.isArray(popularLeagues)) return {};
+        const filtered = search.trim().length > 0
+            ? popularLeagues.filter(l => l.name.toLowerCase().includes(search.toLowerCase()))
+            : popularLeagues;
+        const groups = {};
+        filtered.forEach(league => {
+            // Normalize country id and name for 'Other' group
+            let countryId = league.country?.id;
+            let countryName = league.country?.official_name || league.country?.name;
+            if (!countryId || countryId === 'other' || countryName === undefined || countryName === null || countryName === '') {
+                countryId = 'other';
+                countryName = 'Other';
+            }
+            if (!groups[countryId]) {
+                groups[countryId] = {
+                    name: countryName,
+                    id: countryId,
+                    flag: league.country?.image,
+                    leagues: []
+                };
+            }
+            groups[countryId].leagues.push(league);
+        });
+        return groups;
+    }, [popularLeagues, search]);
+
+    // Get sorted country keys (alphabetical by country name)
+    const sortedCountryKeys = useMemo(() => {
+        return Object.keys(groupedLeagues).sort((a, b) => {
+            const nameA = groupedLeagues[a].name || '';
+            const nameB = groupedLeagues[b].name || '';
+            return nameA.localeCompare(nameB);
+        });
+    }, [groupedLeagues]);
+
+    const popularLeaguesFiltered = useMemo(() => {
+        if (!popularLeagues || !Array.isArray(popularLeagues)) return [];
+        return popularLeagues.filter(l =>
+            POPULAR_LEAGUE_NAMES.some(name => l.name.toLowerCase().includes(name.toLowerCase()))
+        );
+    }, [popularLeagues]);
 
     const adminMenuItems = [
         {
@@ -57,19 +120,6 @@ const Sidebar = () => {
             icon: Settings
         }
     ];
-
-    // Fallback leagues if API data is not available
-    const fallbackLeagues = [
-        { id: 'odds-boost', name: 'Odds Boost', icon: '💫', count: null },
-        { id: 'champions-league', name: 'Champions League', icon: '⚽', count: null },
-        { id: 'premier-league', name: 'Premier League', icon: '⚽', count: null },
-        { id: 'nba', name: 'NBA', icon: '🏀', count: null },
-        { id: 'nhl', name: 'NHL', icon: '🏒', count: null },
-        { id: 'la-liga', name: 'La Liga', icon: '⚽', count: null },
-    ];
-
-    // Use API data if available, otherwise fallback to static data
-    const leaguesToDisplay = popularLeagues.length > 0 ? popularLeagues : fallbackLeagues;
 
     // Handle mouse enter - disable on mobile
     const handleMouseEnter = () => {
@@ -116,11 +166,17 @@ const Sidebar = () => {
         };
     }, []);
 
+    const getFlatSearchedLeagues = useMemo(() => {
+        if (!search.trim()) return null;
+        if (!popularLeagues || !Array.isArray(popularLeagues)) return [];
+        return popularLeagues.filter(l => l.name.toLowerCase().includes(search.toLowerCase()));
+    }, [search, popularLeagues]);
+
     return (
         <div
             ref={sidebarRef}
-            className={`${isMobile ? 'w-64' : (isCollapsed ? 'w-16' : 'w-56')
-                } bg-gray-800 text-white h-full transition-all duration-300 flex-shrink-0 overflow-y-auto`}
+            className={`${isMobile ? 'w-64' : (isCollapsed ? 'w-16' : 'w-64')
+                } bg-gray-800 text-white h-full dropdown-scrollbar transition-all duration-300 flex-shrink-0 overflow-y-auto px-2`}
             onMouseEnter={!isMobile ? handleMouseEnter : undefined}
             onMouseLeave={!isMobile ? handleMouseLeave : undefined}
         >
@@ -128,8 +184,8 @@ const Sidebar = () => {
             <div className="p-3 border-b border-gray-700 flex items-center justify-between">
                 {(!isCollapsed || isMobile) && (
                     <div className="flex items-center text-sm">
-                        <span className="mr-2">🌐</span>
-                        <span>EN</span>
+                        <span className="mr-2"></span>
+                        <span>Leagues</span>
                     </div>
                 )}
                 {!isMobile && (
@@ -173,59 +229,232 @@ const Sidebar = () => {
                             </div>
                         </div>
                     ) : (
-                        // User Menu
-                        <div className="p-4">
-                            <h3 className="text-sm font-semibold mb-3">POPULAR LEAGUES</h3>
-                            {popularLeaguesLoading ? (
-                                // Loading skeleton
-                                <div className="space-y-2">
-                                    {[...Array(6)].map((_, index) => (
-                                        <div key={index} className="flex items-center py-2 px-3 rounded">
-                                            <div className="w-6 h-6 bg-gray-600 rounded mr-3 animate-pulse"></div>
-                                            <div className="h-4 bg-gray-600 rounded flex-1 animate-pulse"></div>
-                                        </div>
-                                    ))}
+                        // User Menu with Tabs
+                        <div className="p-1">
+                            <Tabs defaultValue="by-country" className="w-full mt-1">
+                                <TabsList className="mb-1 w-full  text-xs py-0 h-6 !text-white  bg-transparent border-gray-500 border-1 ">
+                                    <TabsTrigger
+                                        value="by-country"
+                                        className="flex-1 text-xs bg-transparent cursor-pointer text-white data-[state=active]:bg-base data-[state=active]:text-white"
+                                    >
+                                        <Globe className="mr-1 h-4 w-4" /> By Country
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="popular"
+                                        className="flex-1 text-xs bg-transparent cursor-pointer text-white data-[state=active]:bg-base data-[state=active]:text-white"
+                                    >
+                                        <TrendingUp className="mr-1 h-4 w-4" /> Popular
+                                    </TabsTrigger>
+                                </TabsList>
+                                <div className="mb-3 relative">
+                                    <span className="absolute left-2 top-1.5 text-gray-400">
+                                        <Search size={16} />
+                                    </span>
+                                    <input
+                                        type="text"
+                                        value={search}
+                                        onChange={e => setSearch(e.target.value)}
+                                        placeholder="Search leagues..."
+                                        className="w-full  pl-8 pr-7 py-1 text-xs rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm border border-gray-600"
+                                        style={{ boxSizing: 'border-box' }}
+                                    />
+                                    {search && (
+                                        <button
+                                            className="absolute right-2 top-1.5 text-gray-400 hover:text-white focus:outline-none"
+                                            onClick={() => setSearch('')}
+                                            tabIndex={-1}
+                                            aria-label="Clear search"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    )}
                                 </div>
-                            ) : (
-                                <div className="space-y-1">
-                                    {leaguesToDisplay.map((league, index) => {
-                                        const leagueHref = league.id === 'odds-boost'
-                                            ? '/'
-                                            : `/leagues/${league.id}`;
-
-                                        return (
-                                            <Link
-                                                key={league.id || index}
-                                                href={leagueHref}
-                                                className="flex items-center justify-between py-2 px-3 hover:bg-gray-700 rounded cursor-pointer group"
-                                            >
-                                                <div className="flex items-center">
-                                                    <div className="mr-3 w-6 h-6 flex items-center justify-center">
-                                                        {league.image_path ? (
-                                                            <img
-                                                                src={league.image_path}
-                                                                alt={league.name}
-                                                                className="w-5 h-5 object-contain"
-                                                                onError={(e) => {
-                                                                    e.target.style.display = 'none';
-                                                                }}
-                                                            />
-                                                        ) : league.icon ? (
-                                                            <span className="text-green-400 text-sm">{league.icon}</span>
-                                                        ) : null}
-                                                    </div>
-                                                    <span className="text-sm">{league.name}</span>
+                                <TabsContent value="by-country">
+                                    <div className="mb-2 text-xs text-gray-300">
+                                        Total leagues in plan: <span className="font-bold text-white">{popularLeagues?.length || 0}</span>
+                                    </div>
+                                    {popularLeaguesLoading ? (
+                                        <div className="space-y-2">
+                                            {[...Array(6)].map((_, index) => (
+                                                <div key={index} className="flex items-center py-2 px-3 rounded">
+                                                    <div className="w-6 h-6 bg-gray-600 rounded mr-3 animate-pulse"></div>
+                                                    <div className="h-4 bg-gray-600 rounded flex-1 animate-pulse"></div>
                                                 </div>
-                                                {league.count && (
-                                                    <span className="text-xs text-gray-400 bg-gray-700 px-2 py-0.5 rounded group-hover:bg-gray-600">
-                                                        {league.count}
-                                                    </span>
-                                                )}
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-                            )}
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            {getFlatSearchedLeagues && search.trim() ? (
+                                                getFlatSearchedLeagues.length === 0 ? (
+                                                    <div className="text-xs text-gray-400 px-4 py-2">No leagues found.</div>
+                                                ) : (
+                                                    getFlatSearchedLeagues.map(league => {
+                                                        const leagueHref = league.id === 'odds-boost' ? '/' : `/leagues/${league.id}`;
+                                                        return (
+                                                            <Link
+                                                                key={league.id}
+                                                                href={leagueHref}
+                                                                className="flex items-center justify-between py-2 px-4 rounded cursor-pointer group transition-colors hover:bg-gray-700 focus:bg-gray-700 border-l-2 border-transparent hover:border-blue-400 focus:border-blue-400 w-[95%] mx-auto mb-1"
+                                                                title={league.name}
+                                                            >
+                                                                <div className="flex items-center min-w-0">
+                                                                    {league.image_path ? (
+                                                                        <img
+                                                                            src={league.image_path}
+                                                                            alt={league.name}
+                                                                            className="w-5 h-5 object-contain mr-2"
+                                                                            onError={e => { e.target.style.display = 'none'; }}
+                                                                        />
+                                                                    ) : league.icon ? (
+                                                                        <span className="text-green-400 text-sm mr-2">{league.icon}</span>
+                                                                    ) : null}
+                                                                    <span className="text-xs truncate max-w-[120px]" title={league.name}>{league.name}</span>
+                                                                </div>
+                                                                <span className="text-xs text-gray-400 font-bold">{league.id}</span>
+                                                            </Link>
+                                                        );
+                                                    })
+                                                )
+                                            ) : (
+                                                sortedCountryKeys.map((countryId, idx) => {
+                                                    const country = groupedLeagues[countryId];
+                                                    const isExpanded = expandedCountries[countryId] ?? false;
+                                                    return (
+                                                        <div key={countryId} className="mb-2">
+                                                            {idx > 0 && <div className="border-t border-gray-700 my-2" />}
+                                                            <div
+                                                                className="flex items-center justify-between py-1 px-2 bg-gray-700 rounded cursor-pointer select-none transition-colors hover:bg-gray-600 group"
+                                                                onClick={() => setExpandedCountries(prev => ({ ...prev, [countryId]: !isExpanded }))}
+                                                                tabIndex={0}
+                                                                role="button"
+                                                                aria-expanded={isExpanded}
+                                                            >
+                                                                <div className="flex items-center">
+                                                                    {country.flag && (
+                                                                        <img src={country.flag} alt={country.name} className="w-5 h-5 mr-2 object-contain rounded-full border border-gray-600" />
+                                                                    )}
+                                                                    <span className="font-semibold text-xs truncate max-w-[120px]" title={country.name}>
+                                                                        {country.name}
+                                                                    </span>
+                                                                </div>
+                                                                <ChevronRight className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
+                                                            </div>
+                                                            {isExpanded && (
+                                                                <div>
+                                                                    {country.leagues.map(league => {
+                                                                        const leagueHref = league.id === 'odds-boost' ? '/' : `/leagues/${league.id}`;
+                                                                        return (
+                                                                            <Link
+                                                                                key={league.id}
+                                                                                href={leagueHref}
+                                                                                className="flex items-center justify-between py-1 px-5 rounded cursor-pointer group transition-colors hover:bg-gray-700 focus:bg-gray-700 border-l-2 border-transparent hover:border-blue-400 mt-1 focus:border-blue-400 w-[95%] mx-auto"
+                                                                                title={league.name}
+                                                                            >
+                                                                                <div className="flex items-center min-w-0 py-0 ">
+                                                                                    {league.image_path ? (
+                                                                                        <img
+                                                                                            src={league.image_path}
+                                                                                            alt={league.name}
+                                                                                            className="w-5 h-5 object-contain mr-2"
+                                                                                            onError={e => { e.target.style.display = 'none'; }}
+                                                                                        />
+                                                                                    ) : league.icon ? (
+                                                                                        <span className="text-green-400 text-sm mr-2">{league.icon}</span>
+                                                                                    ) : null}
+                                                                                    <span className="text-xs truncate max-w-[120px]" title={league.name}>{league.name}</span>
+                                                                                </div>
+                                                                            </Link>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    )}
+                                </TabsContent>
+                                <TabsContent value="popular">
+                                    <div className="mb-2 text-xs text-gray-300">
+                                        Showing <span className="font-bold text-white">{popularLeaguesFiltered.length}</span> popular leagues
+                                    </div>
+                                    {popularLeaguesLoading ? (
+                                        <div className="space-y-2">
+                                            {[...Array(6)].map((_, index) => (
+                                                <div key={index} className="flex items-center py-2 px-3 rounded">
+                                                    <div className="w-6 h-6 bg-gray-600 rounded mr-3 animate-pulse"></div>
+                                                    <div className="h-4 bg-gray-600 rounded flex-1 animate-pulse"></div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            {getFlatSearchedLeagues && search.trim() ? (
+                                                getFlatSearchedLeagues.length === 0 ? (
+                                                    <div className="text-xs text-gray-400 px-4 py-2">No leagues found.</div>
+                                                ) : (
+                                                    getFlatSearchedLeagues
+                                                        .filter(league => POPULAR_LEAGUE_NAMES.some(name => league.name.toLowerCase().includes(name.toLowerCase())))
+                                                        .map(league => {
+                                                            const leagueHref = league.id === 'odds-boost' ? '/' : `/leagues/${league.id}`;
+                                                            return (
+                                                                <Link
+                                                                    key={league.id}
+                                                                    href={leagueHref}
+                                                                    className="flex items-center justify-between py-2 px-4 rounded cursor-pointer group transition-colors hover:bg-gray-700 focus:bg-gray-700 border-l-2 border-transparent hover:border-blue-400 focus:border-blue-400 w-[95%] mx-auto mb-1"
+                                                                    title={league.name}
+                                                                >
+                                                                    <div className="flex items-center min-w-0">
+                                                                        {league.image_path ? (
+                                                                            <img
+                                                                                src={league.image_path}
+                                                                                alt={league.name}
+                                                                                className="w-5 h-5 object-contain mr-2"
+                                                                                onError={e => { e.target.style.display = 'none'; }}
+                                                                            />
+                                                                        ) : league.icon ? (
+                                                                            <span className="text-green-400 text-sm mr-2">{league.icon}</span>
+                                                                        ) : null}
+                                                                        <span className="text-xs truncate max-w-[120px]" title={league.name}>{league.name}</span>
+                                                                    </div>
+                                                                    <span className="text-xs text-gray-400 font-bold">{league.id}</span>
+                                                                </Link>
+                                                            );
+                                                        })
+                                                )
+                                            ) : (
+                                                popularLeaguesFiltered.map(league => {
+                                                    const leagueHref = league.id === 'odds-boost' ? '/' : `/leagues/${league.id}`;
+                                                    return (
+                                                        <Link
+                                                            key={league.id}
+                                                            href={leagueHref}
+                                                            className="flex items-center justify-between py-2 px-4 rounded cursor-pointer group transition-colors hover:bg-gray-700 focus:bg-gray-700 border-l-2 border-transparent hover:border-blue-400 focus:border-blue-400 w-[95%] mx-auto mb-1"
+                                                            title={league.name}
+                                                        >
+                                                            <div className="flex items-center min-w-0">
+                                                                {league.image_path ? (
+                                                                    <img
+                                                                        src={league.image_path}
+                                                                        alt={league.name}
+                                                                        className="w-5 h-5 object-contain mr-2"
+                                                                        onError={e => { e.target.style.display = 'none'; }}
+                                                                    />
+                                                                ) : league.icon ? (
+                                                                    <span className="text-green-400 text-sm mr-2">{league.icon}</span>
+                                                                ) : null}
+                                                                <span className="text-xs truncate max-w-[120px]" title={league.name}>{league.name}</span>
+                                                            </div>
+                                                            <span className="text-xs text-gray-400 font-bold">{league.id}</span>
+                                                        </Link>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    )}
+                                </TabsContent>
+                            </Tabs>
                         </div>
                     )}
 
@@ -258,7 +487,7 @@ const Sidebar = () => {
                             ))
                         ) : (
                             // User icons
-                            leaguesToDisplay.slice(0, 6).map((league, index) => {
+                            popularLeagues?.slice(0, 8).map((league, index) => {
                                 const leagueHref = league.id === 'odds-boost'
                                     ? '/'
                                     : `/leagues/${league.id}`;

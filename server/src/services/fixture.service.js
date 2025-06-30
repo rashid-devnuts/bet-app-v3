@@ -410,7 +410,7 @@ class FixtureOptimizationService {
       const footballDailyFixtures = allFixtures;
 
       // 1. Generate Top Picks (8-10 best matches) - transform odds and filter out matches without odds
-      const topPicks = this.selectTopPicks(topPicksFixtures, 10)
+      const topPicks = this.selectTopPicks(topPicksFixtures, 12)
         .map((match) => this.transformMatchOdds(match))
         .filter((match) => match.odds && Object.keys(match.odds).length > 0);
 
@@ -701,7 +701,6 @@ class FixtureOptimizationService {
       }
 
       transformedMatch.odds = oddsObj;
-      console.log(oddsObj);
     } else if (match.odds && typeof match.odds === "object") {
       // If odds is already an object, standardize the structure
       const oddsObj = {};
