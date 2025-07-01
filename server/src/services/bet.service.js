@@ -5,8 +5,13 @@ import SportsMonksService from "./sportsMonks.service.js";
 import FixtureOptimizationService from "./fixture.service.js";
 import { CustomError } from "../utils/customErrors.js";
 import agenda from "../config/agenda.js";
+import NodeCache from "node-cache";
 
 class BetService {
+  constructor() {
+    this.finalMatchResultCache = new NodeCache({ stdTTL: 24 * 60 * 60 }); // 24 hours TTL
+  }
+
   async placeBet(userId, matchId, oddId, stake) {
     let matchData;
     const cacheKey = `match_${matchId}`;
@@ -206,35 +211,43 @@ class BetService {
     }
 
     let matchData = match;
+    // Check the final match result cache first (node-cache)
     if (!matchData) {
-      // Always fetch the latest fixture with odds from the API
-      try {
+      if (this.finalMatchResultCache.has(bet.matchId)) {
+        matchData = this.finalMatchResultCache.get(bet.matchId);
         console.log(
-          `[checkBetOutcome] Fetching latest fixture for matchId: ${bet.matchId}`
+          `[checkBetOutcome] Used cached final result for matchId: ${bet.matchId}`
         );
-        matchData = await this.fetchMatchResult(bet.matchId);
-        // if (matchData.state?.id === 5) {
-        //   // Cache finished match
-        //   FixtureOptimizationService.fixtureCache.set(
-        //     `match_${bet.matchId}`,
-        //     matchData,
-        //     24 * 3600
-        //   );
-        // }
-      } catch (err) {
-        console.error(`[checkBetOutcome] Error fetching match:`, err);
-        throw err;
+      } else {
+        // Always fetch the latest fixture with odds from the API
+        try {
+          console.log(
+            `[checkBetOutcome] Fetching latest fixture for matchId: ${bet.matchId}`
+          );
+          matchData = await this.fetchMatchResult(bet.matchId);
+          // Only cache if match is finished
+          if (matchData.state?.id === 5) {
+            this.finalMatchResultCache.set(bet.matchId, matchData);
+            console.log(
+              `[checkBetOutcome] Cached final result for matchId: ${bet.matchId}`
+            );
+          }
+        } catch (err) {
+          console.error(`[checkBetOutcome] Error fetching match:`, err);
+          throw err;
+        }
       }
     }
 
     console.log(`[checkBetOutcome] Match state:`, matchData.state);
+    //INFO: COMMENTED FOR NOW FOR TESTING PURPOSES
     // if (!matchData.state || matchData.state.id !== 5) {
     //   console.log(
     //     `[checkBetOutcome] Match not finished for betId: ${betId}, state:`,
     //     matchData.state
     //   );
     //   // Reschedule for 2 minutes later
-    //   const runAt = new Date(Date.now() + 2 * 60 * 1000);
+    //   const runAt = new Date(Date.now() + 10 * 60 * 1000);
     //   agenda.schedule(runAt, "checkBetOutcome", {
     //     betId,
     //     matchId: bet.matchId,
