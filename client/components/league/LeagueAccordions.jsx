@@ -40,6 +40,13 @@ const LeagueAccordions = ({ matches }) => {
         const oddsX = match.odds && match.odds.draw ? match.odds.draw.value : null;
         const odds2 = match.odds && match.odds.away ? match.odds.away.value : null;
         const matchTime = match.starting_at ? match.starting_at.split(' ')[1]?.slice(0, 5) : '';
+        // Ensure match object has team1 and team2 for BetSlip
+        const matchForBetSlip = {
+            ...match,
+            team1,
+            team2,
+            time: matchTime,
+        };
         return (
             <div key={match.id}>
                 <div className='flex justify-between mt-2'>
@@ -63,7 +70,7 @@ const LeagueAccordions = ({ matches }) => {
                                         <Button
                                             size={"sm"}
                                             className="w-14 h-8 p-0 text-xs font-bold betting-button"
-                                            onClick={createBetHandler(match, '1', odds1)}
+                                            onClick={createBetHandler(matchForBetSlip, `Win - ${team1}`, odds1, '1x2', match.odds?.home?.oddId)}
                                         >
                                             {odds1}
                                         </Button>
@@ -72,7 +79,7 @@ const LeagueAccordions = ({ matches }) => {
                                         <Button
                                             className="w-14 h-8 p-0 text-xs font-bold betting-button"
                                             size={"sm"}
-                                            onClick={createBetHandler(match, 'X', oddsX)}
+                                            onClick={createBetHandler(matchForBetSlip, `Draw - ${team1} vs ${team2}`, oddsX, '1x2', match.odds?.draw?.oddId)}
                                         >
                                             {oddsX}
                                         </Button>
@@ -81,7 +88,7 @@ const LeagueAccordions = ({ matches }) => {
                                         <Button
                                             size={"sm"}
                                             className="w-14 h-8 p-0 text-xs font-bold betting-button"
-                                            onClick={createBetHandler(match, '2', odds2)}
+                                            onClick={createBetHandler(matchForBetSlip, `Win - ${team2}`, odds2, '1x2', match.odds?.away?.oddId)}
                                         >
                                             {odds2}
                                         </Button>
