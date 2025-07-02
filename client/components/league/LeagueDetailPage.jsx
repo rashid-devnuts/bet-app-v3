@@ -37,11 +37,11 @@ const LeagueDetailPage = ({ leagueId }) => {
     if (!selectMatches || !selectMatches.matches || selectMatches.matches.length === 0) {
         return (
             <div className="bg-slate-100 min-h-[calc(100vh-198px)] flex flex-col items-center justify-center">
-                <div className="text-center p-8 bg-white rounded-lg shadow-md">
+                <div className="text-center p-8 bg-white  shadow-md">
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">No Data Found</h2>
                     <p className="text-gray-600 mb-6">There are currently no matches available for this league.</p>
                     <Button 
-                        className="bg-base hover:bg-base-dark text-white font-medium rounded-full px-6 shadow-sm" 
+                        className="bg-base hover:bg-base-dark text-white font-medium py-2 px-6 shadow-sm" 
                         onClick={() => window.history.back()}
                     >
                         Go Back
