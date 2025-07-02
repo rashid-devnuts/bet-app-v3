@@ -84,6 +84,14 @@ export const fetchTransactions = createAsyncThunk(
       
       console.log(`Fetching transactions for user ID: ${userId}`);
       
+      // Debug date filters
+      if (filters.dateFrom) {
+        console.log(`Date From: ${filters.dateFrom} (${new Date(filters.dateFrom).toLocaleString()})`);
+      }
+      if (filters.dateTo) {
+        console.log(`Date To: ${filters.dateTo} (${new Date(filters.dateTo).toLocaleString()})`);
+      }
+      
       // Use the user-specific endpoint
       const response = await apiClient.get(`/finance/users/${userId}/transactions`, { 
         params: filters 

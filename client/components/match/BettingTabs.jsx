@@ -25,35 +25,57 @@ const BettingTabs = ({ matchData }) => {
     const getDataByCategory = useCallback((categoryId) => {
         if (categoryId === 'all') {
             // For 'all', group by category for accordion display
-            // Group betting data by category
-            const groupedByCategory = {};
+            // Create a map of categories to avoid duplicates
+            const categoryMap = new Map();
+            
+            // First, process all betting data and organize by category
             bettingData.forEach(item => {
                 const categoryId = item.category;
-                if (!groupedByCategory[categoryId]) {
-                    groupedByCategory[categoryId] = [];
+                if (!categoryMap.has(categoryId)) {
+                    categoryMap.set(categoryId, {
+                        id: categoryId,
+                        label: categories.find(cat => cat.id === categoryId)?.label || categoryId,
+                        markets: [],
+                        marketIds: new Set() // Track market IDs to avoid duplicates
+                    });
                 }
-                groupedByCategory[categoryId].push(item);
+                
+                const categoryData = categoryMap.get(categoryId);
+                // Only add the market if it hasn't been added before
+                if (!categoryData.marketIds.has(item.id)) {
+                    categoryData.markets.push(item);
+                    categoryData.marketIds.add(item.id);
+                }
             });
-            // Map to the format expected by the component
-            return categories
-                .filter(tab => tab.id !== "all")
-                .map(tab => ({
-                    id: tab.id,
-                    label: tab.label,
-                    markets: groupedByCategory[tab.id] || [],
-                    totalMarkets: (groupedByCategory[tab.id] || []).length
+            
+            // Convert map to array and calculate totals
+            return Array.from(categoryMap.values())
+                .map(category => ({
+                    id: category.id,
+                    label: category.label,
+                    markets: category.markets,
+                    totalMarkets: category.markets.length
                 }))
                 .filter(group => group.markets.length > 0);
         }
-        // For other tabs, just return the betting data for that category as a single market group
-        return [
-            {
-                id: categoryId,
-                label: categories.find(cat => cat.id === categoryId)?.label || categoryId,
-                markets: bettingData.filter(item => item.category === categoryId),
-                totalMarkets: bettingData.filter(item => item.category === categoryId).length
-            }
-        ];
+        
+        // For other tabs, just return the betting data for that category
+        // Also ensure no duplicates
+        const marketIds = new Set();
+        const filteredMarkets = bettingData
+            .filter(item => item.category === categoryId)
+            .filter(item => {
+                if (marketIds.has(item.id)) return false;
+                marketIds.add(item.id);
+                return true;
+            });
+            
+        return [{
+            id: categoryId,
+            label: categories.find(cat => cat.id === categoryId)?.label || categoryId,
+            markets: filteredMarkets,
+            totalMarkets: filteredMarkets.length
+        }];
     }, [bettingData, categories]);
 
 
@@ -207,10 +229,19 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
     const isAllTab = groupedMarkets.length > 1;
     // Helper for grid class
     const getGridClass = (options) => {
-        const isThreeWayMarket = options.length === 3 &&
+        // For result markets (1X2), always use 3 columns if there are 3 options
+        const isResultMarket = options.length === 3 &&
             (options.some(opt => opt.label.toLowerCase() === 'draw') ||
-                options.every(opt => ['1x', 'x2', '12'].includes(opt.label.toLowerCase())));
-        if (isThreeWayMarket) return "grid-cols-3";
+            options.every(opt => ['1x', 'x2', '12'].includes(opt.label.toLowerCase())));
+        
+        // For over/under markets, always use 2 columns
+        const isOverUnderMarket = options.length === 2 && 
+            options.some(opt => opt.label.toLowerCase().includes('over')) && 
+            options.some(opt => opt.label.toLowerCase().includes('under'));
+        
+        if (isResultMarket) return "grid-cols-3";
+        if (isOverUnderMarket) return "grid-cols-2";
+        
         const optionsCount = options.length;
         if (optionsCount <= 2) return "grid-cols-2";
         else if (optionsCount <= 4) return "grid-cols-2 sm:grid-cols-4";
@@ -218,23 +249,174 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
         else return "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
     };
     // Render betting options
-    const renderOptions = (options, section) => (
-        <div className={`grid ${getGridClass(options)} gap-1`}>
-            {options.map((option, idx) => (
-                <BettingOptionButton
-                    key={`${option.label}-${idx}`}
-                    label={option.label}
-                    value={option.value}
-                    sectionType={section?.type || 'market'}
-                    optionId={option?.id}
-                    matchData={matchData}
-                />
-            ))}
-        </div>
-    );
+    const renderOptions = (options, section) => {
+        // Special handling for result markets (1X2, Match Result, etc.)
+        const isResultMarket = 
+            section.title?.toLowerCase().includes('result') || 
+            section.title?.toLowerCase().includes('winner') ||
+            section.title?.toLowerCase().includes('handicap') ||
+            section.title?.toLowerCase().includes('1x2');
+        
+        // Special handling for over/under markets
+        const isOverUnderMarket = 
+            section.title?.toLowerCase().includes('over/under') || 
+            (options.length === 2 && 
+             options.some(opt => opt.label.toLowerCase().includes('over')) && 
+             options.some(opt => opt.label.toLowerCase().includes('under')));
+        
+        // Special handling for goal scorer markets
+        const isGoalScorerMarket = 
+            section.title?.toLowerCase().includes('team to score') || 
+            section.title?.toLowerCase().includes('first team') || 
+            section.title?.toLowerCase().includes('last team') ||
+            section.type === 'goal-scorer';
+        
+        // Use appropriate grid class based on market type
+        const gridClass = isGoalScorerMarket && options.length === 3 ? "grid-cols-3" : getGridClass(options);
+        
+        return (
+            <div className={`grid ${gridClass} gap-1`}>
+                {options.map((option, idx) => (
+                    <BettingOptionButton
+                        key={`${option.label}-${idx}`}
+                        label={option.label}
+                        value={option.value}
+                        sectionType={section?.type || 'market'}
+                        optionId={option?.id}
+                        matchData={matchData}
+                        isResultOption={isResultMarket}
+                        isOverUnderOption={isOverUnderMarket}
+                        isGoalScorerOption={isGoalScorerMarket}
+                    />
+                ))}
+            </div>
+        );
+    };
     // Render market sections
-    const renderSections = (category) => (
-        category.markets.map((section) => (
+    const renderSections = (category) => {
+        // For player cards, group by player name to avoid repetition
+        if (category.id === 'player-cards') {
+            // Extract player names from options
+            const playerOptions = {};
+            const teamPlayers = {
+                team1: [],
+                team2: []
+            };
+
+            // First pass - collect all player names and their options
+            category.markets.forEach(section => {
+                section.options.forEach(option => {
+                    // Extract player name from label (format: "Player Name - Action")
+                    const labelParts = option.label.split(' - ');
+                    if (labelParts.length >= 2) {
+                        const playerName = labelParts[0];
+                        const actionType = labelParts[1];
+                        
+                        if (!playerOptions[playerName]) {
+                            playerOptions[playerName] = {
+                                name: playerName,
+                                options: [],
+                                team: option.team || 'unknown' // Track team if available
+                            };
+                        }
+                        
+                        // Add this option
+                        playerOptions[playerName].options.push({
+                            ...option,
+                            action: actionType
+                        });
+                    }
+                });
+            });
+            
+            // Organize players into teams if possible
+            if (matchData && matchData.participants && matchData.participants.length >= 2) {
+                const team1Name = matchData.participants[0].name;
+                const team2Name = matchData.participants[1].name;
+                
+                // Try to assign players to teams based on available data
+                Object.values(playerOptions).forEach(player => {
+                    // Check team property and player name for team assignment
+                    const playerNameLower = player.name.toLowerCase();
+                    const team1NameLower = team1Name.toLowerCase();
+                    const team2NameLower = team2Name.toLowerCase();
+                    
+                    if (player.team === 'home' || 
+                        player.team === team1Name || 
+                        playerNameLower.includes(team1NameLower)) {
+                        teamPlayers.team1.push(player);
+                    } else if (player.team === 'away' || 
+                             player.team === team2Name || 
+                             playerNameLower.includes(team2NameLower)) {
+                        teamPlayers.team2.push(player);
+                    } else {
+                        // If we can't determine team, put in team1 by default
+                        teamPlayers.team1.push(player);
+                    }
+                });
+            } else {
+                // If we don't have team data, put all players in team1
+                teamPlayers.team1 = Object.values(playerOptions);
+            }
+            
+            // Sort players by name within each team
+            teamPlayers.team1.sort((a, b) => a.name.localeCompare(b.name));
+            teamPlayers.team2.sort((a, b) => a.name.localeCompare(b.name));
+            
+            // Create sections for each team
+            const sections = [];
+            
+            // Add team1 section if it has players
+            if (teamPlayers.team1.length > 0) {
+                sections.push({
+                    id: 'team1-cards',
+                    title: matchData?.participants?.[0]?.name ? `${matchData.participants[0].name} Cards` : 'Home Team Cards',
+                    players: teamPlayers.team1
+                });
+            }
+            
+            // Add team2 section if it has players
+            if (teamPlayers.team2.length > 0) {
+                sections.push({
+                    id: 'team2-cards',
+                    title: matchData?.participants?.[1]?.name ? `${matchData.participants[1].name} Cards` : 'Away Team Cards',
+                    players: teamPlayers.team2
+                });
+            }
+            
+            // Render team sections
+            return sections.map(section => (
+                <div key={section.id} className="bg-white border overflow-hidden transition-all duration-200">
+                    <div className="px-4 py-2.5">
+                        <h3 className="text-sm font-semibold text-gray-800">{section.title}</h3>
+                    </div>
+                    <div className="p-3">
+                        <div className="grid grid-cols-1 gap-3">
+                            {section.players.map(player => (
+                                <div key={player.name} className="border-b pb-2 last:border-0 last:pb-0">
+                                    <div className="font-medium text-sm mb-1">{player.name}</div>
+                                    <div className="grid grid-cols-2 gap-1">
+                                        {player.options.map((option, idx) => (
+                                            <BettingOptionButton
+                                                key={`${player.name}-${option.action}-${idx}`}
+                                                label={option.label}
+                                                value={option.value}
+                                                sectionType="player-cards"
+                                                optionId={option.id}
+                                                matchData={matchData}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            ));
+        }
+        
+        // For other categories, use the standard rendering
+        return category.markets.map((section) => (
             <div key={section.id} className="bg-white border overflow-hidden transition-all duration-200">
                 <div className="px-4 py-2.5">
                     <h3 className="text-sm font-semibold text-gray-800">{section.title}</h3>
@@ -243,8 +425,8 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
                     {renderOptions(section.options, section)}
                 </div>
             </div>
-        ))
-    );
+        ));
+    };
     // All tab: use accordion
     if (isAllTab) {
         return (
@@ -289,18 +471,45 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
     );
 };
 
-const BettingOptionButton = ({ label, value, sectionType, optionId, matchData }) => {
+const BettingOptionButton = ({ label, value, sectionType, optionId, matchData, isResultOption, isOverUnderOption, isGoalScorerOption }) => {
     const { createBetHandler } = useBetting();
     const transformedOBJ = {
         id: matchData.id,
         team1: matchData.participants[0].name,
         team2: matchData.participants[1].name,
         time: matchData.starting_at,
-
     }
+    
+    // Determine if this is a team name (for styling)
+    const isTeamName = 
+        label === matchData?.participants?.[0]?.name || 
+        label === matchData?.participants?.[1]?.name;
+    
+    // Determine if this is a draw option
+    const isDrawOption = label.toLowerCase() === 'draw' || label.toLowerCase() === 'tie' || label === 'X';
+    
+    // Get appropriate style classes
+    const getStyleClasses = () => {
+        if (isOverUnderOption) {
+            return "bg-base hover:bg-base-dark";
+        }
+        
+        if (isResultOption) {
+            if (isTeamName) {
+                return "bg-base hover:bg-base-dark";
+            }
+            if (isDrawOption) {
+                return "bg-emerald-600 hover:bg-emerald-700";
+            }
+        }
+        
+        // All other options (including goal scorer) use the default style
+        return "bg-base hover:bg-base-dark";
+    };
+    
     return (
         <Button
-            className="group relative px-2 py-1 text-center transition-all duration-200 active:scale-[0.98] betting-button"
+            className={`group relative px-2 py-1 text-center transition-all duration-200 active:scale-[0.98] betting-button ${getStyleClasses()}`}
             onClick={createBetHandler(transformedOBJ, label, value, sectionType, optionId)}
         >
             <div className="relative w-full flex justify-between py-1 z-10">
@@ -312,6 +521,67 @@ const BettingOptionButton = ({ label, value, sectionType, optionId, matchData })
                 </div>
             </div>
         </Button>
+    );
+};
+
+// PlayerCardOption component to display player card options in a more compact way
+const PlayerCardOption = ({ player, matchData }) => {
+    const { createBetHandler } = useBetting();
+    
+    // Sort options by value (lowest odds first)
+    const sortedOptions = [...player.options].sort((a, b) => parseFloat(a.value) - parseFloat(b.value));
+    
+    // Create transformed object for bet handler
+    const transformedOBJ = {
+        id: matchData.id,
+        team1: matchData.participants[0].name,
+        team2: matchData.participants[1].name,
+        time: matchData.starting_at,
+    };
+    
+    // Group options by action type (Booked, 1st Card, etc.)
+    const optionsByType = {};
+    player.options.forEach(option => {
+        const actionType = option.action || option.label.split(' - ')[1] || 'Card';
+        if (!optionsByType[actionType]) {
+            optionsByType[actionType] = [];
+        }
+        optionsByType[actionType].push(option);
+    });
+    
+    // Sort each group by odds value
+    Object.values(optionsByType).forEach(options => {
+        options.sort((a, b) => parseFloat(a.value) - parseFloat(b.value));
+    });
+    
+    // Get all unique action types
+    const actionTypes = Object.keys(optionsByType);
+    
+    return (
+        <div className="flex flex-col gap-1 mb-2">
+            <div className="text-xs font-medium text-gray-700 mb-1">{player.name}</div>
+            {actionTypes.map((actionType, index) => {
+                const option = optionsByType[actionType][0]; // Get the best odds for this action type
+                return (
+                    <Button
+                        key={`${player.name}-${actionType}-${index}`}
+                        className="group relative px-2 py-1 text-center transition-all duration-200 active:scale-[0.98] betting-button h-auto"
+                        onClick={createBetHandler(transformedOBJ, option.label, option.value, 'player-cards', option.id)}
+                    >
+                        <div className="relative w-full flex flex-col justify-between z-10">
+                            <div className="flex justify-between items-center">
+                                <div className="text-[10px] text-white/80">
+                                    {actionType}
+                                </div>
+                                <div className="text-[12px] font-bold text-white transition-colors duration-200">
+                                    {option.value}
+                                </div>
+                            </div>
+                        </div>
+                    </Button>
+                );
+            })}
+        </div>
     );
 };
 

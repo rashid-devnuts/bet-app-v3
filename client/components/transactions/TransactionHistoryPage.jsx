@@ -33,6 +33,7 @@ const TransactionHistoryPage = () => {
   }, [dispatch, filters]);
 
   const handleFilterChange = (key, value) => {
+    // For all filters, including dates
     dispatch(setFilters({ [key]: value }));
   };
 
@@ -201,14 +202,20 @@ const TransactionHistoryPage = () => {
                 <Input
                   type="date"
                   value={filters.dateFrom}
-                  onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                  onChange={(e) => {
+                    console.log('Date From selected:', e.target.value);
+                    handleFilterChange('dateFrom', e.target.value);
+                  }}
                 />
               </div>              <div className="space-y-2">
                 <label className=" font-medium text-gray-700">Date To</label>
                 <Input
                   type="date"
                   value={filters.dateTo}
-                  onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                  onChange={(e) => {
+                    console.log('Date To selected:', e.target.value);
+                    handleFilterChange('dateTo', e.target.value);
+                  }}
                 />
               </div>            </div>
               <div className="flex justify-start items-center mt-4 pt-4 border-t">

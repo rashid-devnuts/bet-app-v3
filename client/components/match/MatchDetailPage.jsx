@@ -125,7 +125,7 @@ const MatchDetailPage = ({ matchId }) => {
             </div>
 
             {/* Right sidebar - fixed position, doesn't move */}
-            <div className="w-full lg:w-80 xl:w-96 lg:fixed lg:right-4 lg:top-0 lg:h-screen lg:overflow-y-auto lg:pt-[160px]">
+            <div className="w-full lg:w-80 xl:w-96 lg:fixed lg:right-4 lg:top-40 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto ">
                 <div className="p-2 sm:p-3 md:p-4 lg:p-2">
                     <MatchVisualization matchData={matchData} />
                 </div>

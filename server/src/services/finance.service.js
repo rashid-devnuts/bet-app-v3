@@ -90,8 +90,18 @@ class FinanceService {
     // Date range filter
     if (dateFrom || dateTo) {
       query.createdAt = {};
-      if (dateFrom) query.createdAt.$gte = new Date(dateFrom);
-      if (dateTo) query.createdAt.$lte = new Date(dateTo);
+      if (dateFrom) {
+        // Set the time to the beginning of the day (00:00:00)
+        const fromDate = new Date(dateFrom);
+        fromDate.setHours(0, 0, 0, 0);
+        query.createdAt.$gte = fromDate;
+      }
+      if (dateTo) {
+        // Set the time to the end of the day (23:59:59)
+        const toDate = new Date(dateTo);
+        toDate.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = toDate;
+      }
     }
 
     // Build aggregation pipeline for search
