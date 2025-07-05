@@ -32,20 +32,29 @@ const BettingTabs = ({ matchData }) => {
             
             // First, process all betting data and organize by category
             bettingData.forEach(item => {
+                // Filter out options that are suspended or stopped
+                const activeOptions = item.options?.filter(opt => !opt.suspended && !opt.stopped) || [];
+                
+                // Only process markets that have active options
+                if (activeOptions.length === 0) return;
+
                 const categoryId = item.category;
                 if (!categoryMap.has(categoryId)) {
                     categoryMap.set(categoryId, {
                         id: categoryId,
                         label: categories.find(cat => cat.id === categoryId)?.label || categoryId,
                         markets: [],
-                        marketIds: new Set() // Track market IDs to avoid duplicates
+                        marketIds: new Set()
                     });
                 }
                 
                 const categoryData = categoryMap.get(categoryId);
                 // Only add the market if it hasn't been added before
                 if (!categoryData.marketIds.has(item.id)) {
-                    categoryData.markets.push(item);
+                    categoryData.markets.push({
+                        ...item,
+                        options: activeOptions // Use only active options
+                    });
                     categoryData.marketIds.add(item.id);
                 }
             });
@@ -62,19 +71,23 @@ const BettingTabs = ({ matchData }) => {
         }
         
         // For other tabs, just return the betting data for that category
-        // Also ensure no duplicates
+        // Also ensure no duplicates and filter suspended odds
         const marketIds = new Set();
         const filteredMarkets = bettingData
             .filter(item => item.category === categoryId)
+            .map(item => ({
+                ...item,
+                options: item.options?.filter(opt => !opt.suspended && !opt.stopped) || []
+            }))
             .filter(item => {
-                if (marketIds.has(item.id)) return false;
+                if (marketIds.has(item.id) || item.options.length === 0) return false;
                 marketIds.add(item.id);
                 return true;
             });
             
         return [{
-                id: categoryId,
-                label: categories.find(cat => cat.id === categoryId)?.label || categoryId,
+            id: categoryId,
+            label: categories.find(cat => cat.id === categoryId)?.label || categoryId,
             markets: filteredMarkets,
             totalMarkets: filteredMarkets.length
         }];

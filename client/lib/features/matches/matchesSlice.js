@@ -73,6 +73,25 @@ export const fetchMatchById = createAsyncThunk(
   }
 );
 
+// Async thunk for fetching live odds
+export const fetchLiveOdds = createAsyncThunk(
+  "matches/fetchLiveOdds",
+  async (matchId, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.get(`/fixtures/${matchId}/inplay-odds`);
+      return {
+        matchId,
+        liveOdds: response.data.data,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.error?.message || "Failed to fetch live odds"
+      );
+    }
+  }
+);
+
 const matchesSlice = createSlice({
   name: "matches",
   initialState: {
@@ -81,6 +100,10 @@ const matchesSlice = createSlice({
     upcomingMatchesLoading: false,
     upcomingMatchesError: null,
     matchDetails: {}, // individual match details by matchId
+    liveOdds: {}, // live odds by matchId
+    liveOddsLoading: false,
+    liveOddsError: null,
+    liveOddsTimestamp: {}, // timestamp of last live odds update by matchId
     loading: false,
     matchDetailLoading: false,
     error: null,
@@ -92,14 +115,23 @@ const matchesSlice = createSlice({
       state.error = null;
       state.matchDetailError = null;
       state.upcomingMatchesError = null;
+      state.liveOddsError = null;
     },
     setSelectedLeague: (state, action) => {
       state.selectedLeague = action.payload;
     },
     clearMatchDetail: (state, action) => {
       const matchId = action.payload;
-      if (matchId && state.matchDetails[matchId]) {
-        delete state.matchDetails[matchId];
+      if (matchId) {
+        if (state.matchDetails[matchId]) {
+          delete state.matchDetails[matchId];
+        }
+        if (state.liveOdds[matchId]) {
+          delete state.liveOdds[matchId];
+        }
+        if (state.liveOddsTimestamp[matchId]) {
+          delete state.liveOddsTimestamp[matchId];
+        }
       }
     },
   },
@@ -143,6 +175,20 @@ const matchesSlice = createSlice({
       .addCase(fetchMatchById.rejected, (state, action) => {
         state.matchDetailLoading = false;
         state.matchDetailError = action.payload;
+      })
+      // Fetch live odds
+      .addCase(fetchLiveOdds.pending, (state) => {
+        state.liveOddsLoading = true;
+        state.liveOddsError = null;
+      })
+      .addCase(fetchLiveOdds.fulfilled, (state, action) => {
+        state.liveOddsLoading = false;
+        state.liveOdds[action.payload.matchId] = action.payload.liveOdds;
+        state.liveOddsTimestamp[action.payload.matchId] = action.payload.timestamp;
+      })
+      .addCase(fetchLiveOdds.rejected, (state, action) => {
+        state.liveOddsLoading = false;
+        state.liveOddsError = action.payload;
       });
   },
 });
@@ -156,3 +202,9 @@ export const selectMatchesByLeague = (state, leagueId) => state.matches.data[lea
 export const selectUpcomingMatches = (state) => state.matches.upcomingMatches;
 export const selectUpcomingMatchesLoading = (state) => state.matches.upcomingMatchesLoading;
 export const selectUpcomingMatchesError = (state) => state.matches.upcomingMatchesError;
+
+// Live odds selectors
+export const selectLiveOdds = (state, matchId) => state.matches.liveOdds[matchId];
+export const selectLiveOddsLoading = (state) => state.matches.liveOddsLoading;
+export const selectLiveOddsError = (state) => state.matches.liveOddsError;
+export const selectLiveOddsTimestamp = (state, matchId) => state.matches.liveOddsTimestamp[matchId];

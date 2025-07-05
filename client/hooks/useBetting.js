@@ -22,9 +22,10 @@ export const useBetting = () => {
       // Then send to server with required format
       const betData = {
         matchId: match.id,
-        oddId: oddId,
+        oddId: Number(oddId), // Convert to number
         stake: 11, // Default stake, can be updated later
-        betOption: selection // Include bet option
+        betOption: selection, // Include bet option
+        isInPlay: match.state_id === 2 || match.isLive // Check if match is live
       };
 
       console.log("Sending bet to server:", betData);
