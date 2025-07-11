@@ -234,7 +234,8 @@ class BetOutcomeCalculationService {
         return this.calculatePlayerTotalShots(bet,matchData);
       case "EXACT_TOTAL_GOALS":
         return this.calculateExactTotalGoals(bet,matchData);
-
+      case "SECOND_HALF_GOALS_ODD_EVEN":
+        return this.calculateSecondHalfGoalsOddEven(bet,matchData);
       default:
         return this.calculateGenericOutcome(bet, matchData);
     }
@@ -1124,6 +1125,15 @@ class BetOutcomeCalculationService {
       status: isWinning ? "won" : "lost",
     };
   }
+  calculateSecondHalfGoalsOddEven(bet,matchData){
+    const matchScores = this.extractSecondHalfScores(matchData);
+    const totalGoals = matchScores.homeScore + matchScores.awayScore;
+    const isWinning = totalGoals % 2 === 0;
+    return {
+      status: isWinning ? "won" : "lost",
+    };
+  }
+  
   /**
    * Enhanced market type detection with more markets
    */
@@ -1159,6 +1169,7 @@ class BetOutcomeCalculationService {
       PLAYER_SHOTS_ON_TARGET: [267], // Player Total Shots On Target
       PLAYER_TOTAL_SHOTS: [268], // Player Total Shots
       EXACT_TOTAL_GOALS: [93], // Exact Total Goals
+      SECOND_HALF_GOALS_ODD_EVEN: [124], // Second Half Goals Odd/Even
       ...this.marketTypes,
     };
 
@@ -1304,6 +1315,33 @@ class BetOutcomeCalculationService {
     }
 
     return null;
+  }
+
+  /**
+   * Extract second half scores from match data
+   */
+  extractSecondHalfScores(matchData) {
+    if (matchData.scores && Array.isArray(matchData.scores)) {
+      let homeScore = 0;
+      let awayScore = 0;
+
+      // Only sum 2ND_HALF_ONLY goals
+      const secondHalfOnlyScores = matchData.scores.filter(
+        (score) => score.description === "2ND_HALF_ONLY"
+      );
+      secondHalfOnlyScores.forEach((score) => {
+        if (score.score && score.score.goals !== undefined) {
+          if (score.score.participant === "home") {
+            homeScore += score.score.goals;
+          } else if (score.score.participant === "away") {
+            awayScore += score.score.goals;
+          }
+        }
+      });
+
+      return { homeScore, awayScore };
+    }
+    return { homeScore: 0, awayScore: 0 };
   }
 
   /**
