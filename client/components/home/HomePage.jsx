@@ -12,7 +12,10 @@ const HomePage = () => {
     const loading = useSelector(selectHomeLoading);
     const error = useSelector(selectHomeError);
     const footballDaily = useSelector(selectFootballDaily);
-    const filteredFootballDaily = footballDaily.filter(league => league.matches.length > 0 && league.matches.filter(match=>match.odds_main.length ));
+    const filteredFootballDaily = footballDaily.filter(league => 
+        league.matches.length > 0 && 
+        league.matches.some(match => match.odds_main && Object.keys(match.odds_main).length > 0)
+    );
 
     // Live matches state
     const liveMatches = useSelector(selectLiveMatches);

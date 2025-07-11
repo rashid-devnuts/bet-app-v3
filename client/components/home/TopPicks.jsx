@@ -15,12 +15,32 @@ const transformMatchData = (apiMatch, league) => {
     // Extract main odds (1, X, 2) from the odds data
     const odds = {};
     if (apiMatch.odds) {
+        console.log('🎲 Processing odds for match:', apiMatch.id, apiMatch.odds);
+        
         if (typeof apiMatch.odds === 'object' && !Array.isArray(apiMatch.odds)) {
-            if (apiMatch.odds.home && !isNaN(apiMatch.odds.home.value)) odds['1'] = { value: apiMatch.odds.home.value.toFixed(2), oddId: apiMatch.odds.home.oddId };
-            if (apiMatch.odds.draw && !isNaN(apiMatch.odds.draw.value)) odds['X'] = { value: apiMatch.odds.draw.value.toFixed(2), oddId: apiMatch.odds.draw.oddId };
-            if (apiMatch.odds.away && !isNaN(apiMatch.odds.away.value)) odds['2'] = { value: apiMatch.odds.away.value.toFixed(2), oddId: apiMatch.odds.away.oddId };
+            // Handle object format: { home: { value: 2.1, oddId: 123 }, draw: { value: 3.4, oddId: 124 } }
+            if (apiMatch.odds.home && typeof apiMatch.odds.home === 'object' && !isNaN(apiMatch.odds.home.value)) {
+                odds['1'] = { value: apiMatch.odds.home.value.toFixed(2), oddId: apiMatch.odds.home.oddId };
+            }
+            if (apiMatch.odds.draw && typeof apiMatch.odds.draw === 'object' && !isNaN(apiMatch.odds.draw.value)) {
+                odds['X'] = { value: apiMatch.odds.draw.value.toFixed(2), oddId: apiMatch.odds.draw.oddId };
+            }
+            if (apiMatch.odds.away && typeof apiMatch.odds.away === 'object' && !isNaN(apiMatch.odds.away.value)) {
+                odds['2'] = { value: apiMatch.odds.away.value.toFixed(2), oddId: apiMatch.odds.away.oddId };
+            }
+            
+            // Handle simple object format: { home: 2.1, draw: 3.4, away: 3.2 }
+            if (apiMatch.odds.home && typeof apiMatch.odds.home === 'number') {
+                odds['1'] = { value: apiMatch.odds.home.toFixed(2), oddId: null };
+            }
+            if (apiMatch.odds.draw && typeof apiMatch.odds.draw === 'number') {
+                odds['X'] = { value: apiMatch.odds.draw.toFixed(2), oddId: null };
+            }
+            if (apiMatch.odds.away && typeof apiMatch.odds.away === 'number') {
+                odds['2'] = { value: apiMatch.odds.away.toFixed(2), oddId: null };
+            }
         } else if (Array.isArray(apiMatch.odds)) {
-            // Legacy array format (if still present)
+            // Handle array format
             apiMatch.odds.forEach(odd => {
                 const label = odd.label?.toString().toLowerCase();
                 const name = odd.name?.toString().toLowerCase();
@@ -32,6 +52,10 @@ const transformMatchData = (apiMatch, league) => {
                 }
             });
         }
+        
+        console.log('✅ Extracted odds:', odds);
+    } else {
+        console.log('⚠️ No odds found for match:', apiMatch.id);
     }
 
     // Use the new timezone helper with 12-hour format
@@ -63,10 +87,33 @@ const transformMatchData = (apiMatch, league) => {
 const TopPicks = () => {
     const topPicks = useSelector(selectTopPicks);
 
-    // Transform API data to MatchCard format and filter out matches without odds
+    // Transform API data to MatchCard format and filter out matches without valid odds
     const transformedMatches = topPicks
-        .map(match => transformMatchData(match, match.league))
-        .filter(match => match.odds && Object.keys(match.odds).length > 0);
+        .map(match => {
+            console.log('🔍 Processing top pick match:', {
+                id: match.id,
+                name: match.name,
+                odds: match.odds,
+                league: match.league?.name
+            });
+            return transformMatchData(match, match.league);
+        })
+        .filter(match => {
+            const hasValidOdds = match.odds && Object.keys(match.odds).length > 0;
+            console.log('🎯 Match odds check:', {
+                id: match.id,
+                team1: match.team1,
+                team2: match.team2,
+                hasValidOdds,
+                odds: match.odds
+            });
+            return hasValidOdds;
+        });
+
+    console.log('📊 Top picks summary:', {
+        totalTopPicks: topPicks.length,
+        transformedMatches: transformedMatches.length
+    });
 
     if (transformedMatches.length === 0) {
         return (

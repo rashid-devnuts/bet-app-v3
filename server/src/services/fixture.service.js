@@ -34,12 +34,12 @@ class FixtureOptimizationService {
 
   async getOptimizedFixtures() {
     const today = new Date();
-    // Include matches from 2 days ago to 7 days in the future to capture live matches
-    const startDate = new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    // Fetch matches from today to next 7 days
+    const startDate = today.toISOString().split("T")[0]; // Today's date
     const endDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
       .toISOString()
       .split("T")[0];
-    const cacheKey = `fixtures_live_and_future_${startDate}_${endDate}`;
+    const cacheKey = `fixtures_today_to_7days_${startDate}_${endDate}`;
 
     console.log(`🔍 Looking for cache key: ${cacheKey}`);
     console.log(`📅 Date range: ${startDate} to ${endDate}`);
@@ -75,7 +75,7 @@ class FixtureOptimizationService {
 
     let allFixtures = [];
     let pageUrl = `/football/fixtures/between/${startDate}/${endDate}`;
-    let page = 4;
+    let page = 3;
     try {
       while (pageUrl) {
         let params = {
@@ -119,9 +119,7 @@ class FixtureOptimizationService {
         const pagination = response.data?.pagination;
         if (pagination && pagination.has_more && pagination.next_page) {
           page++;
-          if (page ==7) {
-            pageUrl = null;
-          }
+          
          
         } else {
           pageUrl = null;
@@ -150,6 +148,9 @@ class FixtureOptimizationService {
   }
 
   transformFixturesData(fixtures) {
+    // Define the allowed market IDs for filtering odds
+    const allowedMarketIds = [1, 2, 267, 268, 29, 90, 93, 95, 124, 125, 10, 14, 18, 19, 33, 38, 39, 41, 44, 50, 51];
+    
     return fixtures.map((fixture) => {
       // Extract only essential data
       const transformed = {
@@ -165,20 +166,22 @@ class FixtureOptimizationService {
             image_path: p.image_path,
           })) || [],
         odds: Array.isArray(fixture.odds)
-          ? fixture.odds.map((odd) => ({
-              id: odd.id,
-              fixture_id: odd.fixture_id,
-              label: odd.label,
-              value: parseFloat(odd.value),
-              name: odd.name,
-              market_id: odd.market_id,
-              market_description: odd.market_description,
-              winning: odd.winning,
-              probability: odd.probability,
-              handicap: odd.handicap,
-              total:odd.total,
-              suspended:odd.suspended,
-            }))
+          ? fixture.odds
+              .filter((odd) => allowedMarketIds.includes(odd.market_id)) // Filter by allowed market IDs
+              .map((odd) => ({
+                id: odd.id,
+                fixture_id: odd.fixture_id,
+                label: odd.label,
+                value: parseFloat(odd.value),
+                name: odd.name,
+                market_id: odd.market_id,
+                market_description: odd.market_description,
+                winning: odd.winning,
+                probability: odd.probability,
+                handicap: odd.handicap,
+                total: odd.total,
+                suspended: odd.suspended,
+              }))
           : [],
       };
       return transformed;
@@ -202,21 +205,32 @@ class FixtureOptimizationService {
     odds.forEach((odd) => {
       const marketId = odd.market_id;
       const label = odd.label?.toLowerCase();
+      const name = odd.name?.toLowerCase();
       const value = parseFloat(odd.value);
 
       switch (marketId) {
-        case 1: // 1X2
-          if (label === "home" || label === "1") oddsMap.home = value;
-          if (label === "draw" || label === "x") oddsMap.draw = value;
-          if (label === "away" || label === "2") oddsMap.away = value;
+        case 1: // 1X2 (Full Time Result)
+          if (label === "home" || label === "1" || name === "home" || name === "1") {
+            oddsMap.home = value;
+          } else if (label === "draw" || label === "x" || name === "draw" || name === "x") {
+            oddsMap.draw = value;
+          } else if (label === "away" || label === "2" || name === "away" || name === "2") {
+            oddsMap.away = value;
+          }
           break;
         case 2: // Over/Under 2.5
-          if (label?.includes("over")) oddsMap.over25 = value;
-          if (label?.includes("under")) oddsMap.under25 = value;
+          if (label?.includes("over") || name?.includes("over")) {
+            oddsMap.over25 = value;
+          } else if (label?.includes("under") || name?.includes("under")) {
+            oddsMap.under25 = value;
+          }
           break;
         case 3: // Both Teams to Score
-          if (label?.includes("yes")) oddsMap.btts_yes = value;
-          if (label?.includes("no")) oddsMap.btts_no = value;
+          if (label?.includes("yes") || name?.includes("yes")) {
+            oddsMap.btts_yes = value;
+          } else if (label?.includes("no") || name?.includes("no")) {
+            oddsMap.btts_no = value;
+          }
           break;
       }
     });
@@ -525,94 +539,114 @@ class FixtureOptimizationService {
   selectTopPicks(fixtures, limit = 10) {
     if (!fixtures || fixtures.length === 0) return [];
 
-    // Score fixtures based on multiple criteria
-    const scoredFixtures = fixtures.map((fixture) => {
-      let score = 0;
+    console.log(`🎯 selectTopPicks called with ${fixtures.length} fixtures, limit: ${limit}`);
 
-      // Prefer matches with better odds variety (closer odds = more competitive)
+    // First filter out matches that have already started
+    const now = new Date();
+    const upcomingFixtures = fixtures.filter((fixture) => {
+      const matchTime = new Date(fixture.starting_at);
+      return matchTime > now; // Only include matches that haven't started yet
+    });
+
+    console.log(`🔮 Filtered to ${upcomingFixtures.length} upcoming fixtures (excluded already started matches)`);
+
+    if (upcomingFixtures.length === 0) {
+      console.log("⚠️ No upcoming fixtures available for top picks");
+      return [];
+    }
+
+    // Score fixtures based on multiple criteria
+    const scoredFixtures = upcomingFixtures.map((fixture) => {
+      let score = 10; // Give all matches a base score to ensure some matches are selected
+
+      // Prefer matches with better odds variety (much broader range)
       if (fixture.odds && fixture.odds.length > 0) {
         const homeOdd =
           fixture.odds.find(
-            (o) =>
-              o.name &&
-              (o.name.toLowerCase().includes("home") || o.name === "1")
+            (o) => {
+              const label = o.label?.toLowerCase();
+              const name = o.name?.toLowerCase();
+              return label === "home" || label === "1" || name === "home" || name === "1";
+            }
           )?.value || 0;
         const drawOdd =
           fixture.odds.find(
-            (o) =>
-              o.name &&
-              (o.name.toLowerCase().includes("draw") || o.name === "X")
+            (o) => {
+              const label = o.label?.toLowerCase();
+              const name = o.name?.toLowerCase();
+              return label === "draw" || label === "x" || name === "draw" || name === "x";
+            }
           )?.value || 0;
         const awayOdd =
           fixture.odds.find(
-            (o) =>
-              o.name &&
-              (o.name.toLowerCase().includes("away") || o.name === "2")
+            (o) => {
+              const label = o.label?.toLowerCase();
+              const name = o.name?.toLowerCase();
+              return label === "away" || label === "2" || name === "away" || name === "2";
+            }
           )?.value || 0;
+
+        // Give points for having any odds at all
+        if (homeOdd || drawOdd || awayOdd) {
+          score += 20; // Bonus for having odds
+        }
 
         if (homeOdd && drawOdd && awayOdd) {
           // Convert to numbers for calculation
           const homeNum = parseFloat(homeOdd) || 0;
           const awayNum = parseFloat(awayOdd) || 0;
 
-          // Prefer matches where odds are between 1.5 and 3.5 (competitive)
+          // Much broader range for competitive matches
           const avgOdds = (homeNum + awayNum) / 2;
-          if (avgOdds >= 1.5 && avgOdds <= 3.5) score += 20; // Reduced from 30
-          else if (avgOdds >= 1.2 && avgOdds <= 5.0) score += 10; // Reduced from 15
+          if (avgOdds >= 1.2 && avgOdds <= 5.0) score += 25; // Broader range
+          else if (avgOdds >= 1.1 && avgOdds <= 8.0) score += 15; // Even broader fallback
+          else score += 5; // Some points for any odds
         }
       }
 
-      // Prefer popular leagues
+      // Prefer popular leagues (broader list and more lenient matching)
       const popularLeagueNames = [
-        "Premier League",
-        "Champions League",
-        "La Liga",
-        "Serie A",
-        "Bundesliga",
-        "Ligue 1",
-        "Europa League",
-        "World Cup",
-        "European Championship",
-        "Copa America",
+        "Premier League", "Champions League", "La Liga", "Serie A", "Bundesliga", 
+        "Ligue 1", "Europa League", "World Cup", "European Championship", "Copa America",
+        "Premier", "Liga", "Bundesliga", "Serie", "Champions", "Europa", "Cup",
+        "Championship", "Division", "League", "Primera", "Primeira"
       ];
-      if (
-        fixture.league &&
-        popularLeagueNames.some((name) =>
-          fixture.league.name.toLowerCase().includes(name.toLowerCase())
-        )
-      ) {
-        score += 15; // Reduced from 25
+      
+      const leagueName = fixture.league?.name || '';
+      if (leagueName && popularLeagueNames.some((name) =>
+          leagueName.toLowerCase().includes(name.toLowerCase())
+        )) {
+        score += 20;
       }
 
-      // Give MUCH higher priority to matches happening soon (near future gets highest priority)
+      // Give points based on time until match (only positive values since we filtered past matches)
       const now = new Date();
       const matchTime = new Date(fixture.starting_at);
       const hoursUntilMatch = (matchTime - now) / (1000 * 60 * 60);
 
-      if (hoursUntilMatch >= 0 && hoursUntilMatch <= 6)
-        score += 50; // Next 6 hours - highest priority
-      else if (hoursUntilMatch > 6 && hoursUntilMatch <= 12)
-        score += 40; // Next 12 hours
-      else if (hoursUntilMatch > 12 && hoursUntilMatch <= 24)
-        score += 35; // Next 24 hours
-      else if (hoursUntilMatch > 24 && hoursUntilMatch <= 48)
-        score += 25; // Next 48 hours
-      else if (hoursUntilMatch > 48 && hoursUntilMatch <= 72)
-        score += 15; // Next 72 hours
-      else if (hoursUntilMatch > 72 && hoursUntilMatch <= 168) score += 5; // Next week
+      // Time-based scoring for upcoming matches only
+      if (hoursUntilMatch > 0 && hoursUntilMatch <= 6) score += 50; // Next 6 hours - highest priority
+      else if (hoursUntilMatch > 6 && hoursUntilMatch <= 24) score += 45; // Next 24 hours
+      else if (hoursUntilMatch > 24 && hoursUntilMatch <= 72) score += 35; // Next 3 days
+      else if (hoursUntilMatch > 72 && hoursUntilMatch <= 168) score += 25; // Next week
+      else if (hoursUntilMatch > 168) score += 15; // Beyond a week
 
-      // Prefer matches with recognizable teams (heuristic: longer team names often = bigger clubs)
+      // More lenient team name scoring
       const homeTeamLength =
         fixture.localteam?.name?.length ||
-        fixture.participants?.find((p) => p.meta?.location === "home")?.name
-          ?.length ||
-        0;
+        fixture.participants?.find((p) => p.meta?.location === "home")?.name?.length ||
+        fixture.participants?.[0]?.name?.length || 0;
       const awayTeamLength =
         fixture.visitorteam?.name?.length ||
-        fixture.participants?.find((p) => p.meta?.location === "away")?.name
-          ?.length ||
-        0;
-      if (homeTeamLength > 8 || awayTeamLength > 8) score += 5; // Reduced from 10
+        fixture.participants?.find((p) => p.meta?.location === "away")?.name?.length ||
+        fixture.participants?.[1]?.name?.length || 0;
+      
+      if (homeTeamLength > 5 || awayTeamLength > 5) score += 10; // More lenient team name check
+
+      // Bonus for having participants
+      if (fixture.participants && fixture.participants.length >= 2) {
+        score += 15;
+      }
 
       // Attach league data from cache
       const league = this.getLeagueById(fixture.league_id);
@@ -620,8 +654,11 @@ class FixtureOptimizationService {
       return { ...fixture, topPickScore: score, league };
     });
 
+    console.log(`📊 Scored fixtures: ${scoredFixtures.length}`);
+    console.log(`🏆 Top 3 scores: ${scoredFixtures.slice(0, 3).map(f => f.topPickScore).join(', ')}`);
+
     // Sort by score first, then by start time for matches with similar scores
-    return scoredFixtures
+    const sortedFixtures = scoredFixtures
       .sort((a, b) => {
         // First sort by score (descending)
         if (b.topPickScore !== a.topPickScore) {
@@ -630,8 +667,10 @@ class FixtureOptimizationService {
         // If scores are equal, sort by start time (ascending - earlier matches first)
         return new Date(a.starting_at) - new Date(b.starting_at);
       })
-      .slice(0, limit)
-      .map(({ topPickScore, ...fixture }) => fixture); // Remove score from final result
+      .slice(0, limit);
+
+    console.log(`✅ Returning ${sortedFixtures.length} top picks`);
+    return sortedFixtures.map(({ topPickScore, ...fixture }) => fixture); // Remove score from final result
   }
 
   // Helper method to generate football daily data grouped by leagues
@@ -758,16 +797,25 @@ class FixtureOptimizationService {
     // Extract and standardize odds to only include home/draw/away, but do NOT overwrite the original odds array
     if (match.odds && Array.isArray(match.odds)) {
       const homeOdd = match.odds.find(
-        (o) =>
-          o.name && (o.name.toLowerCase().includes("home") || o.name === "1")
+        (o) => {
+          const label = o.label?.toLowerCase();
+          const name = o.name?.toLowerCase();
+          return label === "home" || label === "1" || name === "home" || name === "1";
+        }
       );
       const drawOdd = match.odds.find(
-        (o) =>
-          o.name && (o.name.toLowerCase().includes("draw") || o.name === "X")
+        (o) => {
+          const label = o.label?.toLowerCase();
+          const name = o.name?.toLowerCase();
+          return label === "draw" || label === "x" || name === "draw" || name === "x";
+        }
       );
       const awayOdd = match.odds.find(
-        (o) =>
-          o.name && (o.name.toLowerCase().includes("away") || o.name === "2")
+        (o) => {
+          const label = o.label?.toLowerCase();
+          const name = o.name?.toLowerCase();
+          return label === "away" || label === "2" || name === "away" || name === "2";
+        }
       );
 
       const oddsObj = {};
@@ -1170,13 +1218,25 @@ class FixtureOptimizationService {
   extractMainOddsObject(oddsArray) {
     if (!Array.isArray(oddsArray)) return {};
     const homeOdd = oddsArray.find(
-      (o) => o.name?.toLowerCase().includes("home") || o.name === "1"
+      (o) => {
+        const label = o.label?.toLowerCase();
+        const name = o.name?.toLowerCase();
+        return label === "home" || label === "1" || name === "home" || name === "1";
+      }
     );
     const drawOdd = oddsArray.find(
-      (o) => o.name?.toLowerCase().includes("draw") || o.name === "X"
+      (o) => {
+        const label = o.label?.toLowerCase();
+        const name = o.name?.toLowerCase();
+        return label === "draw" || label === "x" || name === "draw" || name === "x";
+      }
     );
     const awayOdd = oddsArray.find(
-      (o) => o.name?.toLowerCase().includes("away") || o.name === "2"
+      (o) => {
+        const label = o.label?.toLowerCase();
+        const name = o.name?.toLowerCase();
+        return label === "away" || label === "2" || name === "away" || name === "2";
+      }
     );
     return {
       home: homeOdd ? { value: homeOdd.value, oddId: homeOdd.id } : undefined,

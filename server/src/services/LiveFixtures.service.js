@@ -196,6 +196,9 @@ class LiveFixturesService {
     const liveMatches = this.getLiveMatchesFromCache();
     const apiToken = process.env.SPORTSMONKS_API_KEY;
     
+    // Define the same allowed market IDs as in fixture.service.js
+    const allowedMarketIds = [1, 2, 267, 268, 29, 90, 93, 95, 124, 125, 10, 14, 18, 19, 33, 38, 39, 41, 44, 50, 51];
+    
     if (!apiToken) {
       console.error("❌ SPORTSMONKS_API_KEY is not set");
       return;
@@ -212,7 +215,10 @@ class LiveFixturesService {
           const url = `https://api.sportmonks.com/v3/football/odds/inplay/fixtures/${match.id}?api_token=${apiToken}&filters=bookmakers:2`;
           
           const response = await axios.get(url);
-          const odds = response.data?.data || [];
+          const allOdds = response.data?.data || [];
+          
+          // Filter odds by allowed market IDs
+          const odds = allOdds.filter(odd => allowedMarketIds.includes(odd.market_id));
           
           // Group odds by market for classification
           const odds_by_market = {};
@@ -289,13 +295,19 @@ class LiveFixturesService {
       throw new CustomError("API key not configured", 500, "API_KEY_MISSING");
     }
 
+    // Define the same allowed market IDs as in fixture.service.js
+    const allowedMarketIds = [1, 2, 267, 268, 29, 90, 93, 95, 124, 125, 10, 14, 18, 19, 33, 38, 39, 41, 44, 50, 51];
+
     try {
       const url = `https://api.sportmonks.com/v3/football/odds/inplay/fixtures/${matchId}?api_token=${apiToken}&filters=bookmakers:2`;
       const response = await axios.get(url);
-      const oddsData = response.data?.data || [];
+      const allOddsData = response.data?.data || [];
       
-      console.log(`[ensureLiveOdds] Fetched ${oddsData.length} raw odds from API for match ${matchId}`);
-      console.log(`[ensureLiveOdds] First 3 raw odds:`, oddsData.slice(0, 3).map(odd => ({ id: odd.id, label: odd.label, value: odd.value })));
+      // Filter odds by allowed market IDs
+      const oddsData = allOddsData.filter(odd => allowedMarketIds.includes(odd.market_id));
+      
+      console.log(`[ensureLiveOdds] Fetched ${allOddsData.length} raw odds from API, filtered to ${oddsData.length} allowed odds for match ${matchId}`);
+      console.log(`[ensureLiveOdds] First 3 filtered odds:`, oddsData.slice(0, 3).map(odd => ({ id: odd.id, label: odd.label, value: odd.value, market_id: odd.market_id })));
 
       // Group odds by market for classification
       const odds_by_market = {};

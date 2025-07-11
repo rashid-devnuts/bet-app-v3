@@ -63,6 +63,13 @@ const MatchCard = ({ match }) => {
                                 <div className='text-[13px] font-bold'>{match.odds['2'].value}</div>
                             </Button>
                         )}
+                        
+                        {/* Show message when no odds are available */}
+                        {(!match.odds || Object.keys(match.odds).length === 0) && (
+                            <div className="flex-1 text-center py-2 text-xs text-gray-500 bg-gray-50 rounded">
+                                Odds not available
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
