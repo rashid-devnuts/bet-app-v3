@@ -51,6 +51,65 @@ class LiveFixturesService {
     return parsedDate;
   }
 
+  // Helper method to validate player odds against lineups
+  validatePlayerOdds(odds, matchData) {
+    if (!matchData || !Array.isArray(matchData.lineups)) {
+      console.log(`[LiveFixtures] No lineup data available for player validation`);
+      return odds; // Return all odds if no lineup data
+    }
+
+    // Extract player names from lineups for validation
+    const lineupPlayerNames = new Set();
+    matchData.lineups.forEach(lineup => {
+      if (lineup.player_name) {
+        // Normalize player name for comparison (lowercase, trim spaces)
+        lineupPlayerNames.add(lineup.player_name.toLowerCase().trim());
+      }
+    });
+
+    if (lineupPlayerNames.size === 0) {
+      console.log(`[LiveFixtures] No players found in lineups for match ${matchData.id}`);
+      return odds; // Return all odds if no players in lineups
+    }
+
+    // Filter odds - validate player odds for market IDs 267 and 268
+    const validatedOdds = odds.filter(odd => {
+      // For player-related markets (267, 268), validate player is in lineups
+      if (odd.market_id === 267 || odd.market_id === 268) {
+        if (odd.name) {
+          const playerName = odd.name.toLowerCase().trim();
+          
+          // Check exact match first
+          if (lineupPlayerNames.has(playerName)) {
+            return true;
+          }
+          
+          // Check partial match (in case of name variations)
+          for (const lineupPlayer of lineupPlayerNames) {
+            // Check if odd name is contained in lineup name or vice versa
+            if (lineupPlayer.includes(playerName) || playerName.includes(lineupPlayer)) {
+              return true;
+            }
+          }
+          
+          // Player not found in lineups, exclude this odd
+          console.log(`🚫 [LiveFixtures] Excluding player odd for "${odd.name}" - not in lineups for match ${matchData.id}`);
+          return false;
+        } else {
+          // No player name in odd, exclude it
+          console.log(`🚫 [LiveFixtures] Excluding player odd with no name for match ${matchData.id}`);
+          return false;
+        }
+      }
+
+      // For non-player markets, include the odd
+      return true;
+    });
+
+    console.log(`[LiveFixtures] Player validation: ${odds.length} odds → ${validatedOdds.length} validated odds for match ${matchData.id}`);
+    return validatedOdds;
+  }
+
   // Helper to group matches by league using the popular leagues cache
   bindLeaguesToMatches(matches) {
     const popularLeagues = FixtureOptimizationService.leagueCache.get("popular_leagues") || [];
@@ -218,13 +277,22 @@ class LiveFixturesService {
           const allOdds = response.data?.data || [];
           
           // Filter odds by allowed market IDs
-          const odds = allOdds.filter(odd => allowedMarketIds.includes(odd.market_id));
+          let filteredOdds = allOdds.filter(odd => allowedMarketIds.includes(odd.market_id));
+          
+          // Apply player validation for market IDs 267 and 268
+          filteredOdds = this.validatePlayerOdds(filteredOdds, match);
           
           // Group odds by market for classification
           const odds_by_market = {};
-          for (const odd of odds) {
+          for (const odd of filteredOdds) {
             if (!odd.market_id) continue;
-            if (!odds_by_market[odd.market_id]) odds_by_market[odd.market_id] = { market_id: odd.market_id, market_description: odd.market_description, odds: [] };
+            if (!odds_by_market[odd.market_id]) {
+              odds_by_market[odd.market_id] = { 
+                market_id: odd.market_id, 
+                market_description: odd.market_description, 
+                odds: [] 
+              };
+            }
             odds_by_market[odd.market_id].odds.push(odd);
             odds_by_market[odd.market_id].market_description = odd.market_description;
           }
@@ -248,6 +316,8 @@ class LiveFixturesService {
         }
       }
     }
+    
+    console.log(`[LiveFixtures] Updated ${successfulUpdates}/${totalMatches} live matches with player validation`);
   }
 
   // Get latest betting_data for a match (from cache)
@@ -304,10 +374,35 @@ class LiveFixturesService {
       const allOddsData = response.data?.data || [];
       
       // Filter odds by allowed market IDs
-      const oddsData = allOddsData.filter(odd => allowedMarketIds.includes(odd.market_id));
+      let oddsData = allOddsData.filter(odd => allowedMarketIds.includes(odd.market_id));
       
-      console.log(`[ensureLiveOdds] Fetched ${allOddsData.length} raw odds from API, filtered to ${oddsData.length} allowed odds for match ${matchId}`);
-      console.log(`[ensureLiveOdds] First 3 filtered odds:`, oddsData.slice(0, 3).map(odd => ({ id: odd.id, label: odd.label, value: odd.value, market_id: odd.market_id })));
+      // Get match data to pass to transformToBettingData for team names AND player validation
+      let matchData = null;
+      const cacheKeys = this.fixtureCache.keys();
+      for (const key of cacheKeys) {
+        if (key.startsWith("fixtures_")) {
+          const cachedData = this.fixtureCache.get(key);
+          let fixtures = [];
+          if (Array.isArray(cachedData)) {
+            fixtures = cachedData;
+          } else if (cachedData && Array.isArray(cachedData.data)) {
+            fixtures = cachedData.data;
+          } else if (cachedData instanceof Map) {
+            fixtures = Array.from(cachedData.values());
+          } else {
+            continue;
+          }
+          
+          matchData = fixtures.find(m => m.id == matchId || m.id === parseInt(matchId));
+          if (matchData) break;
+        }
+      }
+      
+      // Apply player validation for market IDs 267 and 268
+      oddsData = this.validatePlayerOdds(oddsData, matchData);
+      
+      console.log(`[ensureLiveOdds] Fetched ${allOddsData.length} raw odds from API, filtered to ${oddsData.length} validated odds for match ${matchId}`);
+      console.log(`[ensureLiveOdds] First 3 validated odds:`, oddsData.slice(0, 3).map(odd => ({ id: odd.id, label: odd.label, value: odd.value, market_id: odd.market_id })));
 
       // Group odds by market for classification
       const odds_by_market = {};
@@ -334,29 +429,6 @@ class LiveFixturesService {
       }
 
       const classified = classifyOdds({ odds_by_market });
-      
-      // Get match data to pass to transformToBettingData for team names
-      let matchData = null;
-      const cacheKeys = this.fixtureCache.keys();
-      for (const key of cacheKeys) {
-        if (key.startsWith("fixtures_")) {
-          const cachedData = this.fixtureCache.get(key);
-          let fixtures = [];
-          if (Array.isArray(cachedData)) {
-            fixtures = cachedData;
-          } else if (cachedData && Array.isArray(cachedData.data)) {
-            fixtures = cachedData.data;
-          } else if (cachedData instanceof Map) {
-            fixtures = Array.from(cachedData.values());
-          } else {
-            continue;
-          }
-          
-          matchData = fixtures.find(m => m.id == matchId || m.id === parseInt(matchId));
-          if (matchData) break;
-        }
-      }
-      
       const betting_data = transformToBettingData(classified, matchData);
 
       // Return both betting_data and odds_classification structure
@@ -366,7 +438,7 @@ class LiveFixturesService {
       };
 
       // Debug: Log the final result structure
-      console.log(`[ensureLiveOdds] Final result structure:`, {
+      console.log(`[ensureLiveOdds] Final result structure with player validation:`, {
         bettingDataSections: result.betting_data.length,
         totalOptions: result.betting_data.reduce((sum, section) => sum + (section.options?.length || 0), 0)
       });
