@@ -5,6 +5,7 @@ import { Clock } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchLiveMatches, silentUpdateLiveMatches, selectLiveMatches, selectLiveMatchesLoading, selectLiveMatchesError } from '@/lib/features/matches/liveMatchesSlice';
 import MatchListPage from '@/components/shared/MatchListPage'; // Updated import path
+import LiveTimer from '@/components/home/LiveTimer';
 
 const InPlayPage = () => {
     const dispatch = useDispatch();
@@ -22,19 +23,13 @@ const InPlayPage = () => {
         return () => clearInterval(interval);
     }, [dispatch]);
 
-    const formatLiveTime = (liveTime) => {
-        // Simplified: if liveTime is provided, use it, otherwise default to '45:00'
-        // The MatchListPage will handle the case where liveTime might be from match.liveTime
-        return liveTime || '45:00';
-    };
-
     const inPlayConfig = {
         pageTitle: 'Live Matches',
         breadcrumbText: 'Football | In-Play Matches',
         leagues: liveMatches,
         loading,
         error,
-        matchTimeFormatter: formatLiveTime, // This will be called with match.liveTime by MatchListPage
+        matchTimeComponent: LiveTimer, // Use LiveTimer component for real-time updates
         PageIcon: Clock,
         noMatchesConfig: {
             title: 'No Live Matches',

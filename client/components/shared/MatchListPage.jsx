@@ -23,6 +23,7 @@ const MatchListPage = ({ config }) => {
         error,
         retryFunction,
         matchTimeFormatter,
+        matchTimeComponent, // New prop for React component
         PageIcon,
         noMatchesConfig,
         viewAllMatchesLink = '/'
@@ -69,6 +70,18 @@ const MatchListPage = ({ config }) => {
     };
 
     const effectiveMatchTimeFormatter = matchTimeFormatter || defaultMatchTimeFormatter;
+
+    // Function to render match time - either component or formatter
+    const renderMatchTime = (match) => {
+        if (matchTimeComponent) {
+            // Use React component for live timer
+            const MatchTimeComponent = matchTimeComponent;
+            return <MatchTimeComponent startingAt={match.starting_at} />;
+        } else {
+            // Use formatter function
+            return effectiveMatchTimeFormatter(match.liveTime || match.startTime || match.starting_at, match);
+        }
+    };
 
     // Show loading state
     if (loading) {
@@ -219,7 +232,7 @@ const MatchListPage = ({ config }) => {
                                                                     <div className="flex items-center justify-between mb-1.5"> {/* Reduced margin */}
                                                                         <div className="flex items-center gap-2">
                                                                             <span className="text-xs font-semibold ">
-                                                                                {effectiveMatchTimeFormatter(match.liveTime || match.startTime || match.starting_at, match)}
+                                                                                {renderMatchTime(match)}
                                                                             </span>
                                                                         </div>
                                                                     </div>

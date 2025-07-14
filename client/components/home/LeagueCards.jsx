@@ -8,6 +8,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useBetting } from '@/hooks/useBetting';
 import leaguesData, { getLiveLeagues } from '@/data/dummayLeagues';
 import { formatToLocalTime } from '@/lib/utils';
+import LiveTimer from './LiveTimer';
+
 // League Card Component
 const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
     const { createBetHandler } = useBetting();
@@ -47,7 +49,14 @@ const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
                     <div key={match.id}>
                         <div className='flex justify-between mt-2'>
                             <div className="text-xs text-gray-600">
-                                {isInPlay ? (match.liveTime || '45:32') : match.time}
+                                {isInPlay ? (
+                                    (() => {
+                                        console.log('[LeagueCards] Rendering LiveTimer for match:', match.id, 'startingAt:', match.starting_at);
+                                        return <LiveTimer startingAt={match.starting_at} />;
+                                    })()
+                                ) : (
+                                    match.time
+                                )}
                             </div>
                             <div className="text-xs text-gray-500">
                                 {isInPlay ? '' : ''}
@@ -198,7 +207,8 @@ const LeagueCards = ({
                         team2: teamNames[1],
                         time: displayTime,
                         odds: odds,
-                        clock: true
+                        clock: true,
+                        starting_at: match.starting_at // Add the starting_at field for live timer
                     };
                 }).filter(match => match !== null); // Filter out null matches
     
