@@ -132,12 +132,14 @@ const Header = () => {
                       <span className="text-gray-200">
                         {user?.firstName || "User"}
                       </span>
-                      <div className="flex items-center space-x-1 bg-warning/10 px-2 py-1 rounded-md">
-                        <CircleDollarSign className="h-3 w-3 text-warning" />
-                        <span className="text-warning font-semibold text-xs">
-                          ${user?.balance?.toFixed(2) || "0.00"}
-                        </span>
-                      </div>
+                      {user?.role !== 'admin' && (
+                        <div className="flex items-center space-x-1 bg-warning/10 px-2 py-1 rounded-md">
+                          <CircleDollarSign className="h-3 w-3 text-warning" />
+                          <span className="text-warning font-semibold text-xs">
+                            ${user?.balance?.toFixed(2) || "0.00"}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-warning text-black font-semibold">
@@ -160,12 +162,14 @@ const Header = () => {
                       <p className="text-xs leading-none text-muted-foreground">
                         {user?.email}
                       </p>
-                      <div className="text-xs leading-none text-base font-semibold flex items-center space-x-1">
-                        <CircleDollarSign className="h-3 w-3" />
-                        <span>
-                          Balance: ${user?.balance?.toFixed(2) || "0.00"}
-                        </span>
-                      </div>
+                      {user?.role !== 'admin' && (
+                        <div className="text-xs leading-none text-base font-semibold flex items-center space-x-1">
+                          <CircleDollarSign className="h-3 w-3" />
+                          <span>
+                            Balance: ${user?.balance?.toFixed(2) || "0.00"}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <DropdownMenuSeparator />{" "}

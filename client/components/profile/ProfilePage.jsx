@@ -317,10 +317,12 @@ const handleInputChange = useCallback((field, value) => {
                   Account Information
                 </CardTitle>
               </CardHeader><CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Account Balance</label>
-                  <p className="text-sm text-foreground mt-1 font-semibold">${user.balance?.toFixed(2) || '0.00'}</p>
-                </div>
+                {user?.role !== 'admin' && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Account Balance</label>
+                    <p className="text-sm text-foreground mt-1 font-semibold">${user.balance?.toFixed(2) || '0.00'}</p>
+                  </div>
+                )}
                 <Separator />
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Member Since</label>
