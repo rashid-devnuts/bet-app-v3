@@ -57,6 +57,32 @@ class MatchesService {
       throw error;
     }
   }
+
+  /**
+   * Get today's matches with all related data
+   * @param {Object} options - Additional options
+   * @returns {Promise} - Today's matches data
+   */
+  async getTodaysMatches(options = {}) {
+    const { leagues } = options;
+
+    try {
+      const params = {};
+      if (leagues && leagues.length > 0) {
+        params.leagues = leagues.join(",");
+      }
+
+      const response = await apiClient.get("/fixtures/today", { params });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching today's matches:", error);
+      throw new Error(
+        error.response?.data?.error?.message ||
+          error.response?.data?.message ||
+          "Failed to fetch today's matches"
+      );
+    }
+  }
 }
 
 // Create and export a single instance

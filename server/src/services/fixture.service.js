@@ -75,7 +75,7 @@ class FixtureOptimizationService {
 
     let allFixtures = [];
     let pageUrl = `/football/fixtures/between/${startDate}/${endDate}`;
-    let page = 3;
+    let page = 1;
     try {
       while (pageUrl) {
         let params = {
@@ -149,7 +149,7 @@ class FixtureOptimizationService {
 
   transformFixturesData(fixtures) {
     // Define the allowed market IDs for filtering odds
-    const allowedMarketIds = [1, 2, 267, 268, 29, 90, 93, 95, 124, 125, 10, 14, 18, 19, 33, 38, 39, 41, 44, 50, 51];
+    const allowedMarketIds = [1, 2, 267, 268, 29, 90, 93, 95, 124, 125, 10, 14, 18, 19, 33, 38, 39, 41, 44, 50, 51,267,268,4,5,81,37,11 , 97 , 13,86,80 ];
     
     return fixtures.map((fixture) => {
       // Extract player names from lineups for validation
@@ -180,9 +180,9 @@ class FixtureOptimizationService {
           ? fixture.odds
               .filter((odd) => {
                 // First check if market_id is allowed
-                // if (!allowedMarketIds.includes(odd.market_id)) {
-                //   return false;
-                // }
+                if (!allowedMarketIds.includes(odd.market_id)) {
+                  return false;
+                }
 
                 // For player-related markets (267, 268), validate player is in lineups
                 if (odd.market_id === 267 || odd.market_id === 268) {
@@ -204,7 +204,7 @@ class FixtureOptimizationService {
                     }
                     
                     // Player not found in lineups, exclude this odd
-                    console.log(`🚫 Excluding player odd for "${odd.name}" - not in lineups for match ${fixture.id}`);
+                    // console.log(`🚫 Excluding player odd for "${odd.name}" - not in lineups for match ${fixture.id}`);
                     return false;
                   } else {
                     // No player name in odd, exclude it
@@ -231,7 +231,7 @@ class FixtureOptimizationService {
                 suspended: odd.suspended,
               }))
           : [],
-        lineups: Array.isArray(fixture.lineups)
+          lineups: Array.isArray(fixture.lineups)
           ? fixture.lineups.map(lineup => ({
               player_name: lineup.player_name,
             }))

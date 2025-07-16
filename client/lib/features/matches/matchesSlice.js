@@ -119,6 +119,45 @@ export const silentUpdateLiveOdds = createAsyncThunk(
   }
 );
 
+// Async thunk for fetching today's matches
+export const fetchTodaysMatches = createAsyncThunk(
+  "matches/fetchTodaysMatches",
+  async (options = {}, { rejectWithValue }) => {
+    try {
+      const params = {};
+      if (options.leagues && options.leagues.length > 0) {
+        params.leagues = options.leagues.join(",");
+      }
+
+      const response = await apiClient.get("/fixtures/today", { params });
+
+      // Transform the data from { leagueName: { league, matches, matchCount } } format to an array of leagues
+      const data = response.data.data;
+      const transformedData = Object.keys(data).map((leagueName) => {
+        const leagueData = data[leagueName];
+        return {
+          id: leagueData.league?.id || Math.random().toString(36).substr(2, 9),
+          name: leagueName,
+          image_path: leagueData.league?.imageUrl || null,
+          imageUrl: leagueData.league?.imageUrl || null,
+          icon: leagueData.league?.icon || "⚽",
+          country: leagueData.league?.country || null,
+          league: leagueData.league, // Keep the full league object
+          matches: leagueData.matches || [],
+          matchCount: leagueData.matchCount || 0,
+        };
+      });
+
+      return transformedData;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.error?.message ||
+          "Failed to fetch today's matches"
+      );
+    }
+  }
+);
+
 const matchesSlice = createSlice({
   name: "matches",
   initialState: {
@@ -126,6 +165,9 @@ const matchesSlice = createSlice({
     upcomingMatches: [], // upcoming matches
     upcomingMatchesLoading: false,
     upcomingMatchesError: null,
+    todaysMatches: [], // today's matches
+    todaysMatchesLoading: false,
+    todaysMatchesError: null,
     matchDetails: {}, // individual match details by matchId
     liveOdds: {}, // live odds by matchId
     liveOddsClassification: {}, // live odds classification by matchId
@@ -238,6 +280,19 @@ const matchesSlice = createSlice({
       .addCase(silentUpdateLiveOdds.rejected, (state, action) => {
         // Don't update loading state, just log the error silently
         console.warn('Silent live odds update failed:', action.payload);
+      })
+      // Fetch today's matches
+      .addCase(fetchTodaysMatches.pending, (state) => {
+        state.todaysMatchesLoading = true;
+        state.todaysMatchesError = null;
+      })
+      .addCase(fetchTodaysMatches.fulfilled, (state, action) => {
+        state.todaysMatchesLoading = false;
+        state.todaysMatches = action.payload;
+      })
+      .addCase(fetchTodaysMatches.rejected, (state, action) => {
+        state.todaysMatchesLoading = false;
+        state.todaysMatchesError = action.payload;
       });
   },
 });

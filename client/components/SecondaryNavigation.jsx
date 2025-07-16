@@ -1,13 +1,14 @@
 "use client"
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Home, Clock, PlayCircle, Search } from "lucide-react"
+import { Home, Clock, PlayCircle, Search, Calendar } from "lucide-react"
 
 const SecondaryNavigation = () => {
     const pathname = usePathname()
 
     const getActiveTab = (pathname) => {
         if (pathname === '/') return 'HOME';
+        if (pathname === '/today') return 'TODAY';
         if (pathname === '/inplay') return 'IN-PLAY';
         if (pathname.includes('/upcoming')) return 'UPCOMING';
         return 'HOME'; // Default to HOME
@@ -17,6 +18,7 @@ const SecondaryNavigation = () => {
 
     const navigationItems = [
         { icon: <Home className="h-3 w-3" />, label: "HOME", href: "/" },
+        { icon: <Calendar className="h-3 w-3" />, label: "TODAY", href: "/today" },
         { icon: <PlayCircle className="h-3 w-3" />, label: "IN-PLAY", href: "/inplay" },
         { icon: <Clock className="h-3 w-3" />, label: "UPCOMING", href: "/upcoming" },
     ];
