@@ -79,7 +79,9 @@ class BetOutcomeCalculationService {
 
     this.typeIdMapping = {
       shotsOnTarget: 86, // Type ID for shots on target
-      shotsTotal: 42,
+      shotsTotal: 42, // Type ID for total shots
+      goals: 14, // Type ID for goals
+      corners: 34, // Type ID for corners
     };
   }
 
@@ -458,7 +460,7 @@ class BetOutcomeCalculationService {
     }
 
     // Filter events to get only goals (type_id: 14)
-    const goalEvents = matchData.events.filter(event => event.type_id === 14);
+    const goalEvents = matchData.events.filter(event => event.type_id === this.typeIdMapping.goals);
     
     if (goalEvents.length === 0) {
       return {
@@ -666,9 +668,37 @@ class BetOutcomeCalculationService {
 
   /**
    * Calculate Corners outcome
+   * Enhanced to use actual corner statistics for markets 60, 67, 68, 69
    */
   calculateCorners(bet, matchData) {
-    // This would require corner statistics from match data
+    // Extract corner statistics using the new method
+    const cornerStats = this.extractCornerStats(matchData);
+    
+    // If we have corner statistics, use them for calculation
+    if (cornerStats.totalCorners >= 0) {
+      const marketId = bet.betDetails?.market_id || bet.marketId;
+      
+      // Handle different corner market types
+      switch (parseInt(marketId)) {
+        case 60: // 2-Way Corners (Over/Under)
+          return this.calculateCornersOverUnder(bet, cornerStats);
+        
+        case 67: // Corners (Team-specific)
+          return this.calculateTeamCorners(bet, cornerStats);
+        
+        case 68: // Total Corners (Over/Under)
+          return this.calculateCornersOverUnder(bet, cornerStats);
+        
+        case 69: // Alternative Corners (Over/Under)
+          return this.calculateCornersOverUnder(bet, cornerStats);
+        
+        default:
+          // Generic corner calculation for other markets
+          return this.calculateGenericCorners(bet, cornerStats);
+      }
+    }
+    
+    // Fallback to winning field if corner statistics not available
     const selectedOdd = this.findSelectedOdd(bet, matchData);
 
     if (!selectedOdd) {
@@ -1372,6 +1402,7 @@ class BetOutcomeCalculationService {
       RESULT_BOTH_TEAMS_SCORE: [13],
       SECOND_HALF_RESULT: [97], // Second Half Result
       HALF_TIME_RESULT_TOTAL_GOALS: [123], // Half Time Result / Total Goals
+      CORNERS: [60, 67, 68, 69], // Corner markets - 2-Way Corners, Corners, Total Corners, Alternative Corners
     };
 
     for (const [type, ids] of Object.entries(extendedMarketTypes)) {
@@ -1399,7 +1430,7 @@ class BetOutcomeCalculationService {
     }
 
     // Filter events to get only goals (type_id: 14)
-    const goalEvents = matchData.events.filter(event => event.type_id === 14);
+    const goalEvents = matchData.events.filter(event => event.type_id === this.typeIdMapping.goals);
     
     if (goalEvents.length === 0) {
       return {
@@ -2229,6 +2260,280 @@ class BetOutcomeCalculationService {
       actualTotalGoals: actualTotalGoals,
       betHalfTimeResult: normalizedBetHalfTimeResult,
       reason: `Half Time: ${actualHalfTimeResult}, Total Goals: ${totalGoals} (${actualTotalGoals}), Bet: ${normalizedBetHalfTimeResult}/${betTotalGoals}`,
+    };
+  }
+
+  /**
+   * Extract corner statistics from match data
+   * Uses statistics array with type_id: 34 for corners
+   */
+  extractCornerStats(matchData) {
+    if (!matchData.statistics || !Array.isArray(matchData.statistics)) {
+      return { homeCorners: 0, awayCorners: 0, totalCorners: 0 };
+    }
+
+    // Filter statistics to get only corners (type_id: 34)
+    const cornerStats = matchData.statistics.filter(
+      stat => stat.type_id === this.typeIdMapping.corners
+    );
+
+    let homeCorners = 0;
+    let awayCorners = 0;
+
+    cornerStats.forEach(stat => {
+      if (stat.data && stat.data.value !== undefined) {
+        if (stat.location === 'home') {
+          homeCorners = stat.data.value;
+        } else if (stat.location === 'away') {
+          awayCorners = stat.data.value;
+        }
+      }
+    });
+
+    return {
+      homeCorners: homeCorners,
+      awayCorners: awayCorners,
+      totalCorners: homeCorners + awayCorners
+    };
+  }
+
+  /**
+   * Calculate Corners Over/Under outcome (Markets 60, 68, 69)
+   */
+  calculateCornersOverUnder(bet, cornerStats) {
+    const marketId = parseInt(bet.betDetails?.market_id || bet.marketId);
+    
+    // Handle different market types
+    if (marketId === 68) {
+      // Market 68: Total Corners - handle range bets like "6 - 8"
+      return this.calculateCornersRange(bet, cornerStats);
+    }
+    
+    if (marketId === 69) {
+      // Market 69: Alternative Corners - handle exact bets
+      const betLabel = bet.betDetails?.label?.toLowerCase() || bet.betOption?.toLowerCase() || '';
+      if (betLabel.includes('exactly')) {
+        return this.calculateCornersExact(bet, cornerStats);
+      }
+    }
+    
+    // Standard Over/Under logic for markets 60, 67, and other Over/Under variants
+    let threshold;
+    let betType;
+    
+    if (bet.betDetails) {
+      // For corner markets, use betDetails.total for threshold if available
+      if (bet.betDetails.total !== null && bet.betDetails.total !== undefined) {
+        threshold = parseFloat(bet.betDetails.total);
+      } else {
+        // Extract from name field (e.g., "9.5", "10")
+        threshold = parseFloat(bet.betDetails.name) || this.extractThreshold(bet.betDetails.label || bet.betOption);
+      }
+      
+      // Extract bet type from label (Over/Under)
+      betType = this.extractOverUnderType(bet.betDetails.label || bet.betDetails.name || bet.betOption);
+    } else {
+      // Fallback to original logic
+      threshold = this.extractThreshold(bet.betOption);
+      betType = this.extractOverUnderType(bet.betOption);
+    }
+
+    let isWinning;
+    if (betType === "OVER") {
+      isWinning = cornerStats.totalCorners > threshold;
+    } else if (betType === "UNDER") {
+      isWinning = cornerStats.totalCorners < threshold;
+    } else {
+      // Handle exact corners
+      isWinning = cornerStats.totalCorners === threshold;
+    }
+
+    return {
+      status: isWinning ? "won" : "lost",
+      payout: isWinning ? bet.stake * bet.odds : 0,
+      actualCorners: cornerStats.totalCorners,
+      homeCorners: cornerStats.homeCorners,
+      awayCorners: cornerStats.awayCorners,
+      threshold: threshold,
+      betType: betType,
+      marketId: marketId,
+      reason: `Total corners: ${cornerStats.totalCorners}, Threshold: ${threshold} (${betType})`,
+    };
+  }
+
+  /**
+   * Calculate Corners Range outcome (Market 68 - Total Corners)
+   * Handles range bets like "6 - 8", "9 - 11", etc.
+   */
+  calculateCornersRange(bet, cornerStats) {
+    const rangeString = bet.betDetails?.label || bet.betDetails?.name || bet.betOption || '';
+    
+    // Parse range from string like "6 - 8"
+    const rangeMatch = rangeString.match(/(\d+)\s*-\s*(\d+)/);
+    
+    if (!rangeMatch) {
+      return {
+        status: "canceled",
+        payout: bet.stake,
+        reason: "Unable to parse corner range from bet option",
+      };
+    }
+    
+    const minCorners = parseInt(rangeMatch[1]);
+    const maxCorners = parseInt(rangeMatch[2]);
+    
+    // Check if actual corners fall within the range (inclusive)
+    const isWinning = cornerStats.totalCorners >= minCorners && cornerStats.totalCorners <= maxCorners;
+    
+    return {
+      status: isWinning ? "won" : "lost",
+      payout: isWinning ? bet.stake * bet.odds : 0,
+      actualCorners: cornerStats.totalCorners,
+      homeCorners: cornerStats.homeCorners,
+      awayCorners: cornerStats.awayCorners,
+      minCorners: minCorners,
+      maxCorners: maxCorners,
+      rangeString: rangeString,
+      marketId: 68,
+      reason: `Total corners: ${cornerStats.totalCorners}, Range: ${minCorners}-${maxCorners}`,
+    };
+  }
+
+  /**
+   * Calculate Corners Exact outcome (Market 69 - Alternative Corners)
+   * Handles exact bets like "Exactly 12"
+   */
+  calculateCornersExact(bet, cornerStats) {
+    // Extract exact number from betDetails.name or betDetails.total
+    let exactCorners;
+    
+    if (bet.betDetails?.total !== null && bet.betDetails?.total !== undefined) {
+      exactCorners = parseInt(bet.betDetails.total);
+    } else if (bet.betDetails?.name) {
+      exactCorners = parseInt(bet.betDetails.name);
+    } else {
+      // Try to extract from betOption
+      const numberMatch = (bet.betOption || '').match(/(\d+)/);
+      exactCorners = numberMatch ? parseInt(numberMatch[1]) : 0;
+    }
+    
+    // Check if actual corners match exactly
+    const isWinning = cornerStats.totalCorners === exactCorners;
+    
+    return {
+      status: isWinning ? "won" : "lost",
+      payout: isWinning ? bet.stake * bet.odds : 0,
+      actualCorners: cornerStats.totalCorners,
+      homeCorners: cornerStats.homeCorners,
+      awayCorners: cornerStats.awayCorners,
+      exactCorners: exactCorners,
+      marketId: 69,
+      reason: `Total corners: ${cornerStats.totalCorners}, Expected exactly: ${exactCorners}`,
+    };
+  }
+
+  /**
+   * Calculate Team Corners outcome (Market 67)
+   */
+  calculateTeamCorners(bet, cornerStats) {
+    // Market 67 is actually total corners Over/Under, not team-specific
+    // The bet data shows it's "Over 10" for total corners, not individual team corners
+    const marketId = parseInt(bet.betDetails?.market_id || bet.marketId);
+    
+    if (marketId === 67) {
+      // This is actually total corners Over/Under, similar to other markets
+      let threshold;
+      let betType;
+      
+      if (bet.betDetails) {
+        // Use betDetails.total for threshold if available
+        if (bet.betDetails.total !== null && bet.betDetails.total !== undefined) {
+          threshold = parseFloat(bet.betDetails.total);
+        } else if (bet.betDetails.name) {
+          // Extract from name field (e.g., "10")
+          threshold = parseFloat(bet.betDetails.name);
+        } else {
+          threshold = this.extractThreshold(bet.betDetails.label || bet.betOption);
+        }
+        
+        // Extract bet type from label (Over/Under)
+        betType = this.extractOverUnderType(bet.betDetails.label || bet.betOption);
+      } else {
+        // Fallback to original logic
+        threshold = this.extractThreshold(bet.betOption);
+        betType = this.extractOverUnderType(bet.betOption);
+      }
+
+      let isWinning;
+      if (betType === "OVER") {
+        isWinning = cornerStats.totalCorners > threshold;
+      } else if (betType === "UNDER") {
+        isWinning = cornerStats.totalCorners < threshold;
+      } else {
+        // Exact match
+        isWinning = cornerStats.totalCorners === threshold;
+      }
+
+      return {
+        status: isWinning ? "won" : "lost",
+        payout: isWinning ? bet.stake * bet.odds : 0,
+        actualCorners: cornerStats.totalCorners,
+        homeCorners: cornerStats.homeCorners,
+        awayCorners: cornerStats.awayCorners,
+        threshold: threshold,
+        betType: betType,
+        marketId: marketId,
+        reason: `Total corners: ${cornerStats.totalCorners}, Threshold: ${threshold} (${betType})`,
+      };
+    }
+    
+    // Original team-specific logic for other corner markets
+    const betOption = bet.betOption?.toLowerCase() || '';
+    const betLabel = bet.betDetails?.label?.toLowerCase() || '';
+    
+    let teamCorners;
+    let teamName = '';
+    
+    // Check if it's for home team (1) or away team (2)
+    if (betLabel === "1" || betOption.includes("home")) {
+      teamCorners = cornerStats.homeCorners;
+      teamName = "Home";
+    } else if (betLabel === "2" || betOption.includes("away")) {
+      teamCorners = cornerStats.awayCorners;
+      teamName = "Away";
+    } else {
+      return {
+        status: "canceled",
+        payout: bet.stake,
+        reason: "Unable to determine team for corner bet",
+      };
+    }
+
+    // For team corner bets, could be Over/Under or exact
+    const threshold = this.extractThreshold(bet.betOption || bet.betDetails?.name || "0.5");
+    const betType = this.extractOverUnderType(bet.betOption || bet.betDetails?.name || "over");
+
+    let isWinning;
+    if (betType === "OVER") {
+      isWinning = teamCorners > threshold;
+    } else if (betType === "UNDER") {
+      isWinning = teamCorners < threshold;
+    } else {
+      // Exact match
+      isWinning = teamCorners === threshold;
+    }
+
+    return {
+      status: isWinning ? "won" : "lost",
+      payout: isWinning ? bet.stake * bet.odds : 0,
+      teamCorners: teamCorners,
+      teamName: teamName,
+      totalCorners: cornerStats.totalCorners,
+      homeCorners: cornerStats.homeCorners,
+      awayCorners: cornerStats.awayCorners,
+      threshold: threshold,
+      betType: betType,
+      reason: `${teamName} corners: ${teamCorners}, Threshold: ${threshold} (${betType})`,
     };
   }
 }
