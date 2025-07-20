@@ -3,7 +3,7 @@ import {
   getLeagues,
   getMatches,
   getMarkets,
-} from "../controllers/SportsMonkController.js";
+} from "../controllers/sportsMonkController";
 const sportsMonkRouter = express.Router();
 
 sportsMonkRouter.get("/leagues", getLeagues);
