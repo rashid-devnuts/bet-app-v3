@@ -30,7 +30,10 @@ connectDB();
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: [
+      process.env.CLIENT_URL || "http://localhost:3000",
+      "https://betting-website-tau.vercel.app/", // Add your Vercel domain
+    ],
     credentials: true,
   })
 );
