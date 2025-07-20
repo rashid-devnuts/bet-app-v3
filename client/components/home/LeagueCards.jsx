@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,33 @@ import LiveTimer from './LiveTimer';
 // League Card Component
 const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
     const { createBetHandler } = useBetting();
+    const [buttonsReady, setButtonsReady] = useState(false);
+
+    // For live matches, delay button activation to prevent premature clicking
+    useEffect(() => {
+        if (isInPlay) {
+            const timer = setTimeout(() => {
+                setButtonsReady(true);
+            }, 500); // 500ms delay for live matches
+            return () => clearTimeout(timer);
+        } else {
+            setButtonsReady(true); // Non-live matches are immediately ready
+        }
+    }, [isInPlay]);
+
+    const isOddClickable = (odd) => {
+        if (!buttonsReady) return false;
+        if (isInPlay && odd.suspended) return false;
+        return true;
+    };
+
+    const getOddButtonClass = (odd) => {
+        const baseClass = "w-14 h-8 p-0 text-xs font-bold betting-button";
+        if (!buttonsReady || (isInPlay && odd.suspended)) {
+            return `${baseClass} opacity-50 cursor-not-allowed bg-gray-300 hover:bg-gray-300`;
+        }
+        return baseClass;
+    };
 
     return (
         <div className="bg-white border border-gray-200 rounded-none shadow-none mb-4 h-[495px] flex flex-col">
@@ -95,16 +122,12 @@ const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
                                             {match.odds['1'] && (
                                                 <Button
                                                     size="sm"
-                                                    className={`w-14 h-8 p-0 text-xs font-bold betting-button ${
-                                                        isInPlay && match.odds['1'].suspended 
-                                                            ? 'opacity-50 cursor-not-allowed bg-gray-300 hover:bg-gray-300' 
-                                                            : ''
-                                                    }`}
-                                                    onClick={isInPlay && match.odds['1'].suspended 
-                                                        ? undefined 
-                                                        : createBetHandler(match, '1', match.odds['1'].value, '1x2', match.odds['1'].oddId)
+                                                    className={getOddButtonClass(match.odds['1'])}
+                                                    onClick={isOddClickable(match.odds['1']) 
+                                                        ? createBetHandler(match, '1', match.odds['1'].value, '1x2', match.odds['1'].oddId)
+                                                        : undefined
                                                     }
-                                                    disabled={isInPlay && match.odds['1'].suspended}
+                                                    disabled={!isOddClickable(match.odds['1'])}
                                                 >
                                                     {match.odds['1'].value}
                                                 </Button>
@@ -112,16 +135,12 @@ const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
                                             {match.odds['X'] && (
                                                 <Button
                                                     size="sm"
-                                                    className={`w-14 h-8 p-0 text-xs font-bold betting-button ${
-                                                        isInPlay && match.odds['X'].suspended 
-                                                            ? 'opacity-50 cursor-not-allowed bg-gray-300 hover:bg-gray-300' 
-                                                            : ''
-                                                    }`}
-                                                    onClick={isInPlay && match.odds['X'].suspended 
-                                                        ? undefined 
-                                                        : createBetHandler(match, 'X', match.odds['X'].value, '1x2', match.odds['X'].oddId)
+                                                    className={getOddButtonClass(match.odds['X'])}
+                                                    onClick={isOddClickable(match.odds['X']) 
+                                                        ? createBetHandler(match, 'X', match.odds['X'].value, '1x2', match.odds['X'].oddId)
+                                                        : undefined
                                                     }
-                                                    disabled={isInPlay && match.odds['X'].suspended}
+                                                    disabled={!isOddClickable(match.odds['X'])}
                                                 >
                                                     {match.odds['X'].value}
                                                 </Button>
@@ -129,16 +148,12 @@ const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
                                             {match.odds['2'] && (
                                                 <Button
                                                     size="sm"
-                                                    className={`w-14 h-8 p-0 text-xs font-bold betting-button ${
-                                                        isInPlay && match.odds['2'].suspended 
-                                                            ? 'opacity-50 cursor-not-allowed bg-gray-300 hover:bg-gray-300' 
-                                                            : ''
-                                                    }`}
-                                                    onClick={isInPlay && match.odds['2'].suspended 
-                                                        ? undefined 
-                                                        : createBetHandler(match, '2', match.odds['2'].value, '1x2', match.odds['2'].oddId)
+                                                    className={getOddButtonClass(match.odds['2'])}
+                                                    onClick={isOddClickable(match.odds['2']) 
+                                                        ? createBetHandler(match, '2', match.odds['2'].value, '1x2', match.odds['2'].oddId)
+                                                        : undefined
                                                     }
-                                                    disabled={isInPlay && match.odds['2'].suspended}
+                                                    disabled={!isOddClickable(match.odds['2'])}
                                                 >
                                                     {match.odds['2'].value}
                                                 </Button>

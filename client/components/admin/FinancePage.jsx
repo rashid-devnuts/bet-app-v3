@@ -803,13 +803,13 @@ const FinancePage = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-medium text-purple-600 mb-1">
-                      Current Balance
+                      Total balance
                     </p>
                     <p className="text-2xl font-bold text-gray-900">
                       ${summary.currentBalance.toFixed(2)}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      Total system balance
+                      Total user's balance
                     </p>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-purple-50 flex items-center justify-center">
