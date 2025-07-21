@@ -11,7 +11,7 @@ import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-
+import winnningOddsCalculation from "./winningOddsCalculation.service.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -21,7 +21,8 @@ class BetService {
     this.marketsCache = null;
     this.marketsCacheTime = null;
     this.MARKETS_FILE_PATH = path.join(__dirname, "../constants/markets.json");
-    this.outcomeCalculator = new BetOutcomeCalculationService();
+    this.SimpleOddsCalculation = new BetOutcomeCalculationService();
+    this.WinningOddsCalculation = new winnningOddsCalculation();
   }
 
   // Helper method to get markets data from JSON file
@@ -29,17 +30,23 @@ class BetService {
     try {
       // Check if cache is valid (cache for 1 hour)
       const now = Date.now();
-      if (this.marketsCache && this.marketsCacheTime && (now - this.marketsCacheTime) < 60 * 60 * 1000) {
+      if (
+        this.marketsCache &&
+        this.marketsCacheTime &&
+        now - this.marketsCacheTime < 60 * 60 * 1000
+      ) {
         return this.marketsCache;
       }
 
       // Read from file
-      const marketsData = JSON.parse(fs.readFileSync(this.MARKETS_FILE_PATH, 'utf8'));
+      const marketsData = JSON.parse(
+        fs.readFileSync(this.MARKETS_FILE_PATH, "utf8")
+      );
       this.marketsCache = marketsData;
       this.marketsCacheTime = now;
       return marketsData;
     } catch (error) {
-      console.error('Error reading markets.json:', error);
+      console.error("Error reading markets.json:", error);
       return { markets: {} };
     }
   }
@@ -48,49 +55,49 @@ class BetService {
   getMarketName(marketId) {
     const marketsData = this.getMarketsData();
     const market = marketsData.markets[marketId];
-    return market ? market.name : 'Unknown Market';
+    return market ? market.name : "Unknown Market";
   }
 
   // Helper method to get market ID by market name/title
   getMarketIdByName(marketName) {
     const marketsData = this.getMarketsData();
-    
+
     // Search for market by name
     for (const [id, market] of Object.entries(marketsData.markets)) {
       if (market.name === marketName) {
         return parseInt(id);
       }
     }
-    
+
     // Fallback mapping for common market names
     const marketNameMapping = {
-      'Fulltime Result': 1,
-      'Double Chance': 2,
-      'Match Goals': 4,
-      'Asian Handicap': 6,
-      'Both Teams To Score': 8,
-      'Exact Goals Number': 9,
-      'Highest Scoring Half': 10,
-      'Goals Over/Under': 11,
-      'First Goal Scorer': 12,
-      'Last Goal Scorer': 13,
-      'Anytime Goal Scorer': 14,
-      'Player To Score 2 Or More': 15,
-      'Correct Score': 16,
-      'Half Time Result': 17,
-      'Half Time/Full Time': 18,
-      'To Qualify': 19,
-      'Both Teams To Score - First Half': 20,
-      'Both Teams To Score - Second Half': 21,
-      'First Half Goals Over/Under': 22,
-      'Second Half Goals Over/Under': 23,
-      'Odd/Even Goals': 24,
-      'First Half Odd/Even Goals': 25,
-      'Second Half Odd/Even Goals': 26,
-      'First Team To Score': 27,
-      'Last Team To Score': 28,
-      'Winning Margin': 29,
-      'To Score In Both Halves': 30
+      "Fulltime Result": 1,
+      "Double Chance": 2,
+      "Match Goals": 4,
+      "Asian Handicap": 6,
+      "Both Teams To Score": 8,
+      "Exact Goals Number": 9,
+      "Highest Scoring Half": 10,
+      "Goals Over/Under": 11,
+      "First Goal Scorer": 12,
+      "Last Goal Scorer": 13,
+      "Anytime Goal Scorer": 14,
+      "Player To Score 2 Or More": 15,
+      "Correct Score": 16,
+      "Half Time Result": 17,
+      "Half Time/Full Time": 18,
+      "To Qualify": 19,
+      "Both Teams To Score - First Half": 20,
+      "Both Teams To Score - Second Half": 21,
+      "First Half Goals Over/Under": 22,
+      "Second Half Goals Over/Under": 23,
+      "Odd/Even Goals": 24,
+      "First Half Odd/Even Goals": 25,
+      "Second Half Odd/Even Goals": 26,
+      "First Team To Score": 27,
+      "Last Team To Score": 28,
+      "Winning Margin": 29,
+      "To Score In Both Halves": 30,
     };
 
     return marketNameMapping[marketName] || null;
@@ -100,46 +107,53 @@ class BetService {
   createBetDetails(odds, marketId) {
     // Ensure marketId is not undefined or null
     let safeMarketId = marketId || odds.market_id;
-    
+
     // If still no market ID, try to resolve it from market description
-    if (!safeMarketId || safeMarketId === 'unknown_market') {
+    if (!safeMarketId || safeMarketId === "unknown_market") {
       if (odds.market_description) {
         safeMarketId = this.getMarketIdByName(odds.market_description);
       }
-      
+
       // Final fallback to prevent errors
-      if (!safeMarketId || safeMarketId === 'unknown_market') {
-        console.warn(`[createBetDetails] Could not resolve market ID, using fallback ID 1 for odds:`, {
-          oddId: odds.id,
-          label: odds.label,
-          market_description: odds.market_description
-        });
+      if (!safeMarketId || safeMarketId === "unknown_market") {
+        console.warn(
+          `[createBetDetails] Could not resolve market ID, using fallback ID 1 for odds:`,
+          {
+            oddId: odds.id,
+            label: odds.label,
+            market_description: odds.market_description,
+          }
+        );
         safeMarketId = 1; // Default to "Fulltime Result"
       }
     }
-    
+
     const marketName = this.getMarketName(safeMarketId);
-    
-    console.log(`[createBetDetails] Final market ID: ${safeMarketId}, market name: ${marketName}`);
-    
+
+    console.log(
+      `[createBetDetails] Final market ID: ${safeMarketId}, market name: ${marketName}`
+    );
+
     // Process the total field - keep it as string for descriptive totals like "Over 0.5", "Under 1.5"
     let processedTotal = null;
     if (odds.total !== undefined && odds.total !== null) {
       // Always keep as string since it contains descriptive text like "Over 1.5", "Under 2.5"
       processedTotal = String(odds.total);
     }
-    
-    console.log(`[createBetDetails] Processing total: ${odds.total} -> ${processedTotal}`);
-    
+
+    console.log(
+      `[createBetDetails] Processing total: ${odds.total} -> ${processedTotal}`
+    );
+
     return {
       market_id: safeMarketId,
       market_name: marketName,
-      label: odds.label || odds.name || '',
+      label: odds.label || odds.name || "",
       value: parseFloat(odds.value) || 0,
       total: processedTotal,
       market_description: odds.market_description || null,
       handicap: odds.handicap || null,
-      name: odds.name || odds.label || ''
+      name: odds.name || odds.label || "",
     };
   }
 
@@ -251,11 +265,11 @@ class BetService {
       console.log(
         `[placeBet] Processing inplay bet for match ${matchId}, odd ${oddId}`
       );
-      
+
       // Force a fresh fetch for betting to ensure we have the latest odds
       console.log(`[placeBet] Forcing fresh fetch of live odds for betting...`);
       FixtureOptimizationService.liveFixturesService.liveOddsCache.del(matchId);
-      
+
       const liveOddsResult =
         await FixtureOptimizationService.liveFixturesService.ensureLiveOdds(
           matchId
@@ -263,40 +277,41 @@ class BetService {
 
       // Get the betting_data array from the result
       const liveOdds = liveOddsResult.betting_data || [];
-      
-      
-      
-
 
       // Find the odd directly in the live odds data
       let foundOdd = null;
       let foundMarket = null;
-      
+
       // Search for the exact odd ID in all sections
       for (const section of liveOdds) {
-        
-        
-        
         // Simple exact match - convert both to numbers for comparison
         const odd = section.options?.find((o) => {
           const optionId = parseInt(o.id);
           const requestedId = parseInt(oddId);
-          console.log(`[placeBet] Comparing: ${optionId} === ${requestedId} (${optionId === requestedId})`);
+          console.log(
+            `[placeBet] Comparing: ${optionId} === ${requestedId} (${
+              optionId === requestedId
+            })`
+          );
           return optionId === requestedId;
         });
-        
+
         if (odd) {
           foundOdd = odd;
           foundMarket = section;
-          console.log(`[placeBet] ✅ FOUND EXACT MATCH: ${odd.label} with ID: ${odd.id}, market_id: ${odd.market_id}`);
+          console.log(
+            `[placeBet] ✅ FOUND EXACT MATCH: ${odd.label} with ID: ${odd.id}, market_id: ${odd.market_id}`
+          );
           break;
         }
       }
 
       if (!foundOdd) {
         console.log(`[placeBet] ❌ EXACT MATCH NOT FOUND for oddId: ${oddId}`);
-        console.log(`[placeBet] This shouldn't happen if SportsMonks doesn't change odd IDs!`);
-        
+        console.log(
+          `[placeBet] This shouldn't happen if SportsMonks doesn't change odd IDs!`
+        );
+
         throw new CustomError(
           `Invalid odd ID for live bet. Odd ID ${oddId} not found in current live odds.`,
           400,
@@ -326,7 +341,11 @@ class BetService {
         );
       }
 
-      console.log(`[placeBet] Using market ID: ${resolvedMarketId} for "${foundOdd.label}" (from ${foundOdd.marketId ? 'marketId' : 'market_id'})`);
+      console.log(
+        `[placeBet] Using market ID: ${resolvedMarketId} for "${
+          foundOdd.label
+        }" (from ${foundOdd.marketId ? "marketId" : "market_id"})`
+      );
 
       odds = {
         id: foundOdd.id,
@@ -335,8 +354,11 @@ class BetService {
         market_id: resolvedMarketId,
         label: foundOdd.label,
         total: foundOdd.total,
-        market_description: foundOdd.market_description || foundMarket.description || foundMarket.title,
-        handicap: foundOdd.handicap
+        market_description:
+          foundOdd.market_description ||
+          foundMarket.description ||
+          foundMarket.title,
+        handicap: foundOdd.handicap,
       };
     }
 
@@ -490,7 +512,6 @@ class BetService {
       betDetails,
     });
 
-    
     await bet.save();
 
     const nowUTC = this.getCurrentUTCTime();
@@ -555,30 +576,34 @@ class BetService {
       // Check cache first
       if (this.finalMatchResultCache.has(matchId)) {
         const cachedData = this.finalMatchResultCache.get(matchId);
-        console.log(`[fetchMatchResult] Used cached result for matchId: ${matchId}`);
+        console.log(
+          `[fetchMatchResult] Used cached result for matchId: ${matchId}`
+        );
         return cachedData;
       }
 
       // Retry logic for API calls
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          console.log(`[fetchMatchResult] Attempt ${attempt}/${maxRetries} for matchId: ${matchId}`);
-          
+          console.log(
+            `[fetchMatchResult] Attempt ${attempt}/${maxRetries} for matchId: ${matchId}`
+          );
+
           // Use minimal includes to reduce response size and avoid timeouts
-          const includes=
-             "state;inplayOdds;scores;participants;lineups.details;events;statistics;odds" // Minimal on first attempt
-            
+          const includes =
+            "state;inplayOdds;scores;participants;lineups.details;events;statistics;odds"; // Minimal on first attempt
+
           const response = await SportsMonksService.client.get(
             `/football/fixtures/${matchId}`,
             {
               params: {
-                include: includes
+                include: includes,
               },
               timeout: attempt === 1 ? 10000 : attempt === 2 ? 20000 : 30000, // Increase timeout with each attempt
               headers: {
-                'Accept-Encoding': 'gzip, deflate', // Avoid br compression which might cause issues
-                'Connection': 'keep-alive'
-              }
+                "Accept-Encoding": "gzip, deflate", // Avoid br compression which might cause issues
+                Connection: "keep-alive",
+              },
             }
           );
 
@@ -586,7 +611,9 @@ class BetService {
             throw new CustomError("Match not found", 404, "MATCH_NOT_FOUND");
           }
 
-          console.log(`[fetchMatchResult] Successfully fetched data on attempt ${attempt} for matchId: ${matchId}`);
+          console.log(
+            `[fetchMatchResult] Successfully fetched data on attempt ${attempt} for matchId: ${matchId}`
+          );
 
           const data = response.data.data;
 
@@ -608,43 +635,83 @@ class BetService {
           // Cache the match data if the match is finished (state.id === 5)
           if (matchData.state?.id === 5) {
             this.finalMatchResultCache.set(matchId, matchData);
-            console.log(`[fetchMatchResult] Cached final result for matchId: ${matchId}`);
+            console.log(
+              `[fetchMatchResult] Cached final result for matchId: ${matchId}`
+            );
           }
 
           return matchData;
-
         } catch (error) {
           lastError = error;
-          console.error(`[fetchMatchResult] Attempt ${attempt} failed for matchId: ${matchId}:`, error.message);
-          
+          console.error(
+            `[fetchMatchResult] Attempt ${attempt} failed for matchId: ${matchId}:`,
+            error.message
+          );
+
           // If it's a connection reset error and we have more attempts, wait before retrying
-          if ((error.code === 'ECONNRESET' || error.code === 'ECONNABORTED' || error.message.includes('aborted')) && attempt < maxRetries) {
+          if (
+            (error.code === "ECONNRESET" ||
+              error.code === "ECONNABORTED" ||
+              error.message.includes("aborted")) &&
+            attempt < maxRetries
+          ) {
             const waitTime = attempt * 2000; // 2s, 4s wait times
-            console.log(`[fetchMatchResult] Waiting ${waitTime}ms before retry ${attempt + 1}`);
-            await new Promise(resolve => setTimeout(resolve, waitTime));
+            console.log(
+              `[fetchMatchResult] Waiting ${waitTime}ms before retry ${
+                attempt + 1
+              }`
+            );
+            await new Promise((resolve) => setTimeout(resolve, waitTime));
             continue;
           }
-          
+
           // If it's not a retry-able error or last attempt, throw
           if (attempt === maxRetries) {
             throw error;
           }
         }
       }
-
     } catch (error) {
-      console.error(`[fetchMatchResult] All attempts failed for matchId: ${matchId}. Final error:`, error.message);
-      
+      console.error(
+        `[fetchMatchResult] All attempts failed for matchId: ${matchId}. Final error:`,
+        error.message
+      );
+
       // If it's a network error, try to provide a more user-friendly error
-      if (error.code === 'ECONNRESET' || error.code === 'ECONNABORTED' || error.message.includes('aborted')) {
+      if (
+        error.code === "ECONNRESET" ||
+        error.code === "ECONNABORTED" ||
+        error.message.includes("aborted")
+      ) {
         throw new CustomError(
           `Unable to fetch match data due to network connectivity issues. Please try again later.`,
           503,
           "NETWORK_ERROR"
         );
       }
-      
+
       throw error;
+    }
+  }
+
+  async checkMarketHasWinningCalculations(marketId) {
+    try {
+      // Load markets data from constants file
+      const fs = await import("fs");
+      const path = await import("path");
+      const { fileURLToPath } = await import("url");
+
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const marketsPath = path.join(__dirname, "../constants/markets.json");
+
+      const marketsData = JSON.parse(fs.readFileSync(marketsPath, "utf8"));
+      const market = marketsData.markets[marketId.toString()];
+
+      return market ? market.has_winning_calculations : false;
+    } catch (error) {
+      console.error("Error checking market winning calculations:", error);
+      return false;
     }
   }
 
@@ -658,17 +725,19 @@ class BetService {
 
     // Prevent processing bets that have already been finalized
     if (bet.status !== "pending") {
-      console.log(`[checkBetOutcome] Bet ${betId} already processed with status: ${bet.status}, skipping`);
+      console.log(
+        `[checkBetOutcome] Bet ${betId} already processed with status: ${bet.status}, skipping`
+      );
       return {
         betId: bet._id,
         status: bet.status,
         payout: bet.payout,
-        message: "Already processed"
+        message: "Already processed",
       };
     }
 
     let matchData = match;
-    
+
     // Check the final match result cache first
     if (!matchData) {
       if (this.finalMatchResultCache.has(bet.matchId)) {
@@ -691,24 +760,32 @@ class BetService {
           }
         } catch (err) {
           console.error(`[checkBetOutcome] Error fetching match:`, err);
-          
+
           // Handle network errors gracefully
-          if (err.code === 'ECONNRESET' || err.code === 'ECONNABORTED' || 
-              err.message.includes('aborted') || err.message.includes('NETWORK_ERROR')) {
-            
-            console.log(`[checkBetOutcome] Network error for betId: ${betId}. Rescheduling for retry in 10 minutes.`);
-            
+          if (
+            err.code === "ECONNRESET" ||
+            err.code === "ECONNABORTED" ||
+            err.message.includes("aborted") ||
+            err.message.includes("NETWORK_ERROR")
+          ) {
+            console.log(
+              `[checkBetOutcome] Network error for betId: ${betId}. Rescheduling for retry in 10 minutes.`
+            );
+
             // Reschedule for retry in 10 minutes due to network issues
             const runAt = new Date(Date.now() + 10 * 60 * 1000);
-            agenda.schedule(runAt, "checkBetOutcome", { betId, matchId: bet.matchId });
-            
+            agenda.schedule(runAt, "checkBetOutcome", {
+              betId,
+              matchId: bet.matchId,
+            });
+
             return {
               betId: bet._id,
               status: bet.status,
-              message: "Network error, rescheduled for retry"
+              message: "Network error, rescheduled for retry",
             };
           }
-          
+
           // For other errors, throw as before
           throw err;
         }
@@ -723,147 +800,200 @@ class BetService {
     //NOTE: Dont remove it i will uncomment it
     // Check if match is finished (state.id === 5 means finished)
     if (!matchData.state || matchData.state.id !== 5) {
-      console.log(`[checkBetOutcome] Match not finished for betId: ${betId}, state:`, matchData.state);
+      console.log(
+        `[checkBetOutcome] Match not finished for betId: ${betId}, state:`,
+        matchData.state
+      );
 
       // If match hasn't started yet or is in progress, reschedule for estimated end time
-      if (!matchData.state || matchData.state.id === 1 || (matchData.state.id >= 2 && matchData.state.id <= 4)) {
-        console.log(`[checkBetOutcome] Match is not yet finished (state: ${matchData.state?.name}). Rescheduling for estimated end time.`);
-        agenda.schedule(bet.estimatedMatchEnd, "checkBetOutcome", { betId, matchId: bet.matchId });
+      if (
+        !matchData.state ||
+        matchData.state.id === 1 ||
+        (matchData.state.id >= 2 && matchData.state.id <= 4)
+      ) {
+        console.log(
+          `[checkBetOutcome] Match is not yet finished (state: ${matchData.state?.name}). Rescheduling for estimated end time.`
+        );
+        agenda.schedule(bet.estimatedMatchEnd, "checkBetOutcome", {
+          betId,
+          matchId: bet.matchId,
+        });
       } else {
         // For other states, check again in 10 minutes
         const runAt = new Date(Date.now() + 10 * 60 * 1000);
-        agenda.schedule(runAt, "checkBetOutcome", { betId, matchId: bet.matchId });
+        agenda.schedule(runAt, "checkBetOutcome", {
+          betId,
+          matchId: bet.matchId,
+        });
       }
 
-      return { betId, status: bet.status, message: "Match not yet finished, rescheduled" };
+      return {
+        betId,
+        status: bet.status,
+        message: "Match not yet finished, rescheduled",
+      };
     }
-   
-   // Prepare match data for outcome calculation
-   let final_match = matchData;
-   if (bet.inplay) {
-     console.log(`[checkBetOutcome] Processing inplay bet for betId: ${betId}`);
-     // For inplay bets, use inplay odds from the current match data
-     // The odds are already stored in the bet object from when it was placed
-     final_match = {...matchData, odds: matchData.inplayodds};
-     console.log(`[checkBetOutcome] Using inplay odds for outcome calculation`);
-   }
-   
-   // Calculate bet outcome using the BetOutcomeCalculationService
-   try {
-     console.log(`[checkBetOutcome] Calculating outcome for betId: ${betId}`);
-     console.log(`[checkBetOutcome] Bet details:`, {
-       oddId: bet.oddId,
-       betOption: bet.betOption,
-       inplay: bet.inplay,
-       marketId: bet.marketId,
-       betDetails: bet.betDetails
-     });
-     
-     const outcomeResult = await this.outcomeCalculator.calculateBetOutcome(bet, final_match);
-     
-     console.log(`[checkBetOutcome] Outcome calculated:`, outcomeResult);
-     
-     // Update bet based on the outcome
-     let updateData = {
-       status: outcomeResult.status,
-       payout: 0
-     };
 
-     // Handle different outcome statuses
-     switch (outcomeResult.status) {
-       case 'won':
-         const winningPayout = bet.stake * bet.odds;
-         console.log(`[checkBetOutcome] Bet won. Payout: ${winningPayout}`);
-         updateData.payout = winningPayout;
-         // Update user balance for winning bet
-         if (bet.userId) {
-           await User.findByIdAndUpdate(
-             bet.userId,
-             { $inc: { balance: winningPayout } }
-           );
-           console.log(`[checkBetOutcome] User balance updated. Added: ${winningPayout}`);
-         }
-         break;
-         
-       case 'lost':
-         console.log(`[checkBetOutcome] Bet lost. No payout.`);
-         updateData.payout = 0;
-         // No balance update needed for lost bets
-         break;
-         
-       
-       case 'cancelled':
-         console.log(`[checkBetOutcome] Bet canceled. Refunding stake: ${bet.stake}`);
-         updateData.payout = bet.stake;
-         updateData.status = 'canceled';
-         // Refund stake to user
-         if (bet.userId) {
-           await User.findByIdAndUpdate(
-             bet.userId,
-             { $inc: { balance: bet.stake } }
-           );
-           console.log(`[checkBetOutcome] Stake refunded to user: ${bet.stake}`);
-         }
-         break;
-      
-       default:
-         console.error(`[checkBetOutcome] Unknown status in outcome calculation:`, outcomeResult);
-         updateData.status = 'canceled';
-         updateData.payout = bet.stake; // Refund the stake
-         // Refund stake to user
-         if (bet.userId) {
-           await User.findByIdAndUpdate(
-             bet.userId,
-             { $inc: { balance: bet.stake } }
-           );
-           console.log(`[checkBetOutcome] Stake refunded to user due to unknown status: ${bet.stake}`);
-         }
-         break;
-     }
+    // Prepare match data for outcome calculation
+    let final_match = matchData;
+    if (bet.inplay) {
+      console.log(
+        `[checkBetOutcome] Processing inplay bet for betId: ${betId}`
+      );
+      // For inplay bets, use inplay odds from the current match data
+      // The odds are already stored in the bet object from when it was placed
+      final_match = { ...matchData, odds: matchData.inplayodds };
+      console.log(
+        `[checkBetOutcome] Using inplay odds for outcome calculation`
+      );
+    }
 
-     // Update the bet in database
-     const updatedBet = await Bet.findByIdAndUpdate(
-       betId,
-       updateData,
-       { new: true }
-     );
+    // Calculate bet outcome using the BetOutcomeCalculationService
+    try {
+      console.log(`[checkBetOutcome] Calculating outcome for betId: ${betId}`);
+      console.log(`[checkBetOutcome] Bet details:`, {
+        oddId: bet.oddId,
+        betOption: bet.betOption,
+        inplay: bet.inplay,
+        marketId: bet.betDetails.market_id,
+        betDetails: bet.betDetails,
+      });
 
-     if (!updatedBet) {
-       throw new CustomError("Failed to update bet", 500, "UPDATE_FAILED");
-     }
+      let outcomeResult;
+      if (bet.inplay) {
+        //INFO: For inplay bets, use inplay odds from the current match data
+        
+        final_match = { ...matchData, odds: matchData.inplayodds };
+      }
+      if (
+        bet.inplay &&
+        this.checkMarketHasWinningCalculations(bet.betDetails.market_id)
+      ) {
+        console.log(
+          `[checkBetOutcome] Using WinningOddsCalculation for inplay bet`
+        );
 
-     console.log(`[checkBetOutcome] Bet updated successfully. betId: ${bet._id}, status: ${updatedBet.status}, payout: ${updatedBet.payout}`);
+        outcomeResult = await this.WinningOddsCalculation.calculateBetOutcome(
+          bet,
+          final_match
+        );
+      } else {
+        outcomeResult = await this.SimpleOddsCalculation.calculateBetOutcome(
+          bet,
+          final_match
+        );
+      }
 
-     return {
-       betId: updatedBet._id,
-       status: updatedBet.status,
-       payout: updatedBet.payout
-     };
+      console.log(`[checkBetOutcome] Outcome calculated:`, outcomeResult);
 
-   } catch (error) {
-     console.error(`[checkBetOutcome] Error in outcome calculation:`, error);
-     
-     // Update bet status to error (using canceled since error is not in enum)
-     await Bet.findByIdAndUpdate(betId, {
-       status: 'canceled',
-       payout: bet.stake // Refund the stake due to error
-     });
+      // Update bet based on the outcome
+      let updateData = {
+        status: outcomeResult.status,
+        payout: 0,
+      };
 
-     // Refund stake to user due to error
-     if (bet.userId) {
-       await User.findByIdAndUpdate(
-         bet.userId,
-         { $inc: { balance: bet.stake } }
-       );
-       console.log(`[checkBetOutcome] Stake refunded to user due to calculation error: ${bet.stake}`);
-     }
+      // Handle different outcome statuses
+      switch (outcomeResult.status) {
+        case "won":
+          const winningPayout = bet.stake * bet.odds;
+          console.log(`[checkBetOutcome] Bet won. Payout: ${winningPayout}`);
+          updateData.payout = winningPayout;
+          // Update user balance for winning bet
+          if (bet.userId) {
+            await User.findByIdAndUpdate(bet.userId, {
+              $inc: { balance: winningPayout },
+            });
+            console.log(
+              `[checkBetOutcome] User balance updated. Added: ${winningPayout}`
+            );
+          }
+          break;
 
-     throw new CustomError(
-       `Failed to calculate bet outcome: ${error.message}`,
-       500,
-       "CALCULATION_ERROR"
-     );
-   }
+        case "lost":
+          console.log(`[checkBetOutcome] Bet lost. No payout.`);
+          updateData.payout = 0;
+          // No balance update needed for lost bets
+          break;
+
+        case "cancelled":
+          console.log(
+            `[checkBetOutcome] Bet canceled. Refunding stake: ${bet.stake}`
+          );
+          updateData.payout = bet.stake;
+          updateData.status = "canceled";
+          // Refund stake to user
+          if (bet.userId) {
+            await User.findByIdAndUpdate(bet.userId, {
+              $inc: { balance: bet.stake },
+            });
+            console.log(
+              `[checkBetOutcome] Stake refunded to user: ${bet.stake}`
+            );
+          }
+          break;
+
+        default:
+          console.error(
+            `[checkBetOutcome] Unknown status in outcome calculation:`,
+            outcomeResult
+          );
+          updateData.status = "canceled";
+          updateData.payout = bet.stake; // Refund the stake
+          // Refund stake to user
+          if (bet.userId) {
+            await User.findByIdAndUpdate(bet.userId, {
+              $inc: { balance: bet.stake },
+            });
+            console.log(
+              `[checkBetOutcome] Stake refunded to user due to unknown status: ${bet.stake}`
+            );
+          }
+          break;
+      }
+
+      // Update the bet in database
+      const updatedBet = await Bet.findByIdAndUpdate(betId, updateData, {
+        new: true,
+      });
+
+      if (!updatedBet) {
+        throw new CustomError("Failed to update bet", 500, "UPDATE_FAILED");
+      }
+
+      console.log(
+        `[checkBetOutcome] Bet updated successfully. betId: ${bet._id}, status: ${updatedBet.status}, payout: ${updatedBet.payout}`
+      );
+
+      return {
+        betId: updatedBet._id,
+        status: updatedBet.status,
+        payout: updatedBet.payout,
+      };
+    } catch (error) {
+      console.error(`[checkBetOutcome] Error in outcome calculation:`, error);
+
+      // Update bet status to error (using canceled since error is not in enum)
+      await Bet.findByIdAndUpdate(betId, {
+        status: "canceled",
+        payout: bet.stake, // Refund the stake due to error
+      });
+
+      // Refund stake to user due to error
+      if (bet.userId) {
+        await User.findByIdAndUpdate(bet.userId, {
+          $inc: { balance: bet.stake },
+        });
+        console.log(
+          `[checkBetOutcome] Stake refunded to user due to calculation error: ${bet.stake}`
+        );
+      }
+
+      throw new CustomError(
+        `Failed to calculate bet outcome: ${error.message}`,
+        500,
+        "CALCULATION_ERROR"
+      );
+    }
   }
 
   async checkPendingBets() {
@@ -995,14 +1125,21 @@ class BetService {
     if (!userId) {
       throw new CustomError("User ID is required", 400, "USER_ID_REQUIRED");
     }
-    
+
     // Convert string userId to ObjectId if necessary
-    const userObjectId = typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId;
-    console.log(`[getBetsByUserId] Searching for bets with userId: ${userId} (as ObjectId: ${userObjectId})`);
-    
-    const bets = await Bet.find({ userId: userObjectId }).sort({ createdAt: -1 });
-    console.log(`[getBetsByUserId] Found ${bets.length} bets for user ${userId}`);
-    
+    const userObjectId =
+      typeof userId === "string" ? new mongoose.Types.ObjectId(userId) : userId;
+    console.log(
+      `[getBetsByUserId] Searching for bets with userId: ${userId} (as ObjectId: ${userObjectId})`
+    );
+
+    const bets = await Bet.find({ userId: userObjectId }).sort({
+      createdAt: -1,
+    });
+    console.log(
+      `[getBetsByUserId] Found ${bets.length} bets for user ${userId}`
+    );
+
     return bets;
   }
 
