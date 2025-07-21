@@ -490,8 +490,7 @@ class BetService {
       betDetails,
     });
 
-    console.log(`[placeBet] Creating bet with marketId: ${odds.market_id}`);
-    console.log(`[placeBet] Bet details:`, betDetails);
+    
     await bet.save();
 
     const nowUTC = this.getCurrentUTCTime();
@@ -512,7 +511,10 @@ class BetService {
     // Schedule outcome check
     await this.scheduleBetOutcomeCheck(bet._id, estimatedMatchEnd, matchId);
 
-    return bet;
+    // Fetch the updated user (with new balance)
+    const updatedUser = await User.findById(userId);
+
+    return { bet, user: updatedUser };
   }
 
   scheduleBetOutcomeCheck(betId, estimatedMatchEnd, matchId) {

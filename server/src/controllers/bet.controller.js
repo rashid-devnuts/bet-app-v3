@@ -32,7 +32,8 @@ class BetController {
       const result = await BetService.placeBet(userId, matchId, oddId, stake, betOption, isLive);
       res.status(201).json({
         success: true,
-        data: result,
+        bet: result.bet,
+        user: result.user,
         message: "Bet placed successfully",
       });
     } catch (error) {

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiClient from "@/config/axios";
+import { setUser } from "@/lib/features/auth/authSlice";
 
 const betSlipSlice = createSlice({
   name: "betSlip",
@@ -255,6 +256,10 @@ export const placeBetThunk = createAsyncThunk(
 
         const response = await apiClient.post("/bet/place-bet", payload);
         results.push(response.data);
+        // If the response contains a user object, update the Redux user state
+        if (response.data.user) {
+          dispatch(setUser(response.data.user));
+        }
       }
       console.log(results);
       dispatch(clearAllBets());

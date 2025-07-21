@@ -140,6 +140,9 @@ const authSlice = createSlice({
     setInitialized: (state) => {
       state.isInitialized = true;
     },
+    setUser: (state, action) => {
+      state.user = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -284,7 +287,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, clearMessage, clearAuth, setInitialized } =
+export const { clearError, clearMessage, clearAuth, setInitialized, setUser } =
   authSlice.actions;
 
 export const selectAuth = (state) => state.auth;
