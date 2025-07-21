@@ -347,3 +347,27 @@ export const debugTimezone = (dateTime) => {
     return { error: error.message };
   }
 };
+
+/**
+ * Get countdown to kickoff (hours, minutes, seconds) from a match object using starting_at
+ * @param {Object} match - Match object with starting_at field
+ * @returns {Object} { hours, minutes, seconds } until kickoff, or zeros if started or invalid
+ */
+export const getCountdownToKickoff = (match) => {
+  if (!match || !match.starting_at) return { hours: 0, minutes: 0, seconds: 0 };
+  let kickoff;
+  if (match.starting_at.includes('T')) {
+    kickoff = new Date(match.starting_at.endsWith('Z') ? match.starting_at : match.starting_at + 'Z');
+  } else {
+    kickoff = new Date(match.starting_at.replace(' ', 'T') + 'Z');
+  }
+  const now = new Date();
+  let diff = Math.max(0, kickoff.getTime() - now.getTime());
+  if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0 };
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  diff -= hours * 1000 * 60 * 60;
+  const minutes = Math.floor(diff / (1000 * 60));
+  diff -= minutes * 1000 * 60;
+  const seconds = Math.floor(diff / 1000);
+  return { hours, minutes, seconds };
+};

@@ -59,26 +59,7 @@ const LeagueDetailPage = ({ leagueId }) => {
                     <LeagueHeader league={selectMatches.league} />
 
                     {/* Live & Upcoming Section */}
-                    <div className="mb-4">
-                        <div className="flex items-center justify-between border-b border-gray-200">
-                            <h2 className="text-lg font-semibold text-gray-800">Live & Upcoming</h2>
-                            <div className="flex items-center px-4 py-1">
-                                <Select value={selectedBetType} onValueChange={setSelectedBetType}>
-                                    <SelectTrigger className="w-auto min-w-[150px] py-3  text-sm bg-white  ">
-                                        <span className="">Bet Type: </span>
-                                        <span className="text-base font-medium ">{betTypeLabels[selectedBetType]}</span>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="match">Match</SelectItem>
-                                        <SelectItem value="total-goals">Total Goals</SelectItem>
-                                        <SelectItem value="handicap">Handicap</SelectItem>
-                                        <SelectItem value="over-under">Over/Under</SelectItem>
-                                        <SelectItem value="both-teams">Both Teams to Score</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                    </div>
+                    
 
                     <LeagueAccordions matches={selectMatches.matches} />
                 </div>
