@@ -1297,10 +1297,36 @@ class BetService {
     if (!allLegsFinished) {
       console.log(`[processCombinationBetOutcome] Not all legs finished, rescheduling check`);
       
-      // Update the bet with current leg statuses
-      await Bet.findByIdAndUpdate(betId, {
-        combination: updatedCombination
-      });
+      // Update each leg individually using array index updates
+      const updateOperations = [];
+      
+      for (let i = 0; i < updatedCombination.length; i++) {
+        const leg = updatedCombination[i];
+        if (leg.status !== 'pending') { // Only update legs that have been processed
+          updateOperations.push(
+            Bet.updateOne(
+              { _id: betId },
+              {
+                $set: {
+                  [`combination.${i}.status`]: leg.status,
+                  [`combination.${i}.payout`]: leg.payout
+                }
+              }
+            )
+          );
+        }
+      }
+      
+      if (updateOperations.length > 0) {
+        const updateResults = await Promise.all(updateOperations);
+        const successfulUpdates = updateResults.filter(result => result.modifiedCount > 0);
+        
+        if (successfulUpdates.length > 0) {
+          console.log(`[processCombinationBetOutcome] Updated combination with partial results:`, 
+            updatedCombination.map((leg, index) => `Leg ${index + 1}: ${leg.status}`)
+          );
+        }
+      }
       
       // Reschedule for 10 minutes from now
       const runAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -1347,16 +1373,59 @@ class BetService {
       console.log(`[processCombinationBetOutcome] At least one leg lost. No payout.`);
     }
 
-    // Update the bet in database
-    const updateData = {
-      status: overallStatus,
-      payout: overallPayout,
-      combination: updatedCombination,
-    };
-
-    const updatedBet = await Bet.findByIdAndUpdate(betId, updateData, {
-      new: true,
+    // Update the bet in database with both overall status and individual leg statuses
+    // Use replaceOne approach to ensure the entire document is updated properly
+    console.log(`[processCombinationBetOutcome] Updating bet with data:`, {
+      betId: betId,
+      overallStatus: overallStatus,
+      overallPayout: overallPayout,
+      legCount: updatedCombination.length,
+      legStatuses: updatedCombination.map((leg, index) => `Leg ${index + 1}: ${leg.status}`)
     });
+
+    // Update each leg individually using array index updates
+    const updateOperations = [];
+    
+    // Update overall bet status and payout
+    updateOperations.push(
+      Bet.updateOne(
+        { _id: betId },
+        {
+          $set: {
+            status: overallStatus,
+            payout: overallPayout
+          }
+        }
+      )
+    );
+    
+    // Update each leg individually
+    for (let i = 0; i < updatedCombination.length; i++) {
+      const leg = updatedCombination[i];
+      updateOperations.push(
+        Bet.updateOne(
+          { _id: betId },
+          {
+            $set: {
+              [`combination.${i}.status`]: leg.status,
+              [`combination.${i}.payout`]: leg.payout
+            }
+          }
+        )
+      );
+    }
+    
+    // Execute all updates
+    const updateResults = await Promise.all(updateOperations);
+    
+    // Check if any update failed
+    const failedUpdates = updateResults.filter(result => result.modifiedCount === 0);
+    if (failedUpdates.length > 0) {
+      console.error(`[processCombinationBetOutcome] Some updates failed: ${failedUpdates.length} out of ${updateResults.length}`);
+    }
+
+    // Fetch the updated document
+    const updatedBet = await Bet.findById(betId);
 
     if (!updatedBet) {
       throw new CustomError("Failed to update combination bet", 500, "UPDATE_FAILED");
@@ -1364,6 +1433,16 @@ class BetService {
 
     console.log(
       `[processCombinationBetOutcome] Combination bet updated successfully. betId: ${bet._id}, status: ${updatedBet.status}, payout: ${updatedBet.payout}`
+    );
+    console.log(
+      `[processCombinationBetOutcome] Individual leg statuses:`, 
+      updatedCombination.map((leg, index) => `Leg ${index + 1}: ${leg.status}`)
+    );
+
+    // Verify that the update was successful by checking the actual saved data
+    console.log(
+      `[processCombinationBetOutcome] Verification - Saved leg statuses:`, 
+      updatedBet.combination.map((leg, index) => `Leg ${index + 1}: ${leg.status}`)
     );
 
     return {
