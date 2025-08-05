@@ -92,19 +92,61 @@ export const checkFixtureCacheAndManageJobs = async () => {
   const hasFixtureData = liveFixturesService.hasFixtureCacheData();
   
   if (hasFixtureData) {
-    console.log('[Agenda] Fixture cache has data - scheduling jobs');
-    await scheduleLiveOddsJob();
+    console.log('[Agenda] Fixture cache has data - scheduling inplay matches job');
     await scheduleInplayMatchesJob();
+    
+    // Check if there are actual live matches for live odds job
+    const hasLiveMatches = checkForLiveMatches(liveFixturesService);
+    if (hasLiveMatches) {
+      console.log('[Agenda] Live matches found - scheduling live odds job');
+      await scheduleLiveOddsJob();
+    } else {
+      console.log('[Agenda] No live matches found - cancelling live odds job');
+      await cancelLiveOddsJob();
+    }
     
     // Only schedule homepage cache job if service is available
     if (fixtureOptimizationService) {
       await scheduleHomepageCacheJob();
     }
   } else {
-    console.log('[Agenda] Fixture cache is empty - cancelling jobs');
+    console.log('[Agenda] Fixture cache is empty - cancelling all jobs');
     await cancelLiveOddsJob();
     await cancelInplayMatchesJob();
     await cancelHomepageCacheJob();
+  }
+};
+
+// Function to check if there are live matches in cache
+const checkForLiveMatches = (liveFixturesService) => {
+  try {
+    const inplayMatches = liveFixturesService.inplayMatchesCache.get('inplay_matches') || [];
+    console.log(`[Agenda] Live matches count in cache: ${inplayMatches.length}`);
+    return inplayMatches.length > 0;
+  } catch (error) {
+    console.error('[Agenda] Error checking live matches:', error);
+    return false;
+  }
+};
+
+// Function to check live matches and manage live odds job dynamically
+export const checkLiveMatchesAndManageLiveOddsJob = async () => {
+  const liveFixturesService = getLiveFixturesService();
+  
+  if (!liveFixturesService) {
+    console.log('[Agenda] LiveFixtures service not available - cancelling live odds job');
+    await cancelLiveOddsJob();
+    return;
+  }
+  
+  const hasLiveMatches = checkForLiveMatches(liveFixturesService);
+  
+  if (hasLiveMatches && !liveOddsJobScheduled) {
+    console.log('[Agenda] Live matches detected - starting live odds job');
+    await scheduleLiveOddsJob();
+  } else if (!hasLiveMatches && liveOddsJobScheduled) {
+    console.log('[Agenda] No live matches - stopping live odds job');
+    await cancelLiveOddsJob();
   }
 };
 
@@ -132,6 +174,13 @@ agenda.define("updateLiveOdds", async (job) => {
       return;
     }
     
+    // Double-check that there are still live matches before updating odds
+    const hasLiveMatches = checkForLiveMatches(liveFixturesService);
+    if (!hasLiveMatches) {
+      console.log('[Agenda] No live matches found during odds update - skipping');
+      return;
+    }
+    
     await liveFixturesService.updateAllLiveOdds();
     console.log(`[Agenda] Live odds updated successfully at ${new Date().toISOString()}`);
   } catch (error) {
@@ -156,6 +205,9 @@ agenda.define("updateInplayMatches", async (job) => {
     // Check if matches were cached
     const cachedMatches = liveFixturesService.inplayMatchesCache.get('inplay_matches') || [];
     console.log(`[Agenda] Cached matches count: ${cachedMatches.length}`);
+    
+    // Check live matches and manage live odds job accordingly
+    await checkLiveMatchesAndManageLiveOddsJob();
     
     // Immediately update odds for the live matches
     if (cachedMatches.length > 0) {
