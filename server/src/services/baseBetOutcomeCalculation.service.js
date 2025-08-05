@@ -52,7 +52,7 @@ export default class BaseBetOutcomeCalculationService {
       TEAM_TO_SCORE_HALF: [24, 25], // Team to Score in 1st/2nd Half
       HALF_TIME_ASIAN_HANDICAP: [26], // 1st Half Asian Handicap
       HALF_TIME_GOAL_LINE: [27], // 1st Half Goal Line
-      HALF_TIME_GOALS: [28], // 1st Half Goals
+      HALF_TIME_GOALS: [28, 53], // 1st Half Goals, 2nd Half Goals
       HALF_TIME_FULL_TIME: [29], // Half Time/Full Time
       GOALSCORERS: [90], // Goalscorers (First/Last/Anytime)
       PLAYER_SHOTS_ON_TARGET: [267], // Player Total Shots On Target
@@ -85,6 +85,11 @@ export default class BaseBetOutcomeCalculationService {
     }
     return "UNKNOWN";
   }
+
+
+  
+
+
 
   /**
    * Calculate Last Team To Score outcome
@@ -1991,17 +1996,106 @@ export default class BaseBetOutcomeCalculationService {
     return null;
   }
 
-  calculateBothTeamsScore1stHalf2ndHalf(bet, matchData) {
+  /**
+   * Calculate Both Teams to Score in 1st Half outcome (Market 15)
+   */
+  calculateBothTeamsScore1stHalf(bet, matchData) {
     const firstHalfScores = this.extractFirstHalfScores(matchData);
-    const secondHalfScores = this.extractSecondHalfScores(matchData);
-    const isWinning =
-      firstHalfScores.homeScore > 0 &&
-      secondHalfScores.homeScore > 0 &&
-      firstHalfScores.awayScore > 0 &&
-      secondHalfScores.awayScore > 0;
+    
+    if (!firstHalfScores) {
+      return {
+        status: "canceled",
+        payout: bet.stake,
+        reason: "First half scores not available",
+      };
+    }
+
+    // Check if both teams scored in the first half
+    const bothTeamsScored1stHalf = firstHalfScores.homeScore > 0 && firstHalfScores.awayScore > 0;
+
+    // Get bet selection from betDetails
+    const originalBetSelection = bet.betDetails?.label || bet.betDetails?.name || bet.betOption;
+    const betSelection = this.normalizeBetSelection(originalBetSelection);
+    const isYesBet = this.resultMappings.YES.includes(betSelection);
+
+    const isWinning = isYesBet ? bothTeamsScored1stHalf : !bothTeamsScored1stHalf;
 
     return {
       status: isWinning ? "won" : "lost",
+      payout: isWinning ? bet.stake * bet.odds : 0,
+      bothTeamsScored1stHalf: bothTeamsScored1stHalf,
+      firstHalfHomeScore: firstHalfScores.homeScore,
+      firstHalfAwayScore: firstHalfScores.awayScore,
+      betSelection: betSelection,
+      reason: `Both Teams to Score in 1st Half: ${bothTeamsScored1stHalf ? "Yes" : "No"} (${firstHalfScores.homeScore}-${firstHalfScores.awayScore})`,
+    };
+  }
+
+  /**
+   * Calculate Both Teams to Score in 2nd Half outcome (Market 16)
+   */
+  calculateBothTeamsScore2ndHalf(bet, matchData) {
+    const secondHalfScores = this.extractSecondHalfScores(matchData);
+    
+    if (!secondHalfScores) {
+      return {
+        status: "canceled",
+        payout: bet.stake,
+        reason: "Second half scores not available",
+      };
+    }
+
+    // Check if both teams scored in the second half
+    const bothTeamsScored2ndHalf = secondHalfScores.homeScore > 0 && secondHalfScores.awayScore > 0;
+
+    // Get bet selection from betDetails
+    const originalBetSelection = bet.betDetails?.label || bet.betDetails?.name || bet.betOption;
+    const betSelection = this.normalizeBetSelection(originalBetSelection);
+    const isYesBet = this.resultMappings.YES.includes(betSelection);
+
+    const isWinning = isYesBet ? bothTeamsScored2ndHalf : !bothTeamsScored2ndHalf;
+
+    return {
+      status: isWinning ? "won" : "lost",
+      payout: isWinning ? bet.stake * bet.odds : 0,
+      bothTeamsScored2ndHalf: bothTeamsScored2ndHalf,
+      secondHalfHomeScore: secondHalfScores.homeScore,
+      secondHalfAwayScore: secondHalfScores.awayScore,
+      betSelection: betSelection,
+      reason: `Both Teams to Score in 2nd Half: ${bothTeamsScored2ndHalf ? "Yes" : "No"} (${secondHalfScores.homeScore}-${secondHalfScores.awayScore})`,
+    };
+  }
+
+  /**
+   * Calculate Both Teams to Score in 1st Half AND 2nd Half outcome
+   * This is for a different market that requires both conditions
+   */
+  calculateBothTeamsScore1stHalf2ndHalf(bet, matchData) {
+    const firstHalfScores = this.extractFirstHalfScores(matchData);
+    const secondHalfScores = this.extractSecondHalfScores(matchData);
+    
+    if (!firstHalfScores || !secondHalfScores) {
+      return {
+        status: "canceled",
+        payout: bet.stake,
+        reason: "Half-time scores not available",
+      };
+    }
+
+    const bothTeamsScored1stHalf = firstHalfScores.homeScore > 0 && firstHalfScores.awayScore > 0;
+    const bothTeamsScored2ndHalf = secondHalfScores.homeScore > 0 && secondHalfScores.awayScore > 0;
+    
+    // Both conditions must be true
+    const isWinning = bothTeamsScored1stHalf && bothTeamsScored2ndHalf;
+
+    return {
+      status: isWinning ? "won" : "lost",
+      payout: isWinning ? bet.stake * bet.odds : 0,
+      bothTeamsScored1stHalf: bothTeamsScored1stHalf,
+      bothTeamsScored2ndHalf: bothTeamsScored2ndHalf,
+      firstHalfScore: `${firstHalfScores.homeScore}-${firstHalfScores.awayScore}`,
+      secondHalfScore: `${secondHalfScores.homeScore}-${secondHalfScores.awayScore}`,
+      reason: `Both Teams to Score in 1st AND 2nd Half: 1st(${bothTeamsScored1stHalf ? "Yes" : "No"}) 2nd(${bothTeamsScored2ndHalf ? "Yes" : "No"})`,
     };
   }
   /**
@@ -2865,6 +2959,84 @@ export default class BaseBetOutcomeCalculationService {
       threshold: threshold,
       betType: betType,
       reason: `${teamName} corners: ${teamCorners}, Threshold: ${threshold} (${betType})`,
+    };
+  }
+
+  /**
+   * Calculate Half-Specific Goals outcome (Market 28: 1st Half Goals, Market 53: 2nd Half Goals)
+   * This handles Over/Under bets for goals scored in a specific half
+   */
+  calculateHalfSpecificGoals(bet, matchData) {
+    const marketId = parseInt(bet.betDetails?.market_id);
+    
+    // Determine which half to calculate for
+    let halfScores;
+    let halfName;
+    
+    if (marketId === 28) {
+      // 1st Half Goals
+      halfScores = this.extractFirstHalfScores(matchData);
+      halfName = "1st Half";
+    } else if (marketId === 53) {
+      // 2nd Half Goals
+      halfScores = this.extractSecondHalfScores(matchData);
+      halfName = "2nd Half";
+    } else {
+      return {
+        status: "canceled",
+        payout: bet.stake,
+        reason: `Unsupported market ID for half-specific goals: ${marketId}`,
+      };
+    }
+
+    if (!halfScores) {
+      return {
+        status: "canceled",
+        payout: bet.stake,
+        reason: `${halfName} scores not available`,
+      };
+    }
+
+    // Calculate total goals for the specific half
+    const totalGoals = halfScores.homeScore + halfScores.awayScore;
+
+    // Extract threshold and bet type directly from betDetails
+    let threshold;
+    let betType;
+
+    if (bet.betDetails) {
+      threshold = parseFloat(bet.betDetails.name); // e.g., "1.5", "0.5"
+      betType = this.normalizeBetSelection(bet.betDetails.label); // e.g., "Under", "Over"
+    } else {
+      return {
+        status: "canceled",
+        payout: bet.stake,
+        reason: "betDetails not available for half-specific goals calculation",
+      };
+    }
+
+    // Determine if bet is winning
+    let isWinning;
+    if (betType === "OVER") {
+      isWinning = totalGoals > threshold;
+    } else if (betType === "UNDER") {
+      isWinning = totalGoals < threshold;
+    } else {
+      // Exact match (though unlikely for half goals)
+      isWinning = totalGoals === threshold;
+    }
+
+    return {
+      status: isWinning ? "won" : "lost",
+      payout: isWinning ? bet.stake * bet.odds : 0,
+      totalGoals: totalGoals,
+      homeGoals: halfScores.homeScore,
+      awayGoals: halfScores.awayScore,
+      threshold: threshold,
+      betType: betType,
+      halfName: halfName,
+      marketId: marketId,
+      reason: `${halfName} goals: ${totalGoals} (${halfScores.homeScore}-${halfScores.awayScore}), Threshold: ${threshold} (${betType})`,
     };
   }
 }

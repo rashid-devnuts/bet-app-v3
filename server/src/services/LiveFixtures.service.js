@@ -16,6 +16,12 @@ class LiveFixturesService {
     this.lastInplayUpdate = 0;
     this.updateInterval = 5 * 60 * 1000; // 5 minutes in milliseconds
     this.io = null; // Will be set from app.js
+    
+    // Define allowed market IDs once in constructor
+    this.allowedMarketIds = [
+      1, 2, 267, 268, 29, 90, 93, 95, 124, 125, 10, 14, 18, 19, 44, 4, 5, 81,
+      37, 11, 97, 13, 86, 80, 60, 67, 68, 69, 15, 16,53,28
+    ];
   }
 
   // Set Socket.IO instance
@@ -665,12 +671,6 @@ class LiveFixturesService {
       return;
     }
 
-    // Define the same allowed market IDs as in fixture.service.js
-    const allowedMarketIds = [
-      1, 2, 267, 268, 29, 90, 93, 95, 124, 125, 10, 14, 18, 19, 44, 4, 5, 81,
-      37, 11, 97, 13, 86, 80, 60, 67, 68, 69,
-    ];
-
     let successfulUpdates = 0;
     for (const match of inplayMatches) {
       try {
@@ -691,7 +691,7 @@ class LiveFixturesService {
         
         // Filter odds by allowed market IDs
         let filteredOdds = allOdds.filter((odd) =>
-          allowedMarketIds.includes(odd.market_id)
+          this.allowedMarketIds.includes(odd.market_id)
         );
         
         console.log(`[LiveFixtures] Match ${match.id} - Filtered odds count: ${filteredOdds.length}`);
@@ -772,12 +772,6 @@ class LiveFixturesService {
     
     const apiToken = process.env.SPORTSMONKS_API_KEY;
 
-    // Define the same allowed market IDs as in fixture.service.js
-    const allowedMarketIds = [
-      1, 2, 267, 268, 29, 90, 93, 95, 124, 125, 10, 14, 18, 19, 44, 4, 5, 81,
-      37, 11, 97, 13, 86, 80, 60, 67, 68, 69,
-    ];
-
     if (!apiToken) {
       console.error("❌ SPORTSMONKS_API_KEY is not set");
       return;
@@ -807,7 +801,7 @@ class LiveFixturesService {
           
           // Filter odds by allowed market IDs
           let filteredOdds = allOdds.filter((odd) =>
-            allowedMarketIds.includes(odd.market_id)
+            this.allowedMarketIds.includes(odd.market_id)
           );
 
           // Group odds by market for classification
@@ -972,12 +966,6 @@ class LiveFixturesService {
       throw new CustomError("API key not configured", 500, "API_KEY_MISSING");
     }
 
-    // Define the same allowed market IDs as in fixture.service.js
-    const allowedMarketIds = [
-      1, 2, 267, 268, 29, 90, 93, 95, 124, 125, 10, 14, 18, 19, 44, 4, 5, 81,
-      37, 11, 97, 13, 86, 80, 60, 67, 68, 69,
-    ];
-
     // Retry logic for network issues
     const maxRetries = 3;
     let lastError;
@@ -1005,7 +993,7 @@ class LiveFixturesService {
 
         // Filter odds by allowed market IDs
         let oddsData = allOddsData.filter((odd) =>
-          allowedMarketIds.includes(odd.market_id)
+          this.allowedMarketIds.includes(odd.market_id)
         );
 
         // Get match data for team names

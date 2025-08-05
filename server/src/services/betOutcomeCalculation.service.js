@@ -79,15 +79,17 @@ class BetOutcomeCalculationService extends BaseBetOutcomeCalculationService {
    */
   async calculateOutcomeByMarketType(bet, matchData, marketId) {
     const marketType = this.getMarketType(marketId);
-    console.log("THIS IS FROM THE BET OUTCOME CALCULATION SERVICE", marketType);
+   
     
     switch (marketType) {
       case "OVER_UNDER":
         return super.calculateOverUnder(bet, matchData);
 
       case "BOTH_TEAMS_SCORE_1ST_HALF":
+        return super.calculateBothTeamsScore1stHalf(bet, matchData);
+
       case "BOTH_TEAMS_SCORE_2ND_HALF":
-        return super.calculateBothTeamsScore(bet, matchData);
+        return super.calculateBothTeamsScore2ndHalf(bet, matchData);
 
       case "CORRECT_SCORE":
         return super.calculateCorrectScore(bet, matchData);
@@ -139,7 +141,7 @@ class BetOutcomeCalculationService extends BaseBetOutcomeCalculationService {
         return super.calculateResultBothTeamsToScore(bet, matchData);
 
       case "HALF_TIME_GOALS":
-        return super.calculateOverUnder(bet, matchData); // Similar to over/under for specific half
+        return super.calculateHalfSpecificGoals(bet, matchData); // 1st Half Goals (28) and 2nd Half Goals (53)
 
       case "HALF_TIME_FULL_TIME":
         return super.calculateHalfTimeFullTime(bet, matchData);

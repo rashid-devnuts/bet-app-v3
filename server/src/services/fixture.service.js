@@ -188,7 +188,7 @@ class FixtureOptimizationService {
     // Define the allowed market IDs for filtering odds
     const allowedMarketIds = [
       1, 2, 267, 268, 29, 90, 93, 95, 124, 125, 10, 14, 18, 19, 44, 4, 5, 81,
-      37, 11, 97, 13, 86, 80, 60, 67, 68, 69,
+      37, 11, 97, 13, 86, 80, 60, 67, 68, 69,15,16,28,53
     ];
 
     return fixtures.map((fixture) => {
