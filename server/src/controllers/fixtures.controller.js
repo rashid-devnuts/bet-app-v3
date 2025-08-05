@@ -274,15 +274,6 @@ export const getLiveMatchesFromCache = async (req, res) => {
   
   console.log("🎯 getLiveMatchesFromCache controller called");
   
-  // First, update live odds to ensure we have fresh data
-  // try {
-  //   console.log("🔄 Starting live odds update...");
-  //   await liveFixturesService.updateAllLiveOdds();
-  //   console.log("✅ Live odds update completed");
-  // } catch (error) {
-  //   console.error("❌ Error updating live odds:", error);
-  // }
-  
   console.log("📊 Getting live matches from cache...");
   const liveMatches = await liveFixturesService.getLiveMatchesFromCache();
   
@@ -300,9 +291,28 @@ export const getLiveMatchesFromCache = async (req, res) => {
     //   return match.odds && (match.odds.home || match.odds.draw || match.odds.away);
     // });
   });
+  
   // Remove league groups with no matches
   const filteredLiveMatches = liveMatches.filter(group => group.matches.length > 0);
-  res.json(filteredLiveMatches);
+  
+  // LIMIT TO ONLY ONE LIVE MATCH - API CALL OPTIMIZATION
+  if (filteredLiveMatches.length > 0) {
+    // Take only the first league group
+    const firstLeagueGroup = filteredLiveMatches[0];
+    
+    // If the first league has multiple matches, take only the first match
+    if (firstLeagueGroup.matches && firstLeagueGroup.matches.length > 1) {
+      firstLeagueGroup.matches = [firstLeagueGroup.matches[0]];
+      console.log(`📊 [API OPTIMIZATION] Limited to 1 match from ${firstLeagueGroup.matches.length + 1} matches in league ${firstLeagueGroup.league?.name || firstLeagueGroup.league?.id}`);
+    }
+    
+    // Return only the first league group with limited matches
+    const limitedLiveMatches = [firstLeagueGroup];
+    console.log(`📊 [API OPTIMIZATION] Returning only 1 live match to limit API calls`);
+    res.json(limitedLiveMatches);
+  } else {
+    res.json([]);
+  }
 };
 
 

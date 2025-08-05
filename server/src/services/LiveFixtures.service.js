@@ -173,13 +173,30 @@ class LiveFixturesService {
         return true;
       });
       
+      // LIMIT TO ONLY ONE LIVE MATCH - API CALL OPTIMIZATION
+      let limitedLeagueGroups = leagueGroups;
+      if (leagueGroups.length > 0) {
+        // Take only the first league group
+        const firstLeagueGroup = leagueGroups[0];
+        
+        // If the first league has multiple matches, take only the first match
+        if (firstLeagueGroup.matches && firstLeagueGroup.matches.length > 1) {
+          firstLeagueGroup.matches = [firstLeagueGroup.matches[0]];
+          console.log(`📡 [WebSocket] [API OPTIMIZATION] Limited to 1 match from ${firstLeagueGroup.matches.length + 1} matches in league ${firstLeagueGroup.league?.name || firstLeagueGroup.league?.id}`);
+        }
+        
+        // Return only the first league group with limited matches
+        limitedLeagueGroups = [firstLeagueGroup];
+        console.log(`📡 [WebSocket] [API OPTIMIZATION] Emitting only 1 live match to limit API calls`);
+      }
+      
       const updateData = {
-        matches: leagueGroups,
+        matches: limitedLeagueGroups,
         timestamp: new Date().toISOString()
       };
       
       this.io.to('liveMatches').emit('liveMatchesUpdate', updateData);
-      console.log(`📡 [WebSocket] Emitted live matches update for ${leagueGroups.length} league groups (filtered from ${Array.from(leagueMap.values()).length} total leagues)`);
+      console.log(`📡 [WebSocket] Emitted live matches update for ${limitedLeagueGroups.length} league groups (filtered from ${Array.from(leagueMap.values()).length} total leagues)`);
     }
   }
 
@@ -663,7 +680,9 @@ class LiveFixturesService {
       return;
     }
     
-    console.log(`[LiveFixtures] Updating odds for ${inplayMatches.length} inplay matches`);
+    // LIMIT TO ONLY ONE LIVE MATCH - API CALL OPTIMIZATION
+    const limitedInplayMatches = inplayMatches.slice(0, 1);
+    console.log(`[LiveFixtures] [API OPTIMIZATION] Limiting odds update to 1 match from ${inplayMatches.length} inplay matches`);
 
     const apiToken = process.env.SPORTSMONKS_API_KEY;
     if (!apiToken) {
@@ -672,7 +691,7 @@ class LiveFixturesService {
     }
 
     let successfulUpdates = 0;
-    for (const match of inplayMatches) {
+    for (const match of limitedInplayMatches) {
       try {
          // Update odds for matches that are live (including halftime)
          if (!match.isLive) {
@@ -768,7 +787,8 @@ class LiveFixturesService {
       return;
     }
     
-    console.log(`[LiveFixtures] Processing ${totalFallbackMatches} fallback matches for odds update`);
+    // LIMIT TO ONLY ONE LIVE MATCH - API CALL OPTIMIZATION
+    console.log(`[LiveFixtures] [API OPTIMIZATION] Limiting fallback odds update to 1 match from ${totalFallbackMatches} fallback matches`);
     
     const apiToken = process.env.SPORTSMONKS_API_KEY;
 
@@ -779,9 +799,16 @@ class LiveFixturesService {
 
     let totalMatches = 0;
     let successfulUpdates = 0;
+    let processedMatches = 0; // Track how many matches we've processed
 
     for (const group of liveMatches) {
       for (const match of group.matches) {
+        // LIMIT TO ONLY ONE MATCH - API CALL OPTIMIZATION
+        if (processedMatches >= 1) {
+          console.log(`[LiveFixtures] [API OPTIMIZATION] Skipping match ${match.id} - already processed 1 match`);
+          break;
+        }
+        processedMatches++;
         totalMatches++;
         
         // Skip if we already have fresh odds from scheduler
@@ -852,6 +879,12 @@ class LiveFixturesService {
             err.message
           );
         }
+      }
+      
+      // LIMIT TO ONLY ONE MATCH - API CALL OPTIMIZATION
+      if (processedMatches >= 1) {
+        console.log(`[LiveFixtures] [API OPTIMIZATION] Exiting outer loop - already processed 1 match`);
+        break;
       }
     }
 
