@@ -14,8 +14,21 @@ const LeagueAccordions = ({ matches }) => {
 
     const matchGroups = useMemo(() => {
         const groups = {};
-        (matches || []).forEach((match) => {
+        const now = new Date();
+        
+        // Filter out matches that have already started
+        const upcomingMatches = (matches || []).filter((match) => {
+            if (!match.starting_at) return true; // Keep matches without starting time
+            
+            // Handle timezone properly - assume starting_at is in UTC format
+            // Convert "2025-08-06 13:00:00" to UTC Date object
+            const matchStartTime = new Date(match.starting_at + ' UTC');
+            
+            // Compare with current time
+            return matchStartTime > now; // Only keep matches that haven't started yet
+        });
 
+        upcomingMatches.forEach((match) => {
             let groupKey = 'Today';
             if (match.day) {
                 groupKey = match.day;
@@ -43,6 +56,7 @@ const LeagueAccordions = ({ matches }) => {
         const oddsX = match.odds && match.odds.draw ? match.odds.draw.value : null;
         const odds2 = match.odds && match.odds.away ? match.odds.away.value : null;
         const matchTime = match.starting_at ? match.starting_at.split(' ')[1]?.slice(0, 5) : '';
+
 
         // Check if odds are available
         const hasOdds = odds1 || oddsX || odds2;
