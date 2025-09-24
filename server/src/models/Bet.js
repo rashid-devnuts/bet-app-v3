@@ -126,6 +126,14 @@ const betSchema = new mongoose.Schema(
         stake: { type: Number, required: true, min: 1 }, // Same as main stake for all legs
         payout: { type: Number, required: true, default: 0 },
         status: { type: String, enum: ["pending", "won", "lost", "canceled"], default: "pending" },
+        result: {
+          actualOutcome: { type: String, default: null },
+          finalScore: { type: String, default: null },
+          fotmobMatchId: { type: String, default: null },
+          reason: { type: String, default: null },
+          processedAt: { type: Date, default: null },
+          similarity: { type: Number, default: null }
+        },
         selection: { type: String, required: true, trim: true },
         inplay: { type: Boolean, default: false },
         betDetails: {

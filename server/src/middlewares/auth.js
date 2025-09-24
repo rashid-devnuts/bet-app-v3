@@ -23,23 +23,30 @@ export const authenticateToken = async (req, res, next) => {
     }
 
     const decoded = verifyToken(token);
+    console.log(`[AuthMiddleware] Token decoded for user:`, decoded.userId);
+    
     const user = await User.findById(decoded.userId).select("-password");
 
     if (!user) {
+      console.log(`[AuthMiddleware] User not found:`, decoded.userId);
       return res.status(401).json({
         success: false,
         message: "Invalid token or user not found.",
       });
     }
 
+    console.log(`[AuthMiddleware] User found:`, user.email, `Role:`, user.role, `Active:`, user.isActive);
+
     // Only check isActive for non-admin users
     if (!user.isActive && user.role !== "admin") {
+      console.log(`[AuthMiddleware] User account not active`);
       return res.status(401).json({
         success: false,
         message: "Account is not active.",
       });
     }
 
+    console.log(`[AuthMiddleware] Authentication successful`);
     req.user = user;
     next();
   } catch (error) {

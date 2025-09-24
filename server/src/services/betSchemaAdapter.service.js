@@ -290,18 +290,27 @@ export class BetSchemaAdapter {
         const updatedCombination = originalBet.combination.map((leg, index) => {
             const result = calculatorResults[index];
             
-            console.log(`[adaptCombinationCalculatorResult] Leg ${index + 1}: ${leg.betOption} → ${result.status} (payout: ${result.payout})`);
+            // Normalize status to handle both 'canceled' and 'cancelled' spellings
+            const normalizedStatus = result.status === 'cancelled' ? 'canceled' : result.status;
+            
+            console.log(`[adaptCombinationCalculatorResult] Leg ${index + 1}: ${leg.betOption} → ${result.status} → ${normalizedStatus} (payout: ${result.payout})`);
+            console.log(`[adaptCombinationCalculatorResult] Leg ${index + 1} status details:`, {
+                originalStatus: leg.status,
+                calculatorStatus: result.status,
+                normalizedStatus: normalizedStatus,
+                statusType: typeof result.status
+            });
             
             return {
                 ...leg,
-                status: result.status,
+                status: normalizedStatus,
                 payout: result.payout || 0,
                 odds: leg.odds, // Explicitly preserve odds for payout calculation
                 // Add result metadata
                 result: {
-                    status: result.status,
+                    status: normalizedStatus,
                     payout: result.payout || 0,
-                    reason: result.reason,
+                    reason: this.generateLegReason(leg, result, normalizedStatus),
                     processedAt: new Date(),
                     debugInfo: result.debugInfo || {},
                     calculatorVersion: 'unibet-api-v1'
@@ -315,6 +324,14 @@ export class BetSchemaAdapter {
         
         console.log(`[adaptCombinationCalculatorResult] Overall status: ${overallStatus}, Total payout: ${totalPayout}`);
         
+        // Debug: Log the final combination array to verify leg statuses
+        console.log(`[adaptCombinationCalculatorResult] Final combination array:`, updatedCombination.map((leg, index) => ({
+            leg: index + 1,
+            betOption: leg.betOption,
+            status: leg.status,
+            payout: leg.payout
+        })));
+        
         return {
             ...originalBet,
             combination: updatedCombination,
@@ -323,6 +340,7 @@ export class BetSchemaAdapter {
             result: {
                 status: overallStatus,
                 payout: totalPayout,
+                reason: this.generateCombinationBetReason(updatedCombination, overallStatus),
                 processedAt: new Date(),
                 legs: updatedCombination.length,
                 wonLegs: updatedCombination.filter(leg => leg.status === 'won').length,
@@ -430,5 +448,59 @@ export class BetSchemaAdapter {
             errors,
             warnings
         };
+    }
+
+    /**
+     * Generate a comprehensive reason for combination bet outcome
+     * @param {Array} legs - Array of combination bet legs with their results
+     * @param {string} overallStatus - Overall combination bet status
+     * @returns {string} Detailed reason explaining the outcome
+     */
+    static generateCombinationBetReason(legs, overallStatus) {
+        const legCount = legs.length;
+        const wonLegs = legs.filter(leg => leg.status === 'won');
+        const lostLegs = legs.filter(leg => leg.status === 'lost');
+        const canceledLegs = legs.filter(leg => leg.status === 'canceled');
+        
+        if (overallStatus === 'won') {
+            const legDetails = legs.map((leg, index) => 
+                `Leg ${index + 1}: ${leg.betOption} (${leg.unibetMeta?.eventName || 'Unknown match'}) - ${leg.status}`
+            ).join(', ');
+            return `Combination bet won: All ${legCount} legs successful.`;
+        } else if (overallStatus === 'lost') {
+            const lostDetails = lostLegs.map((leg, index) => 
+                `Leg ${legs.indexOf(leg) + 1}: ${leg.betOption} (${leg.unibetMeta?.eventName || 'Unknown match'}) - ${leg.status}`
+            ).join(', ');
+            return `Combination bet lost: ${lostLegs.length} of ${legCount} legs failed.`;
+        } else if (overallStatus === 'canceled') {
+            const canceledDetails = canceledLegs.map((leg, index) => 
+                `Leg ${legs.indexOf(leg) + 1}: ${leg.betOption} (${leg.unibetMeta?.eventName || 'Unknown match'}) - ${leg.status}`
+            ).join(', ');
+            return `Combination bet canceled: ${canceledLegs.length} of ${legCount} legs canceled.`;
+        } else {
+            return `Combination bet status: ${overallStatus} (${wonLegs.length} won, ${lostLegs.length} lost, ${canceledLegs.length} canceled)`;
+        }
+    }
+
+    /**
+     * Generate a reason string for individual combination bet leg results
+     * @param {Object} leg - Individual leg object
+     * @param {Object} result - Calculator result for this leg
+     * @param {string} status - Normalized status
+     * @returns {string} - Reason string for this leg
+     */
+    static generateLegReason(leg, result, status) {
+        const betOption = leg.betOption || 'Unknown bet';
+        const teams = leg.teams || 'Unknown teams';
+        
+        if (status === 'won') {
+            return `${betOption} won for ${teams}`;
+        } else if (status === 'lost') {
+            return `${betOption} lost for ${teams}`;
+        } else if (status === 'canceled') {
+            return `${betOption} canceled for ${teams}`;
+        } else {
+            return `${betOption} status: ${status} for ${teams}`;
+        }
     }
 }

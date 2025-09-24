@@ -533,6 +533,8 @@ export class UnibetCalcController {
             
             // Adapt results back to bet-app format
             const updatedBet = BetSchemaAdapter.adaptCombinationCalculatorResult(results, bet);
+
+            console.log(`Updatedbet --------------------------------------:`,updatedBet);
             
             console.log(`[processCombinationBetInternal] Updating database for bet ${bet._id}:`, {
                 status: updatedBet.status,
@@ -542,19 +544,47 @@ export class UnibetCalcController {
             
             console.log(`[processCombinationBetInternal] Updated bet object:`, JSON.stringify(updatedBet, null, 2));
             
-            // Update bet in database - use $set to ensure proper update
+            // Update bet in database with main fields first
             const savedBet = await Bet.findByIdAndUpdate(
                 bet._id,
                 { 
                     $set: {
                         status: updatedBet.status,
                         payout: updatedBet.payout,
-                        combination: updatedBet.combination,
                         result: updatedBet.result,
                         updatedAt: new Date()
                     }
                 },
                 { new: true, runValidators: true }
+            );
+
+            console.log(`Savedbet --------------------------------------:`,savedBet);
+            
+            // Update combination array elements individually using array index notation
+            for (let i = 0; i < updatedBet.combination.length; i++) {
+                const leg = updatedBet.combination[i];
+                await Bet.findByIdAndUpdate(
+                    bet._id,
+                    { 
+                        $set: {
+                            [`combination.${i}.status`]: leg.status,
+                            [`combination.${i}.payout`]: leg.payout,
+                            [`combination.${i}.result`]: leg.result
+                        }
+                    },
+                    { new: true, runValidators: true }
+                );
+                console.log(`[processCombinationBetInternal] Updated leg ${i + 1}: ${leg.betOption} → ${leg.status}`);
+            }
+            
+            // Verify the combination array was updated correctly
+            const verifyBet = await Bet.findById(bet._id);
+            console.log(`Verification - Leg statuses---------------------:`, 
+                verifyBet.combination.map((leg, index) => ({
+                    leg: index + 1,
+                    betOption: leg.betOption,
+                    status: leg.status
+                }))
             );
             
             if (savedBet) {

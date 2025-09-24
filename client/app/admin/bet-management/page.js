@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useMemo, useEffect } from "react";
+import { toast } from 'sonner';
 import {
   Table,
   TableBody,
@@ -128,6 +129,22 @@ export default function BetManagement() {
     return betDetails.total || "-";
   };
 
+  // Helper function to get match display for single bets
+  const getMatchDisplay = (bet) => {
+    // First try teams field
+    if (bet.teams && bet.teams.trim() !== "") {
+      return bet.teams;
+    }
+    
+    // Fallback to unibetMeta homeName and awayName
+    if (bet.unibetMeta && bet.unibetMeta.homeName && bet.unibetMeta.awayName) {
+      return `${bet.unibetMeta.homeName} vs ${bet.unibetMeta.awayName}`;
+    }
+    
+    // Last resort fallback
+    return "-";
+  };
+
   // Helper function to get the correct selection format
   const getBetSelection = (betDetails, selection) => {
     if (!betDetails) return selection || "-";
@@ -222,6 +239,41 @@ export default function BetManagement() {
     }
   };
 
+  const handleStatusChange = async (betId, oldStatus, newStatus) => {
+    if (oldStatus === newStatus) return;
+    
+    try {
+      const response = await fetch(`http://localhost:4000/api/admin/bets/${betId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // This will send cookies with the request
+        body: JSON.stringify({
+          oldStatus,
+          newStatus,
+          reason: `Admin override: Changed from ${oldStatus} to ${newStatus}`
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // Refresh only the bets data instead of the whole page
+        dispatch(fetchAdminBets());
+        // Show success toast
+        toast.success(`Bet status updated from ${oldStatus} to ${newStatus}`, {
+          description: `Balance change: ${result.balanceChange > 0 ? '+' : ''}${result.balanceChange}`
+        });
+      } else {
+        const error = await response.json();
+        toast.error(`Failed to update bet status: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('Error updating bet status:', error);
+      toast.error('Failed to update bet status. Please try again.');
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
       case "won":
@@ -306,19 +358,15 @@ export default function BetManagement() {
                   <TableHead>Market</TableHead>
                   <TableHead>Selection</TableHead>
                   <TableHead className="w-20">Value</TableHead>
+                  <TableHead className="w-32">Reason</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {bet.combination.map((leg, index) => {
                   const calculateLegProfit = () => {
-                    if (leg.status.toLowerCase() === 'won') {
-                      return (bet.stake * leg.odds).toFixed(2);
-                    } else if (leg.status.toLowerCase() === 'lost') {
-                      return bet.stake.toFixed(2);
-                    } else if (leg.status.toLowerCase() === 'cancelled' || leg.status.toLowerCase() === 'canceled') {
-                      return '0.00';
-                    }
-                    return 0;
+                    // For combination bets, individual legs don't have their own profit
+                    // The profit is only calculated for the overall combination bet
+                    return leg.payout ? leg.payout.toFixed(2) : '0.00';
                   };
 
                   return (
@@ -357,8 +405,8 @@ export default function BetManagement() {
                         </div>
                       </TableCell>
                       <TableCell className="max-w-32">
-                        <div className="truncate" title={leg.betDetails?.market_description}>
-                          {leg.betDetails?.market_description || "-"}
+                        <div className="truncate" title={leg.unibetMeta?.marketName || leg.betDetails?.market_description}>
+                          {leg.unibetMeta?.marketName || leg.betDetails?.market_description || "-"}
                         </div>
                       </TableCell>
                       <TableCell className="max-w-32">
@@ -367,8 +415,13 @@ export default function BetManagement() {
                         </div>
                       </TableCell>
                       <TableCell className="max-w-20">
-                        <div className="truncate" title={getBetValue(leg.betDetails)}>
-                          {getBetValue(leg.betDetails)}
+                        <div className="truncate" title={leg.betDetails?.value}>
+                          {leg.betDetails?.total || leg.betDetails?.handicapRaw || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-32">
+                        <div className="truncate" title={leg.result?.reason || "No reason available"}>
+                          {leg.result?.reason || "-"}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1245,13 +1298,15 @@ export default function BetManagement() {
                         <ArrowUpDown className="h-4 w-4" />
                       </div>
                     </TableHead>
+                    <TableHead className="select-none">Reason</TableHead>
+                    <TableHead className="select-none">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedBets.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={12}
+                        colSpan={14}
                         className="text-center py-12 text-gray-500"
                       >
                         <div className="flex flex-col items-center justify-center">
@@ -1281,7 +1336,7 @@ export default function BetManagement() {
                               )}
                             </TableCell>
                             <TableCell>{bet.user}</TableCell>
-                            <TableCell>{isCombo ? formatAmount(bet.stake * bet.combination.length) : formatAmount(bet.stake)}</TableCell>
+                            <TableCell>{formatAmount(bet.stake)}</TableCell>
                             <TableCell>{parseFloat(bet.odds).toFixed(2)}</TableCell>
                             <TableCell>
                               <div>
@@ -1301,8 +1356,8 @@ export default function BetManagement() {
                               {getBetTypeBadge(bet)}
                             </TableCell>
                             <TableCell className="max-w-48">
-                              <div className="truncate" title={isCombo ? `Combination Bet (${bet.combination.length} legs)` : bet.teams}>
-                                {isCombo ? `Combination (${bet.combination.length} legs)` : (bet.teams || "-")}
+                              <div className="truncate" title={isCombo ? `Combination Bet (${bet.combination.length} legs)` : getMatchDisplay(bet)}>
+                                {isCombo ? `Combination (${bet.combination.length} legs)` : getMatchDisplay(bet)}
                               </div>
                             </TableCell>
                             <TableCell className="max-w-48">
@@ -1323,7 +1378,7 @@ export default function BetManagement() {
                             <TableCell>
                               {bet.status.toLowerCase() === "won" ? (
                                 <span className="font-medium text-green-600">
-                                  +${(bet.stake * bet.odds).toFixed(2)}
+                                  +${isCombo ? bet.payout.toFixed(2) : (bet.stake * bet.odds).toFixed(2)}
                                 </span>
                               ) : bet.status.toLowerCase() === "pending" ? (
                                 <span className="text-gray-500">Pending</span>
@@ -1334,6 +1389,29 @@ export default function BetManagement() {
                                   -${bet.stake.toFixed(2)}
                                 </span>
                               )}
+                            </TableCell>
+                            <TableCell className="max-w-48">
+                              <div className="truncate" title={bet.result?.reason || "No reason available"}>
+                                {bet.result?.reason || "-"}
+                              </div>
+                            </TableCell>
+                            <TableCell className="w-32">
+                              <div className="flex gap-1">
+                                <Select
+                                  value={bet.status}
+                                  onValueChange={(newStatus) => handleStatusChange(bet._id, bet.status, newStatus)}
+                                >
+                                  <SelectTrigger className="h-8 w-24 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="won">Won</SelectItem>
+                                    <SelectItem value="lost">Lost</SelectItem>
+                                    <SelectItem value="canceled">Canceled</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </TableCell>
                           </TableRow>
                           {isExpanded && isCombo && renderCombinationDetails(bet)}
