@@ -298,18 +298,27 @@ agenda.define("processPendingBets", async (job) => {
     console.log(`[Agenda] Job "processPendingBets" starting at ${new Date().toISOString()}`);
     const unibetCalcController = new UnibetCalcController();
     
-    // Process pending bets (finished matches only)
-    const result = await unibetCalcController.processAll({
-      body: { limit: 50, onlyPending: true }
-    }, {
+    // Create a mock response object to capture the JSON data
+    let responseData = null;
+    const mockRes = {
       json: (data) => {
+        responseData = data;
         console.log(`[Agenda] Bet processing result:`, data);
-        // Log all results for debugging
         if (data.stats) {
           console.log(`[Agenda] Bet processing: ${data.stats.processed} processed, ${data.stats.failed} failed, ${data.stats.skipped} skipped`);
         }
       }
-    });
+    };
+    
+    // Process pending bets (finished matches only)
+    const result = await unibetCalcController.processAll({
+      body: { limit: 50, onlyPending: true }
+    }, mockRes);
+    
+    // If no response data was captured, log a warning
+    if (!responseData) {
+      console.warn(`[Agenda] No response data captured from processAll`);
+    }
     
     console.log(`[Agenda] Job "processPendingBets" completed at ${new Date().toISOString()}`);
   } catch (error) {

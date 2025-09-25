@@ -462,7 +462,7 @@ const IMPLEMENTED_MARKETS = [
     'total corners',
     'most corners',
     'first to corners',
-    'next corner no corner no bet',
+    // 'next corner no corner no bet',
     'Most Corners - 50:00-59:59',
     'team given a red card',
     'to get a card',
@@ -483,6 +483,10 @@ const IMPLEMENTED_MARKETS = [
 // Helper function to check if a market is implemented
 function isMarketImplemented(marketName) {
     const name = marketName.toLowerCase();
+    
+    // Exclude specific markets that should not be shown
+    if (name.includes('double chance') && name.includes('1st half')) return false;
+    if (name.includes('total corner') && name.includes('1st half')) return false;
     
     // Check for exact matches first
     for (const implementedMarket of IMPLEMENTED_MARKETS) {
@@ -515,7 +519,7 @@ function isMarketImplemented(marketName) {
     if (name.includes('total corners') && !name.includes('by team')) return true;
     if (name.includes('most corners') && !name.includes('50:00-59:59')) return true;
     if (name.includes('first to corners')) return true;
-    if (name.includes('next corner') && name.includes('no corner') && name.includes('no bet')) return true;
+    // if (name.includes('next corner') && name.includes('no corner') && name.includes('no bet')) return true;
     if (name.includes('most corners') && name.includes('50:00-59:59')) return true;
     if (name.includes('team given a red card')) return true;
     if (name.includes('to get a card')) return true;

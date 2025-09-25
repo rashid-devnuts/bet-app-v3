@@ -1,0 +1,12 @@
+{
+  "watch": ["src"],
+  "ext": "js,json",
+  "ignore": [
+    "storage/**/*",
+    "upcoming_matches_sorted.json",
+    "node_modules/**/*",
+    "*.log",
+    "*.tmp"
+  ],
+  "delay": 1000
+}

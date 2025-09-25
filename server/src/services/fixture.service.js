@@ -549,7 +549,7 @@ class FixtureOptimizationService {
     
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
-    const jsonFilePath = path.join(__dirname, '../../upcoming_matches_sorted.json');
+    const jsonFilePath = path.join(__dirname, '../../storage/upcoming_matches_sorted.json');
     
     try {
       fs.writeFileSync(jsonFilePath, JSON.stringify(matchIdsData, null, 2));

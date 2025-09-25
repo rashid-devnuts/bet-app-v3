@@ -184,7 +184,7 @@ export default class BetOutcomeCalculator {
             console.log(`   - Date: ${dateFormatted} (${dateStr})`);
 
             // Try specific daily cache first
-            const cacheFile = path.join(__dirname, `fotmob_matches_${dateStr}_${dateFormatted}.json`);
+            const cacheFile = path.join(__dirname, '../storage/fotmob', `fotmob_matches_${dateStr}_${dateFormatted}.json`);
             console.log(`   - Checking daily cache: ${path.basename(cacheFile)}`);
 
             if (fs.existsSync(cacheFile)) {
@@ -218,7 +218,7 @@ export default class BetOutcomeCalculator {
                 console.log(`🧪 TEST EVENT DETECTED: Using fotmob-11.json for event ${bet.matchId}`);
                 console.log(`🧪 TEST MODE: Will use August 11, 2025 data regardless of bet date`);
             } else {
-                multiDayCacheFile = path.join(__dirname, 'fotmob_multiday_cache.json');
+                multiDayCacheFile = path.join(__dirname, '../storage/fotmob/fotmob_multiday_cache.json');
             }
             console.log(`   - Checking multi-day cache: ${path.basename(multiDayCacheFile)}`);
 
@@ -3112,7 +3112,7 @@ export default class BetOutcomeCalculator {
     async fetchFotmobMatches(date, forceRefresh = false) {
         try {
             const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
-            const cacheFile = path.join(__dirname, `fotmob_matches_${dateStr}_${date.toISOString().slice(0, 10)}.json`);
+            const cacheFile = path.join(__dirname, '../storage/fotmob', `fotmob_matches_${dateStr}_${date.toISOString().slice(0, 10)}.json`);
 
             if (!forceRefresh && fs.existsSync(cacheFile)) {
                 console.log(`📊 Loading cached Fotmob data for ${dateStr}`);
@@ -3138,7 +3138,7 @@ export default class BetOutcomeCalculator {
      * Fetch multi-day Fotmob matches (handled by server endpoint now)
      */
     async fetchMultiDayFotmobMatches(forceRefresh = false) {
-        const cacheFile = path.join(__dirname, 'fotmob_multiday_cache.json');
+        const cacheFile = path.join(__dirname, '../storage/fotmob/fotmob_multiday_cache.json');
 
         if (!forceRefresh && fs.existsSync(cacheFile)) {
             return JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
