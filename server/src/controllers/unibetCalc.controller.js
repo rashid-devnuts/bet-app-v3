@@ -485,7 +485,7 @@ export class UnibetCalcController {
             }
 
             // Adapt combination bet for calculator (returns array of calculator bets)
-            const calculatorBets = BetSchemaAdapter.adaptCombinationBetForCalculator(bet);
+            const calculatorBets = await BetSchemaAdapter.adaptCombinationBetForCalculator(bet);
             
 
             // Process each leg through calculator

@@ -477,7 +477,10 @@ const IMPLEMENTED_MARKETS = [
     'total goals',
     'total cards',
     'total cards team',
-    'Draw no bet 2nd half'
+    'Draw no bet 2nd half',
+    'Both Teams To Score',
+    '1st Half Total Goals',
+    '2nd Half Total Goals'
 ];
 
 // Helper function to check if a market is implemented
@@ -504,6 +507,9 @@ function isMarketImplemented(marketName) {
     if (name.includes('total goals by team') && !name.includes('2nd half') && !name.includes('30:00-59:59')) return true;
     if (name.includes('full time result') || name.includes('match result')) return true;
     if (name.includes('correct score')) return true;
+    if (name.includes('both teams to score') || name.includes('btts')) return true;
+    if (name.includes('1st half total goals') || name.includes('first half total goals')) return true;
+    if (name.includes('2nd half total goals') || name.includes('second half total goals')) return true;
     if (name.includes('total goals') && (name.includes('odd') || name.includes('even'))) return true;
     if (name.includes('draw no bet') && !name.includes('2nd half')) return true;
     if (name.includes('interval winner') && name.includes('30:00-59:59')) return true;
@@ -558,11 +564,8 @@ function categorizeMarkets(bettingData) {
         
         // Filter out non-implemented markets
         if (!isMarketImplemented(offer.name)) {
-            console.log(`🚫 Filtering out non-implemented market: "${offer.name}"`);
             return; // Skip this market
         }
-        
-        console.log(`✅ Including implemented market: "${offer.name}"`);
         
         // Enhanced categorization logic (matching unibet-api app)
         if (marketName.includes('match') || marketName.includes('winner') || marketName.includes('head to head') || 
@@ -582,10 +585,11 @@ function categorizeMarkets(bettingData) {
             }
         } else if (marketName.includes('shot')) {
             categorized['player-shots'].push(offer);
+        } else if (marketName.includes('both teams to score') || marketName.includes('btts')) {
+            categorized.goals.push(offer);
         } else if (marketName.includes('to score') || marketName.includes('goalscorer') || marketName.includes('scorer') || marketName.includes('first goal')) {
             categorized.scorers.push(offer);
         } else if (marketName.includes('goal') || marketName.includes('score') || marketName.includes('total') || 
-                   marketName.includes('both teams to score') || marketName.includes('btts') ||
                    marketName.includes('correct score') || marketName.includes('half time')) {
             categorized.goals.push(offer);
         } else {

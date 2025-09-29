@@ -552,7 +552,7 @@ class BetService {
             homeName: leg.homeName || matchData.participants?.[0]?.name || this.extractHomeTeam(leg.teams),
             awayName: leg.awayName || matchData.participants?.[1]?.name || this.extractAwayTeam(leg.teams),
             start: leg.start || leg.matchDate || matchData.starting_at,
-            odds: parseFloat(odds.value)
+            odds: parseFloat(odds.value) / 1000 // Convert from Unibet format to decimal
           },
           {
             eventName: leg.teams || `${matchData.participants?.[0]?.name || 'Home'} vs ${matchData.participants?.[1]?.name || 'Away'}`,
@@ -568,7 +568,7 @@ class BetService {
           matchId: leg.matchId,
           oddId: leg.oddId,
           betOption: leg.betOption || leg.selection || odds.name,
-          odds: parseFloat(odds.value),
+          odds: parseFloat(odds.value) / 1000, // Convert from Unibet format to decimal
           stake: stake, // Same stake for all legs in combination
           payout: 0,
           status: "pending",
@@ -579,11 +579,16 @@ class BetService {
           estimatedMatchEnd,
           betOutcomeCheckTime,
           teams: this.getTeamsFromMatchData(matchData, leg.teams),
-          unibetMeta: legUnibetMeta // ✅ Add unibetMeta to each leg
+          unibetMeta: legUnibetMeta, // ✅ Add unibetMeta to each leg
+          // Add league information directly to the leg for bet processing
+          leagueId: leg.leagueId || matchData.league?.id || matchData.league_id,
+          leagueName: leg.leagueName || matchData.league?.name
         };
 
         processedLegs.push(processedLeg);
-        totalOdds *= parseFloat(odds.value);
+        // Convert odds from Unibet format (e.g., 2650) to decimal format (e.g., 2.65)
+        const decimalOdds = parseFloat(odds.value) / 1000;
+        totalOdds *= decimalOdds;
 
         // Store first leg data for main bet document
         if (i === 0) {
@@ -1901,8 +1906,25 @@ class BetService {
       } catch (error) {
         console.error(`[processCombinationBetOutcome] Error fetching match data for leg ${i + 1}:`, error);
         allLegsFinished = false;
-        // Keep the leg as pending
-        updatedCombination.push({ ...leg });
+        
+        // If it's a network error, API error, or Fotmob error, mark the leg as canceled and continue
+        if (error.code === "NETWORK_ERROR" || error.code === "API_ERROR" || 
+            error.message.includes("network") || error.message.includes("timeout") ||
+            error.message.includes("Fotmob") || error.message.includes("API format issue")) {
+          console.log(`[processCombinationBetOutcome] Marking leg ${i + 1} as canceled due to network/API/Fotmob error`);
+          const canceledLeg = {
+            ...leg,
+            status: "canceled",
+            payout: 0,
+            reason: `Network/API/Fotmob error: ${error.message}`
+          };
+          updatedCombination.push(canceledLeg);
+          anyLegCanceled = true;
+          allLegsWon = false;
+        } else {
+          // For other errors, keep the leg as pending and continue
+          updatedCombination.push({ ...leg });
+        }
         continue;
       }
 

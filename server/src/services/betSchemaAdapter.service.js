@@ -62,9 +62,9 @@ export class BetSchemaAdapter {
                 name: betDetails.name
             },
 
-            // Match context
-            leagueId: unibetMeta.leagueId,
-            leagueName: unibetMeta.leagueName,
+            // Match context - prioritize direct league fields over unibetMeta, but ensure unibetMeta is used as fallback
+            leagueId: bet.leagueId || unibetMeta.leagueId || null,
+            leagueName: bet.leagueName || unibetMeta.leagueName || null,
             homeName: unibetMeta.homeName || this.extractTeamName(bet.teams, 'home'),
             awayName: unibetMeta.awayName || this.extractTeamName(bet.teams, 'away'),
             start: unibetMeta.start || bet.matchDate,
@@ -128,6 +128,26 @@ export class BetSchemaAdapter {
         if (parts.length !== 2) return null;
         
         return side === 'home' ? parts[0].trim() : parts[1].trim();
+    }
+
+    /**
+     * Fetch match data from the fixture service
+     * @param {string} matchId - Match ID
+     * @returns {Object|null} - Match data or null if not found
+     */
+    static async fetchMatchData(matchId) {
+        try {
+            // Import the fixture service dynamically to avoid circular dependencies
+            const { default: FixtureService } = await import('./fixture.service.js');
+            const fixtureService = new FixtureService();
+            
+            // Try to get match data from cache or API
+            const matchData = await fixtureService.getMatchById(matchId);
+            return matchData;
+        } catch (error) {
+            console.warn(`[fetchMatchData] Failed to fetch match data for ${matchId}:`, error.message);
+            return null;
+        }
     }
 
     /**
@@ -239,14 +259,18 @@ export class BetSchemaAdapter {
      * @param {Object} bet - bet-app Bet document with combination array
      * @returns {Array} - Array of calculator-compatible bet objects (one per leg)
      */
-    static adaptCombinationBetForCalculator(bet) {
+    static async adaptCombinationBetForCalculator(bet) {
         if (!bet.combination || !Array.isArray(bet.combination)) {
             throw new Error('Invalid combination bet: missing combination array');
         }
         
         console.log(`[adaptCombinationBetForCalculator] Processing combination bet ${bet._id} with ${bet.combination.length} legs`);
         
-        return bet.combination.map((leg, index) => {
+        const results = [];
+        
+        for (let index = 0; index < bet.combination.length; index++) {
+            const leg = bet.combination[index];
+            
             // Create a single bet object for this leg using the leg's data
             const legBet = {
                 // Core bet fields from the main combination bet
@@ -270,14 +294,54 @@ export class BetSchemaAdapter {
                 inplay: leg.inplay,
                 matchDate: leg.matchDate,
                 estimatedMatchEnd: leg.estimatedMatchEnd,
-                betOutcomeCheckTime: leg.betOutcomeCheckTime
+                betOutcomeCheckTime: leg.betOutcomeCheckTime,
+                // Include league information directly from the leg
+                leagueId: leg.leagueId,
+                leagueName: leg.leagueName
             };
             
             console.log(`[adaptCombinationBetForCalculator] Processing leg ${index + 1}: ${leg.betOption} @ ${leg.odds} for match ${leg.matchId}`);
+            console.log(`[adaptCombinationBetForCalculator] Leg ${index + 1} league info:`, {
+                legLeagueId: leg.leagueId,
+                legLeagueName: leg.leagueName,
+                unibetMetaLeagueId: leg.unibetMeta?.leagueId,
+                unibetMetaLeagueName: leg.unibetMeta?.leagueName
+            });
+            
+            // Ensure league information is available - prioritize leg fields, then unibetMeta
+            if (!legBet.leagueId && leg.unibetMeta?.leagueId) {
+                legBet.leagueId = leg.unibetMeta.leagueId;
+            }
+            if (!legBet.leagueName && leg.unibetMeta?.leagueName) {
+                legBet.leagueName = leg.unibetMeta.leagueName;
+            }
+            
+            // If still no league information, try to fetch it from match data
+            if (!legBet.leagueId || !legBet.leagueName) {
+                try {
+                    console.log(`[adaptCombinationBetForCalculator] Fetching league info for match ${leg.matchId}...`);
+                    const matchData = await this.fetchMatchData(leg.matchId);
+                    if (matchData) {
+                        if (!legBet.leagueId && matchData.league?.id) {
+                            legBet.leagueId = matchData.league.id;
+                            console.log(`[adaptCombinationBetForCalculator] Set leagueId from match data: ${legBet.leagueId}`);
+                        }
+                        if (!legBet.leagueName && matchData.league?.name) {
+                            legBet.leagueName = matchData.league.name;
+                            console.log(`[adaptCombinationBetForCalculator] Set leagueName from match data: ${legBet.leagueName}`);
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`[adaptCombinationBetForCalculator] Failed to fetch match data for ${leg.matchId}:`, error.message);
+                }
+            }
             
             // Use the existing single bet adapter
-            return this.adaptBetForCalculator(legBet);
-        });
+            const adaptedBet = this.adaptBetForCalculator(legBet);
+            results.push(adaptedBet);
+        }
+        
+        return results;
     }
 
     /**
@@ -356,7 +420,7 @@ export class BetSchemaAdapter {
                 legs: updatedCombination.length,
                 wonLegs: updatedCombination.filter(leg => leg.status === 'won').length,
                 lostLegs: updatedCombination.filter(leg => leg.status === 'lost').length,
-                canceledLegs: updatedCombination.filter(leg => leg.status === 'canceled').length,
+                canceledLegs: updatedCombination.filter(leg => leg.status === 'canceled' || leg.status === 'error').length,
                 pendingLegs: updatedCombination.filter(leg => leg.status === 'pending').length,
                 calculatorVersion: 'unibet-api-v1'
             },
@@ -371,12 +435,17 @@ export class BetSchemaAdapter {
      */
     static calculateCombinationStatus(legs) {
         // Handle both 'canceled' and 'cancelled' spellings from calculator
-        const hasCanceled = legs.some(leg => leg.status === 'canceled' || leg.status === 'cancelled');
+        // Also treat 'error' status as 'canceled' for combination bet rules
+        const hasCanceled = legs.some(leg => 
+            leg.status === 'canceled' || 
+            leg.status === 'cancelled' || 
+            leg.status === 'error'
+        );
         const hasLost = legs.some(leg => leg.status === 'lost');
         const hasPending = legs.some(leg => leg.status === 'pending');
         
         // Combination bet rules:
-        // - CANCELED: If any leg is canceled/cancelled
+        // - CANCELED: If any leg is canceled/cancelled/error
         // - LOST: If any leg is lost (even if others are won)
         // - PENDING: If any leg is still pending
         // - WON: Only if ALL legs are won
@@ -395,7 +464,12 @@ export class BetSchemaAdapter {
      */
     static calculateCombinationPayout(legs, stake) {
         // Handle both 'canceled' and 'cancelled' spellings from calculator
-        const hasCanceled = legs.some(leg => leg.status === 'canceled' || leg.status === 'cancelled');
+        // Also treat 'error' status as 'canceled' for payout calculation
+        const hasCanceled = legs.some(leg => 
+            leg.status === 'canceled' || 
+            leg.status === 'cancelled' || 
+            leg.status === 'error'
+        );
         const hasLost = legs.some(leg => leg.status === 'lost');
         const allWon = legs.every(leg => leg.status === 'won');
         

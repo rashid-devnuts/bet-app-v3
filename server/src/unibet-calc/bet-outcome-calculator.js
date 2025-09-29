@@ -261,13 +261,28 @@ export default class BetOutcomeCalculator {
 
             // Fallback: fetch fresh data
             console.log(`📡 FALLBACK: Fetching fresh Fotmob data for ${dateStr}`);
-            const freshData = await this.fotmob.getMatchesByDate(dateStr);
-            if (freshData) {
-                console.log(`✅ Fresh data fetched: ${freshData.leagues?.length || 0} leagues`);
-            } else {
-                console.log(`❌ Failed to fetch fresh data`);
+            try {
+                const freshData = await this.fotmob.getMatchesByDate(dateStr);
+                if (freshData) {
+                    console.log(`✅ Fresh data fetched: ${freshData.leagues?.length || 0} leagues`);
+                } else {
+                    console.log(`❌ Failed to fetch fresh data`);
+                }
+                return freshData;
+            } catch (fotmobError) {
+                console.error(`❌ FOTMOB API ERROR:`, fotmobError.message);
+                
+                // Handle specific Fotmob API format errors
+                if (fotmobError.message.includes('Invalid value for key "leagues"')) {
+                    console.error(`📋 Fotmob API format error - leagues field format has changed`);
+                    console.error(`📋 This is likely a Fotmob package compatibility issue`);
+                    console.error(`📋 Returning null to skip Fotmob data for this bet`);
+                    return null;
+                }
+                
+                // Re-throw other errors
+                throw fotmobError;
             }
-            return freshData;
 
         } catch (error) {
             console.error(`❌ ERROR getting cached daily matches for ${date}:`, error.message);
@@ -2483,7 +2498,11 @@ export default class BetOutcomeCalculator {
 
             if (!fotmobData) {
                 console.log(`❌ FOTMOB DATA FAILED: No data available for ${betDate.toISOString().slice(0, 10)}`);
-                return { success: false, error: 'Failed to fetch Fotmob data' };
+                console.log(`📋 This could be due to Fotmob API format changes or network issues`);
+                console.log(`📋 Throwing error to mark bet as canceled`);
+                
+                // Throw an error so it gets caught and handled as a cancellation
+                throw new Error('Failed to fetch Fotmob data - API format issue');
             }
             console.log(`✅ Fotmob data loaded: ${fotmobData.leagues?.length || 0} leagues available`);
 

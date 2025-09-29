@@ -3381,6 +3381,7 @@
         },
         {
             "id": 2542376277,
+            "suspended": false,
             "criterion": {
                 "id": 1001642858,
                 "label": "Both Teams To Score",

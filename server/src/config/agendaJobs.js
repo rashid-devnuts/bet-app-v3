@@ -310,10 +310,14 @@ agenda.define("processPendingBets", async (job) => {
       }
     };
     
+    console.log(`[Agenda] About to call processAll with limit: 50, onlyPending: true`);
+    
     // Process pending bets (finished matches only)
     const result = await unibetCalcController.processAll({
       body: { limit: 50, onlyPending: true }
     }, mockRes);
+    
+    console.log(`[Agenda] processAll completed, result:`, result);
     
     // If no response data was captured, log a warning
     if (!responseData) {
