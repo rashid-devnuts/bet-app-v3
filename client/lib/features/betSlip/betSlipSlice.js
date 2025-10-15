@@ -77,7 +77,20 @@ const betSlipSlice = createSlice({
 
       // Determine if match is live/inplay
       const isMatchLive = (match) => {
-        if (!match || !match.starting_at) return match?.isLive || false;
+        // First check if match explicitly has isLive flag (from home page components)
+        if (match?.isLive === true) return true;
+        
+        // Check if match is from Inplay page (always live)
+        if (match?.source === 'InPlayPage') return true;
+        
+        // Check if match has live data indicators
+        if (match?.kambiLiveData || match?.liveData) return true;
+        
+        // Check if match has live timer data
+        if (match?.timing || match?.state_id === 2) return true;
+        
+        // Original time-based logic as fallback
+        if (!match || !match.starting_at) return false;
         const now = new Date();
         let matchTime;
         if (match.starting_at.includes('T')) {
@@ -97,7 +110,13 @@ const betSlipSlice = createSlice({
         league: match.league,
         groupId: match.groupId,
         leagueName: match.leagueName,
-        source: match.source
+        source: match.source,
+        isLive: match.isLive,
+        inplay: inplay,
+        hasKambiLiveData: !!match.kambiLiveData,
+        hasLiveData: !!match.liveData,
+        timing: match.timing,
+        state_id: match.state_id
       });
 
       const newBet = {

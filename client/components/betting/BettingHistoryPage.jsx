@@ -374,19 +374,23 @@ const BettingHistoryPage = ({ userId }) => {
               <span className="text-gray-500">Match:</span>
               <span className="text-gray-900 font-medium text-right max-w-[60%] truncate" title={
                 isCombo ? `Combination (${bet.combination.length} legs)` : (
-                  bet.teams || 
+                  (bet.teams && bet.teams !== "Teams information not available" ? bet.teams : null) ||
                   bet.match?.name || 
                   (bet.unibetMeta?.eventName && bet.unibetMeta.eventName !== 'Combination Bet' ? bet.unibetMeta.eventName : null) ||
                   (bet.unibetMeta?.homeName && bet.unibetMeta?.awayName ? `${bet.unibetMeta.homeName} vs ${bet.unibetMeta.awayName}` : null) ||
-                  "-"
+                  (bet.homeTeam && bet.awayTeam ? `${bet.homeTeam} vs ${bet.awayTeam}` : null) ||
+                  (bet.match?.homeTeam && bet.match?.awayTeam ? `${bet.match.homeTeam} vs ${bet.match.awayTeam}` : null) ||
+                  "Teams information not available"
                 )
               }>
                 {isCombo ? `Combination (${bet.combination.length} legs)` : (
-                  bet.teams || 
+                  (bet.teams && bet.teams !== "Teams information not available" ? bet.teams : null) ||
                   bet.match?.name || 
                   (bet.unibetMeta?.eventName && bet.unibetMeta.eventName !== 'Combination Bet' ? bet.unibetMeta.eventName : null) ||
                   (bet.unibetMeta?.homeName && bet.unibetMeta?.awayName ? `${bet.unibetMeta.homeName} vs ${bet.unibetMeta.awayName}` : null) ||
-                  "-"
+                  (bet.homeTeam && bet.awayTeam ? `${bet.homeTeam} vs ${bet.awayTeam}` : null) ||
+                  (bet.match?.homeTeam && bet.match?.awayTeam ? `${bet.match.homeTeam} vs ${bet.match.awayTeam}` : null) ||
+                  "Teams information not available"
                 )}
               </span>
             </div>

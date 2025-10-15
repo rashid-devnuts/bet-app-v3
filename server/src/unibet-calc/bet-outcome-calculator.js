@@ -1100,22 +1100,17 @@ class BetOutcomeCalculator {
                 actualOutcome = '2'; // Away win in regular time
                 console.log(`   - Regular time result: Away win (${homeScore}-${awayScore})`);
         } else {
-                // Regular time is a draw - check if match was decided by penalties/aggregate
-                console.log(`   - Regular time result: Draw (${homeScore}-${awayScore}) - checking penalties/aggregate`);
+                // Regular time is a draw - for Full Time Result markets, use regular time result
+                console.log(`   - Regular time result: Draw (${homeScore}-${awayScore})`);
+                actualOutcome = 'X'; // Draw in regular time
+                console.log(`   - Full Time Result market: Using regular time result (Draw)`);
+                
+                // Note: Penalties/aggregate are only relevant for specific penalty/aggregate markets
                 if (hasPenalties) {
-                    // Match was decided by penalties
                     const penaltyScores = matchDetails.header.status.reason.penalties;
                     const homePenalties = penaltyScores[0];
                     const awayPenalties = penaltyScores[1];
-                    
-                    if (homePenalties > awayPenalties) {
-                        actualOutcome = '1'; // Home win on penalties
-                    } else if (awayPenalties > homePenalties) {
-                        actualOutcome = '2'; // Away win on penalties
-                    } else {
-                        actualOutcome = 'X'; // Draw (shouldn't happen with penalties)
-                    }
-                    console.log(`   - Regular time was draw, decided by penalties: ${homePenalties}-${awayPenalties} - result: ${actualOutcome}`);
+                    console.log(`   - Penalty shootout: ${homePenalties}-${awayPenalties} (not used for Full Time Result)`);
                 } else if (hasAggregate) {
                     // Match was decided by aggregate
                     const aggregateStr = matchDetails.header.status.aggregatedStr;
@@ -1125,13 +1120,13 @@ class BetOutcomeCalculator {
                         const homeAggregate = parseInt(aggregateMatch[1]);
                         const awayAggregate = parseInt(aggregateMatch[2]);
                         
-                        if (homeAggregate > awayAggregate) {
-                            actualOutcome = '1'; // Home win on aggregate
-                        } else if (awayAggregate > homeAggregate) {
-                            actualOutcome = '2'; // Away win on aggregate
-                        } else {
-                            actualOutcome = 'X'; // Draw on aggregate
-                        }
+                        // if (homeAggregate > awayAggregate) {
+                        //     actualOutcome = '1'; // Home win on aggregate
+                        // } else if (awayAggregate > homeAggregate) {
+                        //     actualOutcome = '2'; // Away win on aggregate
+                        // } else {
+                        //     actualOutcome = 'X'; // Draw on aggregate
+                        // }
                         console.log(`   - Regular time was draw, decided by aggregate: ${homeAggregate}-${awayAggregate} - result: ${actualOutcome}`);
                     } else {
                         actualOutcome = 'X'; // Fallback to draw if can't parse aggregate
@@ -1144,7 +1139,21 @@ class BetOutcomeCalculator {
                 }
         }
 
-            betWon = bet.outcomeLabel === actualOutcome;
+            // Normalize both values for comparison
+            const normalizedBetSelection = bet.outcomeLabel?.toLowerCase().trim();
+            const normalizedActualOutcome = actualOutcome?.toLowerCase().trim();
+            
+            // Handle different formats for draw
+            let isDrawMatch = false;
+            if (actualOutcome === 'X' && (normalizedBetSelection === 'draw' || normalizedBetSelection === 'x')) {
+                isDrawMatch = true;
+            } else if (actualOutcome === '1' && (normalizedBetSelection === 'home' || normalizedBetSelection === '1')) {
+                isDrawMatch = true;
+            } else if (actualOutcome === '2' && (normalizedBetSelection === 'away' || normalizedBetSelection === '2')) {
+                isDrawMatch = true;
+            }
+            
+            betWon = isDrawMatch || (bet.outcomeLabel === actualOutcome);
 
             console.log(`🎯 Regular Time/Full Time market outcome analysis:`);
             console.log(`   - Regular time result: ${actualOutcome}`);

@@ -10,6 +10,27 @@ import { Tv } from 'lucide-react';
 
 const LiveMatchCard = ({ match }) => {
     const { createBetHandler } = useBetting();
+    
+    // Create a properly formatted match object for betting (same as BettingTabs.jsx)
+    const formattedMatch = {
+        id: match.id,
+        team1: match.team1 || match.homeName || 'Home',
+        team2: match.team2 || match.awayName || 'Away',
+        starting_at: match.starting_at,
+        participants: match.participants || [
+            { name: match.team1 || match.homeName || 'Home', position: 'home' },
+            { name: match.team2 || match.awayName || 'Away', position: 'away' }
+        ],
+        isLive: match.isLive || true, // Live match cards are always live
+        kambiLiveData: match.kambiLiveData,
+        liveData: match.liveData,
+        timing: match.timing,
+        state_id: match.state_id,
+        league: match.league,
+        groupId: match.groupId,
+        leagueName: match.leagueName,
+        source: 'LiveMatchCard'
+    };
     // Debug: single console to inspect cards/corners structure
     if (match?.kambiLiveData?.statistics?.football) {
         const f = match.kambiLiveData.statistics.football;
@@ -114,10 +135,10 @@ const LiveMatchCard = ({ match }) => {
                             <Button
                                 size={"sm"}
                                 className="flex-1 flex justify-between py-2 gap-0 betting-button"
-                                onClick={createBetHandler(match, "Home", match.odds['1'].value, '1x2', match.odds['1'].oddId, { 
+                                onClick={createBetHandler(formattedMatch, "Home", match.odds['1'].value, '1x2', match.odds['1'].oddId, { 
                                     marketId: "1", 
                                     label: "Home", 
-                                    name: `Win - ${match.team1}`, 
+                                    name: `Win - ${formattedMatch.team1}`, 
                                     marketDescription: "Full Time Result" 
                                 })}
                             >
@@ -129,7 +150,7 @@ const LiveMatchCard = ({ match }) => {
                             <Button
                                 className="flex-1 flex justify-between py-2 gap-0 betting-button"
                                 size={"sm"}
-                                onClick={createBetHandler(match, "Draw", match.odds['X'].value, '1x2', match.odds['X'].oddId, { marketId: "1", label: "Draw", name: `Draw - ${match.team1} vs ${match.team2}`, marketDescription: "Full Time Result" })}
+                                onClick={createBetHandler(formattedMatch, "Draw", match.odds['X'].value, '1x2', match.odds['X'].oddId, { marketId: "1", label: "Draw", name: `Draw - ${formattedMatch.team1} vs ${formattedMatch.team2}`, marketDescription: "Full Time Result" })}
                             >
                                 <div className="text-[11px]">X</div>
                                 <div className='text-[13px] font-bold'>{match.odds['X'].value}</div>
@@ -139,7 +160,7 @@ const LiveMatchCard = ({ match }) => {
                             <Button
                                 size={"sm"}
                                 className="flex-1 flex justify-between py-2 gap-0 betting-button"
-                                onClick={createBetHandler(match, "Away", match.odds['2'].value, '1x2', match.odds['2'].oddId, { marketId: "1", label: "Away", name: `Win - ${match.team2}`, marketDescription: "Full Time Result" })}
+                                onClick={createBetHandler(formattedMatch, "Away", match.odds['2'].value, '1x2', match.odds['2'].oddId, { marketId: "1", label: "Away", name: `Win - ${formattedMatch.team2}`, marketDescription: "Full Time Result" })}
                             >
                                 <div className="text-[11px]">2</div>
                                 <div className='text-[13px] font-bold'>{match.odds['2'].value}</div>
