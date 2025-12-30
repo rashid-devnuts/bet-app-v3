@@ -4394,12 +4394,40 @@ class BetOutcomeCalculator {
         } else if (marketCode === MarketCodes.FIRST_GOAL) {
             // First Goal (Draw: No Goals) - e.g., "First Goal (Draw: No Goals)"
             const sel = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '').toLowerCase();
+            const marketName = String(bet.marketName || '').toLowerCase();
             
             console.log(`🎯 FIRST GOAL MARKET: "${sel}"`);
             console.log(`   - Market: "${bet.marketName}"`);
             
+            // Check if this is a "Draw: No Goals" market
+            const isDrawNoGoalsMarket = marketName.includes('draw') && 
+                                       (marketName.includes('no goals') || marketName.includes('no goal'));
+            
             // ✅ Get team names from matchDetails (not bet, as bet teams might be swapped)
             const { homeName: matchHomeName, awayName: matchAwayName } = getTeamNames(matchDetails);
+            
+            // Get final score to check for draw
+            const { homeScore, awayScore } = getFinalScore(matchDetails);
+            const isDraw = homeScore === awayScore;
+            
+            console.log(`   - Final Score: ${homeScore}-${awayScore}`);
+            console.log(`   - Is Draw: ${isDraw}`);
+            console.log(`   - Is "Draw: No Goals" Market: ${isDrawNoGoalsMarket}`);
+            
+            // ✅ FIX: For "First Goal (Draw: No Goals)" market, if match ends in draw (any score: 0-0, 1-1, 2-2, etc.), ALL bets are VOID
+            if (isDrawNoGoalsMarket && isDraw) {
+                console.log(`   - Match ended in draw (${homeScore}-${awayScore})`);
+                console.log(`   - Market is "Draw: No Goals" → ALL bets VOID (refunded)`);
+                console.log(`   - Selection: ${sel}`);
+                
+                return {
+                    status: 'void',
+                    actualOutcome: 'X',
+                    firstGoal: `Draw (${homeScore}-${awayScore})`,
+                    matchId: matchDetails.general?.matchId,
+                    reason: `First Goal (Draw: No Goals): Match ended in draw ${homeScore}-${awayScore} → All bets VOID (refunded)`
+                };
+            }
             
             // Get all goal events from the match
             const goalEvents = getGoalEvents(matchDetails);
@@ -4407,6 +4435,7 @@ class BetOutcomeCalculator {
             
             if (goalEvents.length === 0) {
                 // No goals scored - Draw (No Goals)
+                // For regular First Goal market (without "Draw: No Goals"), only "Draw" selection wins
                 const actualOutcome = 'X';
                 const won = sel === 'x' || sel === 'draw';
                 const status = won ? 'won' : 'lost';
@@ -5124,29 +5153,95 @@ class BetOutcomeCalculator {
             console.log(`   - bet.playerName: "${bet.playerName}"`);
             console.log(`   - bet.betDetails?.name: "${bet.betDetails?.name}"`);
             console.log(`   - bet.unibetMeta?.participant: "${bet.unibetMeta?.participant}"`);
+            console.log(`   - bet._originalBet?.unibetMeta?.participant: "${bet._originalBet?.unibetMeta?.participant}"`);
             console.log(`   - bet.criterionLabel: "${bet.criterionLabel}"`);
             console.log(`   - bet.criterionEnglishLabel: "${bet.criterionEnglishLabel}"`);
             
-            const participantName = bet.participant || bet.playerName || bet.betDetails?.name || bet.unibetMeta?.participant || null;
-            let playerId = bet.participantId || bet.unibetMeta?.participantId || bet.eventParticipantId || bet.unibetMeta?.eventParticipantId || null;
+            // ✅ FIX: For combination bets, unibetMeta is stored in _originalBet.unibetMeta
+            // Check both bet.unibetMeta and bet._originalBet.unibetMeta
+            const unibetMetaParticipant = bet.unibetMeta?.participant || bet._originalBet?.unibetMeta?.participant;
+            
+            // ✅ FIX: Helper function to check if a string looks like a player name (not a line like "Over 0.5")
+            const looksLikePlayerName = (name) => {
+                if (!name || typeof name !== 'string') return false;
+                const normalized = name.toLowerCase().trim();
+                // Exclude common outcome labels that are not player names
+                const nonPlayerPatterns = [
+                    /^over\s*\d+\.?\d*$/i,
+                    /^under\s*\d+\.?\d*$/i,
+                    /^yes$/i,
+                    /^no$/i,
+                    /^\d+\.?\d*$/,
+                    /^over\/under/i
+                ];
+                return !nonPlayerPatterns.some(pattern => pattern.test(normalized));
+            };
+            
+            // ✅ FIX: Prioritize unibetMeta.participant first, and validate that it's a real player name
+            // Check all possible sources for player name, prioritizing unibetMeta.participant
+            let participantName = null;
+            
+            // Priority 1: unibetMeta.participant (most reliable source from Unibet API)
+            // Check both bet.unibetMeta and bet._originalBet.unibetMeta for combination bets
+            if (unibetMetaParticipant && looksLikePlayerName(unibetMetaParticipant)) {
+                participantName = unibetMetaParticipant;
+                console.log(`   - ✅ Using player name from unibetMeta.participant: "${participantName}"`);
+            }
+            // Priority 2: bet.participant (but only if it looks like a player name)
+            else if (bet.participant && looksLikePlayerName(bet.participant)) {
+                participantName = bet.participant;
+                console.log(`   - ✅ Using player name from bet.participant: "${participantName}"`);
+            }
+            // Priority 3: bet.playerName
+            else if (bet.playerName && looksLikePlayerName(bet.playerName)) {
+                participantName = bet.playerName;
+                console.log(`   - ✅ Using player name from bet.playerName: "${participantName}"`);
+            }
+            // Priority 4: bet.betDetails?.name (but only if it looks like a player name)
+            else if (bet.betDetails?.name && looksLikePlayerName(bet.betDetails.name)) {
+                participantName = bet.betDetails.name;
+                console.log(`   - ✅ Using player name from bet.betDetails.name: "${participantName}"`);
+            }
+            // Priority 5: Fallback to unibetMeta.participant even if validation fails (might still be valid)
+            else if (unibetMetaParticipant) {
+                participantName = unibetMetaParticipant;
+                console.log(`   - ⚠️ Using player name from unibetMeta.participant (fallback, validation skipped): "${participantName}"`);
+            }
+            
+            // ✅ FIX: Check _originalBet.unibetMeta for combination bets
+            let playerId = bet.participantId || bet.unibetMeta?.participantId || bet._originalBet?.unibetMeta?.participantId || bet.eventParticipantId || bet.unibetMeta?.eventParticipantId || bet._originalBet?.unibetMeta?.eventParticipantId || null;
             
             console.log(`   - Final Participant Name: "${participantName}"`);
             console.log(`   - Final Player ID (from bet): ${playerId}`);
             
-            // ALWAYS try to find player by name first, even if we have a playerId
-            // This ensures we have the correct player ID from match data
+            // ✅ ENHANCED: Multi-step player resolution with Gemini fallback
             let foundPlayerId = null;
             if (participantName) {
                 console.log(`   - Looking up player ID by name: "${participantName}"`);
                 foundPlayerId = await findPlayerIdByName(matchDetails, participantName);
                 console.log(`   - Found Player ID by name: ${foundPlayerId}`);
                 
-                // If we found a player by name, use that ID (it's more reliable)
                 if (foundPlayerId) {
                     playerId = foundPlayerId;
-                    console.log(`   - Using player ID from name lookup: ${playerId}`);
+                    console.log(`   - ✅ Using player ID from name lookup: ${playerId}`);
                 } else if (playerId) {
                     console.log(`   - Could not find player by name, using bet's player ID: ${playerId}`);
+                } else {
+                    // ✅ NEW: Try Gemini AI to find player by name
+                    console.log(`   - Attempting Gemini AI lookup for player: "${participantName}"`);
+                    try {
+                        const { findPlayerWithGemini } = await import('./utils/gemini-player-matcher.js');
+                        const geminiPlayerId = await findPlayerWithGemini(matchDetails, participantName);
+                        if (geminiPlayerId) {
+                            playerId = geminiPlayerId;
+                            foundPlayerId = geminiPlayerId;
+                            console.log(`   - ✅ Found player ID via Gemini: ${playerId}`);
+                        } else {
+                            console.log(`   - ❌ Gemini could not find player`);
+                        }
+                    } catch (error) {
+                        console.error(`   - ❌ Gemini lookup failed: ${error.message}`);
+                    }
                 }
             }
             
@@ -5160,6 +5255,42 @@ class BetOutcomeCalculator {
                     console.log(`   - Player name in match data: "${playerStatsMap[playerKey]?.name || 'N/A'}"`);
                 } else {
                     console.log(`   ⚠️ WARNING: Player ID ${playerId} not found in match data`);
+                    
+                    // ✅ NEW: Check if player scored goals - if yes, bet should be won for "Over 0.5"
+                    if (participantName) {
+                        const allGoals = getGoalEvents(matchDetails);
+                        const playerGoals = allGoals.filter(goal => {
+                            const goalPlayerId = goal?.playerId || goal?.player?.id || goal?.shotmapEvent?.playerId;
+                            return goalPlayerId && Number(goalPlayerId) === Number(playerId);
+                        });
+                        
+                        if (playerGoals.length > 0) {
+                            console.log(`   - ✅ Player scored ${playerGoals.length} goal(s) - this indicates shots on target > 0`);
+                            // Get line value early for goal check
+                            let line = null;
+                            if (bet.betDetails?.total) {
+                                line = parseFloat(bet.betDetails.total);
+                            } else if (typeof bet.handicapLine === 'number') {
+                                line = bet.handicapLine / 1000;
+                            } else if (typeof bet.line === 'number') {
+                                line = normalizeLine(bet.line);
+                            } else if (typeof bet.handicapRaw === 'number') {
+                                line = bet.handicapRaw / 1000000;
+                            }
+                            
+                            const sel = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '').toLowerCase();
+                            if (sel.includes('over') && line !== null && line <= 0.5) {
+                                console.log(`   - ✅ Bet should be WON: Player scored goals = shots on target > ${line}`);
+                                return {
+                                    status: 'won',
+                                    actualOutcome: `Player scored ${playerGoals.length} goal(s)`,
+                                    debugInfo: { playerId: Number(playerId), participantName, playerGoals: playerGoals.length, source: 'goal_check' },
+                                    reason: `Player Shots on Target Over ${line}: Player scored ${playerGoals.length} goal(s) → shots on target > ${line} → WON`
+                                };
+                            }
+                        }
+                    }
+                    
                     // Try to find by name again as fallback
                     if (participantName && !foundPlayerId) {
                         console.log(`   - Retrying name lookup with different normalization...`);
@@ -5279,9 +5410,59 @@ class BetOutcomeCalculator {
             console.log(`   - Selection: "${bet.outcomeLabel}"`);
             console.log(`   - Line: "${bet.betDetails?.total}"`);
             
-            // Check all possible sources for player name
-            const participantName = bet.participant || bet.playerName || bet.betDetails?.name || bet.unibetMeta?.participant || null;
-            let playerId = bet.participantId || bet.unibetMeta?.participantId || bet.eventParticipantId || bet.unibetMeta?.eventParticipantId || null;
+            // ✅ FIX: For combination bets, unibetMeta is stored in _originalBet.unibetMeta
+            // Check both bet.unibetMeta and bet._originalBet.unibetMeta
+            const unibetMetaParticipant = bet.unibetMeta?.participant || bet._originalBet?.unibetMeta?.participant;
+            
+            // ✅ FIX: Helper function to check if a string looks like a player name (not a line like "Over 0.5")
+            const looksLikePlayerName = (name) => {
+                if (!name || typeof name !== 'string') return false;
+                const normalized = name.toLowerCase().trim();
+                // Exclude common outcome labels that are not player names
+                const nonPlayerPatterns = [
+                    /^over\s*\d+\.?\d*$/i,
+                    /^under\s*\d+\.?\d*$/i,
+                    /^yes$/i,
+                    /^no$/i,
+                    /^\d+\.?\d*$/,
+                    /^over\/under/i
+                ];
+                return !nonPlayerPatterns.some(pattern => pattern.test(normalized));
+            };
+            
+            // ✅ FIX: Prioritize unibetMeta.participant first, and validate that it's a real player name
+            // Check all possible sources for player name, prioritizing unibetMeta.participant
+            let participantName = null;
+            
+            // Priority 1: unibetMeta.participant (most reliable source from Unibet API)
+            // Check both bet.unibetMeta and bet._originalBet.unibetMeta for combination bets
+            if (unibetMetaParticipant && looksLikePlayerName(unibetMetaParticipant)) {
+                participantName = unibetMetaParticipant;
+                console.log(`   - ✅ Using player name from unibetMeta.participant: "${participantName}"`);
+            }
+            // Priority 2: bet.participant (but only if it looks like a player name)
+            else if (bet.participant && looksLikePlayerName(bet.participant)) {
+                participantName = bet.participant;
+                console.log(`   - ✅ Using player name from bet.participant: "${participantName}"`);
+            }
+            // Priority 3: bet.playerName
+            else if (bet.playerName && looksLikePlayerName(bet.playerName)) {
+                participantName = bet.playerName;
+                console.log(`   - ✅ Using player name from bet.playerName: "${participantName}"`);
+            }
+            // Priority 4: bet.betDetails?.name (but only if it looks like a player name)
+            else if (bet.betDetails?.name && looksLikePlayerName(bet.betDetails.name)) {
+                participantName = bet.betDetails.name;
+                console.log(`   - ✅ Using player name from bet.betDetails.name: "${participantName}"`);
+            }
+            // Priority 5: Fallback to unibetMeta.participant even if validation fails (might still be valid)
+            else if (unibetMetaParticipant) {
+                participantName = unibetMetaParticipant;
+                console.log(`   - ⚠️ Using player name from unibetMeta.participant (fallback, validation skipped): "${participantName}"`);
+            }
+            
+            // ✅ FIX: Check _originalBet.unibetMeta for combination bets
+            let playerId = bet.participantId || bet.unibetMeta?.participantId || bet._originalBet?.unibetMeta?.participantId || bet.eventParticipantId || bet.unibetMeta?.eventParticipantId || bet._originalBet?.unibetMeta?.eventParticipantId || null;
             
             console.log(`   - Final Participant Name: "${participantName}"`);
             console.log(`   - Final Player ID (from bet): ${playerId}`);
@@ -7763,10 +7944,29 @@ class BetOutcomeCalculator {
             if (!fotmobData) {
                 console.log(`❌ FOTMOB DATA FAILED: No data available for ${betDate.toISOString().slice(0, 10)}`);
                 console.log(`📋 This could be due to Fotmob API format changes or network issues`);
-                console.log(`📋 Throwing error to mark bet as canceled`);
+                console.log(`📋 Marking bet as canceled with detailed reason`);
                 
-                // Throw an error so it gets caught and handled as a cancellation
-                throw new Error('Failed to fetch Fotmob data - API format issue');
+                // ✅ FIX: Return proper cancellation instead of throwing error
+                const cancellationReason = 'FOTMOB_DATA_UNAVAILABLE';
+                const detailedError = `Failed to fetch Fotmob match data for date ${betDate.toISOString().slice(0, 10)}. This could be due to Fotmob API format changes, network issues, or the match date being outside the cache range.`;
+                
+                const cancelResult = await this.cancelBet(bet, cancellationReason, detailedError, {
+                    betDate: betDate.toISOString(),
+                    dateStr: betDate.toISOString().slice(0, 10),
+                    error: 'Fotmob data unavailable'
+                });
+                
+                return {
+                    success: true,
+                    outcome: {
+                        status: 'cancelled',
+                        reason: detailedError,
+                        stake: bet.stake,
+                        payout: bet.stake
+                    },
+                    cancelled: true,
+                    updated: cancelResult.updated
+                };
             }
             console.log(`✅ Fotmob data loaded: ${fotmobData.leagues?.length || 0} leagues available`);
 
@@ -7797,15 +7997,22 @@ class BetOutcomeCalculator {
                 if (matchResult.cancellationReason) {
                     console.log(`\n🚫 CANCELLING BET: ${matchResult.cancellationReason}`);
                     console.log(`📝 Reason: ${matchResult.error}`);
+                    
+                    // ✅ FIX: Create detailed cancellation reason with code and error message
+                    let detailedReason = `${matchResult.cancellationReason}: ${matchResult.error}`;
+                    if (matchResult.debugInfo?.searchSteps && matchResult.debugInfo.searchSteps.length > 0) {
+                        const searchSteps = matchResult.debugInfo.searchSteps.slice(-3).join('; '); // Last 3 steps
+                        detailedReason = `${detailedReason} (${searchSteps})`;
+                    }
 
-                    const cancelResult = await this.cancelBet(bet, matchResult.cancellationReason, matchResult.error, matchResult.debugInfo);
+                    const cancelResult = await this.cancelBet(bet, matchResult.cancellationReason, detailedReason, matchResult.debugInfo);
 
                     console.log(`✅ Bet cancelled and updated in database`);
                     return {
                         success: true,
                         outcome: { 
                             status: 'cancelled', 
-                            reason: matchResult.error,
+                            reason: detailedReason,
                             stake: bet.stake,
                             payout: bet.stake // Refund the stake
                         },

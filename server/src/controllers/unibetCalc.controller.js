@@ -18,6 +18,14 @@ export class UnibetCalcController {
         try {
             const { limit = 200, onlyPending = true } = req.body;
             
+            console.log(`\n📊 [processAll] ========================================`);
+            console.log(`📊 [processAll] STARTING BATCH BET PROCESSING`);
+            console.log(`📊 [processAll] ========================================`);
+            console.log(`📊 [processAll] Parameters:`);
+            console.log(`📊 [processAll]    - Limit: ${limit}`);
+            console.log(`📊 [processAll]    - Only Pending: ${onlyPending}`);
+            console.log(`📊 [processAll]    - Timestamp: ${new Date().toISOString()}`);
+            
             let bets = [];
             
             if (onlyPending) {
@@ -25,22 +33,41 @@ export class UnibetCalcController {
                 // This allows us to process bets based on actual match status, not estimated time
                 const query = { status: 'pending' };
                 
-                console.log(`🔍 [processAll] Fetching all pending bets (no time-based filtering - will check Unibet/FotMob match status)`);
+                console.log(`📊 [processAll] 🔍 Querying database for pending bets...`);
+                console.log(`📊 [processAll]    - Query: ${JSON.stringify(query)}`);
+                console.log(`📊 [processAll]    - Sort: { createdAt: 1 }`);
+                console.log(`📊 [processAll]    - Limit: ${parseInt(limit)}`);
                 
-                bets = await Bet.find(query)
-                .sort({ createdAt: 1 })
-                .limit(parseInt(limit));
-                
-                console.log(`   - Found ${bets.length} pending bets`);
-            } else {
-                // For non-pending mode, get all bets
-                const query = {};
+                const queryStartTime = Date.now();
                 bets = await Bet.find(query)
                     .sort({ createdAt: 1 })
                     .limit(parseInt(limit));
+                const queryDuration = Date.now() - queryStartTime;
+                
+                console.log(`📊 [processAll] ✅ Database query completed in ${queryDuration}ms`);
+                console.log(`📊 [processAll]    - Found ${bets.length} pending bets`);
+                
+                if (bets.length > 0) {
+                    console.log(`📊 [processAll] 📋 Bet IDs found:`);
+                    bets.forEach((bet, index) => {
+                        const betType = bet.combination && bet.combination.length > 0 
+                            ? `Combination (${bet.combination.length} legs)` 
+                            : 'Single';
+                        console.log(`📊 [processAll]    ${index + 1}. Bet ID: ${bet._id} | Type: ${betType} | Match ID: ${bet.matchId || 'N/A'}`);
+                    });
+                }
+            } else {
+                // For non-pending mode, get all bets
+                const query = {};
+                console.log(`📊 [processAll] 🔍 Querying database for all bets...`);
+                bets = await Bet.find(query)
+                    .sort({ createdAt: 1 })
+                    .limit(parseInt(limit));
+                console.log(`📊 [processAll]    - Found ${bets.length} bets`);
             }
 
             if (bets.length === 0) {
+                console.log(`📊 [processAll] ⚠️ No bets found for processing`);
                 return res.json({
                     success: true,
                     message: 'No bets found for processing',
@@ -76,20 +103,45 @@ export class UnibetCalcController {
             const results = [];
 
             // Process each bet with improved error isolation
-            for (const bet of bets) {
+            for (let i = 0; i < bets.length; i++) {
+                const bet = bets[i];
+                const betNumber = i + 1;
+                
                 try {
-                    let result;
+                    console.log(`\n🔄 [processAll] ========================================`);
+                    console.log(`🔄 [processAll] Processing bet ${betNumber}/${bets.length}`);
+                    console.log(`🔄 [processAll] ========================================`);
+                    console.log(`🔄 [processAll] Bet ID: ${bet._id}`);
+                    console.log(`🔄 [processAll] Bet Type: ${bet.combination && bet.combination.length > 0 ? 'Combination' : 'Single'}`);
+                    if (bet.combination && bet.combination.length > 0) {
+                        console.log(`🔄 [processAll]    - Legs: ${bet.combination.length}`);
+                        bet.combination.forEach((leg, legIndex) => {
+                            console.log(`🔄 [processAll]       Leg ${legIndex + 1}: Match ${leg.matchId} | ${leg.betOption} @ ${leg.odds} | Status: ${leg.status || 'pending'}`);
+                        });
+                    } else {
+                        console.log(`🔄 [processAll]    - Match ID: ${bet.matchId}`);
+                        console.log(`🔄 [processAll]    - Bet Option: ${bet.betOption}`);
+                        console.log(`🔄 [processAll]    - Odds: ${bet.odds}`);
+                    }
+                    console.log(`🔄 [processAll]    - Stake: ${bet.stake}`);
+                    console.log(`🔄 [processAll]    - Current Status: ${bet.status}`);
+                    console.log(`🔄 [processAll]    - Created At: ${bet.createdAt}`);
+                    console.log(`🔄 [processAll]    - Match Date: ${bet.matchDate}`);
+                    console.log(`🔄 [processAll]    - Bet Outcome Check Time: ${bet.betOutcomeCheckTime}`);
                     
-                    console.log(`\n🔄 Processing bet ${bet._id} (${bet.combination && bet.combination.length > 0 ? 'combination' : 'single'})...`);
+                    let result;
+                    const processStartTime = Date.now();
                     
                     // Check if it's a combination bet
                     if (bet.combination && bet.combination.length > 0) {
+                        console.log(`🔄 [processAll] → Routing to processCombinationBetInternal...`);
                         result = await this.processCombinationBetInternal(bet);
                         stats.combination.processed++;
                         if (result.status === 'won') stats.combination.won++;
                         else if (result.status === 'lost') stats.combination.lost++;
                         else if (result.status === 'canceled' || result.status === 'cancelled') stats.combination.canceled++;
                     } else {
+                        console.log(`🔄 [processAll] → Routing to processSingleBet...`);
                         result = await this.processSingleBet(bet);
                         stats.single.processed++;
                         if (result.status === 'won') stats.single.won++;
@@ -97,12 +149,27 @@ export class UnibetCalcController {
                         else if (result.status === 'canceled' || result.status === 'cancelled') stats.single.canceled++;
                     }
                     
+                    const processDuration = Date.now() - processStartTime;
+                    
+                    console.log(`✅ [processAll] Bet ${betNumber} processed in ${processDuration}ms`);
+                    console.log(`✅ [processAll]    - Final Status: ${result.status}`);
+                    console.log(`✅ [processAll]    - Payout: ${result.payout}`);
+                    console.log(`✅ [processAll]    - Reason: ${result.reason || 'No reason provided'}`);
+                    if (result.debugInfo && Object.keys(result.debugInfo).length > 0) {
+                        console.log(`✅ [processAll]    - Debug Info: ${JSON.stringify(result.debugInfo, null, 2)}`);
+                    }
+                    
                     results.push(result);
-                    console.log(`✅ Bet ${bet._id} processed successfully: ${result.status}`);
                     
                 } catch (error) {
-                    console.error(`❌ [processAll] Error processing bet ${bet._id}:`, error.message);
-                    console.error(`📋 Error details:`, error.stack);
+                    console.error(`\n❌ [processAll] ========================================`);
+                    console.error(`❌ [processAll] ERROR processing bet ${betNumber}/${bets.length}`);
+                    console.error(`❌ [processAll] ========================================`);
+                    console.error(`❌ [processAll] Bet ID: ${bet._id}`);
+                    console.error(`❌ [processAll] Error Message: ${error.message}`);
+                    console.error(`❌ [processAll] Error Stack: ${error.stack}`);
+                    console.error(`❌ [processAll] ========================================`);
+                    
                     stats.failed++;
                     stats.errors.push({
                         betId: bet._id,
@@ -112,9 +179,25 @@ export class UnibetCalcController {
                     });
                     
                     // Continue processing other bets even if one fails
-                    console.log(`⚠️ Continuing with next bet despite error...`);
+                    console.log(`⚠️ [processAll] Continuing with next bet despite error...`);
                 }
             }
+
+            console.log(`\n📊 [processAll] ========================================`);
+            console.log(`📊 [processAll] BATCH PROCESSING COMPLETED`);
+            console.log(`📊 [processAll] ========================================`);
+            console.log(`📊 [processAll] Summary:`);
+            console.log(`📊 [processAll]    - Total: ${stats.total}`);
+            console.log(`📊 [processAll]    - Single: ${stats.single.processed} processed (${stats.single.won} won, ${stats.single.lost} lost, ${stats.single.canceled} canceled)`);
+            console.log(`📊 [processAll]    - Combination: ${stats.combination.processed} processed (${stats.combination.won} won, ${stats.combination.lost} lost, ${stats.combination.canceled} canceled)`);
+            console.log(`📊 [processAll]    - Failed: ${stats.failed}`);
+            if (stats.errors.length > 0) {
+                console.log(`📊 [processAll]    - Errors: ${stats.errors.length}`);
+                stats.errors.forEach((err, index) => {
+                    console.log(`📊 [processAll]       ${index + 1}. Bet ${err.betId} (${err.betType}): ${err.error}`);
+                });
+            }
+            console.log(`📊 [processAll] ========================================\n`);
 
 
             res.json({
@@ -125,7 +208,13 @@ export class UnibetCalcController {
             });
 
         } catch (error) {
-            console.error('[processAll] Error in batch processing:', error);
+            console.error(`\n❌ [processAll] ========================================`);
+            console.error(`❌ [processAll] FATAL ERROR in batch processing`);
+            console.error(`❌ [processAll] ========================================`);
+            console.error(`❌ [processAll] Error: ${error.message}`);
+            console.error(`❌ [processAll] Stack: ${error.stack}`);
+            console.error(`❌ [processAll] ========================================\n`);
+            
             res.status(500).json({
                 success: false,
                 message: 'Failed to process bets',
@@ -202,26 +291,54 @@ export class UnibetCalcController {
 
     // Internal method to process a single bet
     async processSingleBet(bet) {
-        // console.log('bet+++++++++++++++++++++++', bet);
         try {
+            console.log(`\n🔍 [processSingleBet] ========================================`);
+            console.log(`🔍 [processSingleBet] Processing bet ${bet._id}`);
+            console.log(`🔍 [processSingleBet] ========================================`);
+            console.log(`🔍 [processSingleBet] Bet Details:`);
+            console.log(`🔍 [processSingleBet]    - Match ID: ${bet.matchId}`);
+            console.log(`🔍 [processSingleBet]    - Odd ID: ${bet.oddId}`);
+            console.log(`🔍 [processSingleBet]    - Bet Option: ${bet.betOption}`);
+            console.log(`🔍 [processSingleBet]    - Odds: ${bet.odds}`);
+            console.log(`🔍 [processSingleBet]    - Stake: ${bet.stake}`);
+            console.log(`🔍 [processSingleBet]    - Status: ${bet.status}`);
+            console.log(`🔍 [processSingleBet]    - Inplay: ${bet.inplay || false}`);
+            console.log(`🔍 [processSingleBet]    - Match Date: ${bet.matchDate}`);
+            console.log(`🔍 [processSingleBet]    - Bet Outcome Check Time: ${bet.betOutcomeCheckTime}`);
+            
             // Validate bet for calculator
             const validation = BetSchemaAdapter.validateBetForCalculator(bet);
             if (!validation.isValid) {
+                console.error(`❌ [processSingleBet] Bet validation failed:`, validation.errors);
                 throw new Error(`Bet validation failed: ${validation.errors.join(', ')}`);
             }
+            console.log(`✅ [processSingleBet] Bet validation passed`);
 
             // Adapt bet for calculator
             const adaptedBet = BetSchemaAdapter.adaptBetForCalculator(bet);
             
-            // console.log('adaptedBet+++++++++++++++++++++++', adaptedBet);
-            console.log(`Processing bet ${bet._id}: ${adaptedBet.marketName} - ${adaptedBet.outcomeLabel}`);
+            console.log(`🔍 [processSingleBet] Adapted bet for calculator:`);
+            console.log(`🔍 [processSingleBet]    - Event ID: ${adaptedBet.eventId}`);
+            console.log(`🔍 [processSingleBet]    - Market Name: ${adaptedBet.marketName}`);
+            console.log(`🔍 [processSingleBet]    - Outcome Label: ${adaptedBet.outcomeLabel}`);
+            console.log(`🔍 [processSingleBet] Processing bet ${bet._id}: ${adaptedBet.marketName} - ${adaptedBet.outcomeLabel}`);
 
             // Process with calculator (calculator already updates the database)
+            console.log(`🔍 [processSingleBet] Calling calculator.processBetWithMatchId...`);
             const calculatorResult = await this.calculator.processBetWithMatchId(adaptedBet, adaptedBet.eventId);
+            
+            console.log(`🔍 [processSingleBet] Calculator result:`, {
+                success: calculatorResult.success,
+                status: calculatorResult.outcome?.status,
+                payout: calculatorResult.outcome?.payout,
+                reason: calculatorResult.outcome?.reason,
+                error: calculatorResult.error
+            });
             
             // Check if calculator validation failed
             if (!calculatorResult.success) {
-                console.log(`❌ Calculator validation failed: ${calculatorResult.error}`);
+                console.error(`❌ [processSingleBet] Calculator validation failed: ${calculatorResult.error}`);
+                console.error(`❌ [processSingleBet] Cancelling bet ${bet._id} due to validation failure`);
                 
                 // Cancel the bet due to validation failure
                 await this.cancelBet(bet._id, calculatorResult.error);
@@ -232,9 +349,14 @@ export class UnibetCalcController {
                     payout: 0,
                     reason: `Validation failed: ${calculatorResult.error}`,
                     processedAt: new Date(),
-                    debugInfo: {}
+                    debugInfo: {
+                        validationError: calculatorResult.error,
+                        adaptedBet: adaptedBet
+                    }
                 };
             }
+            
+            console.log(`✅ [processSingleBet] Bet ${bet._id} processed successfully: ${calculatorResult.outcome?.status}`);
             
             // No need to update database again - calculator already did it
             // The calculator handles the database update with proper transaction and write concern
@@ -251,7 +373,9 @@ export class UnibetCalcController {
             };
 
         } catch (error) {
-            console.error(`Error processing bet ${bet._id}:`, error);
+            console.error(`❌ [processSingleBet] Error processing bet ${bet._id}:`, error);
+            console.error(`❌ [processSingleBet] Error message:`, error.message);
+            console.error(`❌ [processSingleBet] Error stack:`, error.stack);
             
             // Update bet with error status
             await Bet.findByIdAndUpdate(bet._id, {
@@ -272,35 +396,74 @@ export class UnibetCalcController {
     // Helper method to cancel a bet
     async cancelBet(betId, reason) {
         try {
-            console.log(`🚫 Cancelling bet ${betId} due to: ${reason}`);
+            console.log(`\n🚫 [cancelBet] ========================================`);
+            console.log(`🚫 [cancelBet] Cancelling bet ${betId}`);
+            console.log(`🚫 [cancelBet] Reason: ${reason}`);
+            console.log(`🚫 [cancelBet] ========================================`);
+            
+            // Fetch bet first to get details
+            const bet = await Bet.findById(betId);
+            if (!bet) {
+                console.error(`❌ [cancelBet] Bet ${betId} not found`);
+                return null;
+            }
+            
+            console.log(`🚫 [cancelBet] Bet details before cancellation:`);
+            console.log(`🚫 [cancelBet]    - Match ID: ${bet.matchId}`);
+            console.log(`🚫 [cancelBet]    - Stake: ${bet.stake}`);
+            console.log(`🚫 [cancelBet]    - User ID: ${bet.userId}`);
+            console.log(`🚫 [cancelBet]    - Current Status: ${bet.status}`);
+            if (bet.combination && bet.combination.length > 0) {
+                console.log(`🚫 [cancelBet]    - Type: Combination bet with ${bet.combination.length} legs`);
+            } else {
+                console.log(`🚫 [cancelBet]    - Type: Single bet`);
+            }
             
             // Update bet status to cancelled
+            // ✅ FIX: Preserve existing result fields and add cancellation reason
             const updatedBet = await Bet.findByIdAndUpdate(
                 betId,
                 {
                     status: 'cancelled',
-                    result: {
-                        status: 'cancelled',
-                        payout: 0,
-                        reason: reason,
-                        processedAt: new Date()
+                    payout: 0,
+                    profit: 0,
+                    $set: {
+                        'result.status': 'cancelled',
+                        'result.payout': 0,
+                        'result.reason': reason || 'Bet cancelled due to validation failure or processing error',
+                        'result.processedAt': new Date()
                     }
                 },
                 { new: true }
             );
 
             if (updatedBet) {
+                console.log(`✅ [cancelBet] Bet ${betId} status updated to cancelled`);
+                
                 // Refund the stake to user's balance
-                await User.findByIdAndUpdate(
+                const userUpdate = await User.findByIdAndUpdate(
                     updatedBet.userId,
-                    { $inc: { balance: updatedBet.stake } }
+                    { $inc: { balance: updatedBet.stake } },
+                    { new: true }
                 );
-                console.log(`✅ Bet ${betId} cancelled and stake refunded`);
+                
+                if (userUpdate) {
+                    console.log(`✅ [cancelBet] Stake ${updatedBet.stake} refunded to user ${updatedBet.userId}`);
+                    console.log(`✅ [cancelBet] User new balance: ${userUpdate.balance}`);
+                } else {
+                    console.error(`❌ [cancelBet] Failed to update user balance`);
+                }
+                
+                console.log(`✅ [cancelBet] Bet ${betId} cancelled and stake refunded`);
+            } else {
+                console.error(`❌ [cancelBet] Failed to update bet status`);
             }
 
             return updatedBet;
         } catch (error) {
-            console.error(`❌ Error cancelling bet ${betId}:`, error);
+            console.error(`❌ [cancelBet] Error cancelling bet ${betId}:`, error);
+            console.error(`❌ [cancelBet] Error message:`, error.message);
+            console.error(`❌ [cancelBet] Error stack:`, error.stack);
             throw error;
         }
     }
@@ -540,16 +703,42 @@ export class UnibetCalcController {
     // Internal method to process a combination bet
     async processCombinationBetInternal(bet) {
         try {
+            console.log(`\n🔍 [processCombinationBetInternal] ========================================`);
+            console.log(`🔍 [processCombinationBetInternal] Processing combination bet ${bet._id}`);
+            console.log(`🔍 [processCombinationBetInternal] ========================================`);
+            console.log(`🔍 [processCombinationBetInternal] Bet Details:`);
+            console.log(`🔍 [processCombinationBetInternal]    - Total Legs: ${bet.combination?.length || 0}`);
+            console.log(`🔍 [processCombinationBetInternal]    - Stake: ${bet.stake}`);
+            console.log(`🔍 [processCombinationBetInternal]    - Total Odds: ${bet.totalOdds || bet.odds}`);
+            console.log(`🔍 [processCombinationBetInternal]    - Status: ${bet.status}`);
+            console.log(`🔍 [processCombinationBetInternal]    - Match Date: ${bet.matchDate}`);
+            console.log(`🔍 [processCombinationBetInternal]    - Bet Outcome Check Time: ${bet.betOutcomeCheckTime}`);
+            
+            // Log each leg
+            if (bet.combination && bet.combination.length > 0) {
+                console.log(`🔍 [processCombinationBetInternal] Legs:`);
+                bet.combination.forEach((leg, index) => {
+                    console.log(`🔍 [processCombinationBetInternal]    Leg ${index + 1}:`);
+                    console.log(`🔍 [processCombinationBetInternal]       - Match ID: ${leg.matchId}`);
+                    console.log(`🔍 [processCombinationBetInternal]       - Odd ID: ${leg.oddId}`);
+                    console.log(`🔍 [processCombinationBetInternal]       - Bet Option: ${leg.betOption}`);
+                    console.log(`🔍 [processCombinationBetInternal]       - Odds: ${leg.odds}`);
+                    console.log(`🔍 [processCombinationBetInternal]       - Status: ${leg.status || 'pending'}`);
+                    console.log(`🔍 [processCombinationBetInternal]       - Inplay: ${leg.inplay || false}`);
+                });
+            }
             
             // Validate combination bet for calculator
             const validation = BetSchemaAdapter.validateCombinationBetForCalculator(bet);
             if (!validation.isValid) {
+                console.error(`❌ [processCombinationBetInternal] Combination bet validation failed:`, validation.errors);
                 throw new Error(`Combination bet validation failed: ${validation.errors.join(', ')}`);
             }
+            console.log(`✅ [processCombinationBetInternal] Combination bet validation passed`);
 
             // Adapt combination bet for calculator (returns array of calculator bets)
             const calculatorBets = await BetSchemaAdapter.adaptCombinationBetForCalculator(bet);
-            
+            console.log(`🔍 [processCombinationBetInternal] Adapted ${calculatorBets.length} legs for calculator`);
 
             // Process each leg through calculator
             const results = [];
@@ -557,11 +746,98 @@ export class UnibetCalcController {
                 const calculatorBet = calculatorBets[i];
                 const leg = bet.combination[i];
                 
-                console.log(`[processCombinationBetInternal] Processing leg ${i + 1}/${calculatorBets.length}: ${leg.betOption} @ ${leg.odds}`);
+                console.log(`\n🔍 [processCombinationBetInternal] ========================================`);
+                console.log(`🔍 [processCombinationBetInternal] Processing leg ${i + 1}/${calculatorBets.length}`);
+                console.log(`🔍 [processCombinationBetInternal] ========================================`);
+                console.log(`🔍 [processCombinationBetInternal] Leg Details:`);
+                console.log(`🔍 [processCombinationBetInternal]    - Match ID: ${leg.matchId}`);
+                console.log(`🔍 [processCombinationBetInternal]    - Current Status: ${leg.status}`);
+                console.log(`🔍 [processCombinationBetInternal]    - Bet Option: ${leg.betOption}`);
+                
+                // ✅ FIX: Skip legs that are already finalized (won/lost/canceled)
+                // Only process legs that are still pending
+                const isFinalStatus = leg.status === 'won' || leg.status === 'lost' || 
+                                     leg.status === 'canceled' || leg.status === 'cancelled' || 
+                                     leg.status === 'void';
+                
+                if (isFinalStatus) {
+                    console.log(`⏭️ [processCombinationBetInternal] Leg ${i + 1} already finalized with status: ${leg.status}`);
+                    
+                    // ✅ FIX: Check if reason is generic - if so, try to get detailed reason from calculator
+                    const existingReason = leg.result?.reason || '';
+                    const isGenericReason = existingReason.includes('canceled for') && 
+                                           !existingReason.includes(':') && 
+                                           !existingReason.includes('NO_SUITABLE_MATCH') &&
+                                           !existingReason.includes('FOTMOB_DATA_UNAVAILABLE') &&
+                                           !existingReason.includes('LEAGUE_MAPPING_NOT_FOUND');
+                    
+                    if (isGenericReason && (leg.status === 'canceled' || leg.status === 'cancelled')) {
+                        console.log(`🔍 [processCombinationBetInternal] Leg ${i + 1} has generic cancellation reason - attempting to get detailed reason from calculator`);
+                        try {
+                            // Try to get detailed cancellation reason from calculator (won't change status, just get reason)
+                            const calculatorResult = await this.calculator.processBetWithMatchId(calculatorBet, calculatorBet.eventId, false);
+                            
+                            if (calculatorResult.outcome?.reason && calculatorResult.outcome.reason !== existingReason) {
+                                console.log(`✅ [processCombinationBetInternal] Got detailed reason for leg ${i + 1}: ${calculatorResult.outcome.reason}`);
+                                results.push({
+                                    status: leg.status, // Keep existing status
+                                    payout: leg.payout || 0,
+                                    reason: calculatorResult.outcome.reason, // Use detailed reason
+                                    odds: leg.odds,
+                                    debugInfo: calculatorResult.debugInfo || leg.result?.debugInfo || {}
+                                });
+                            } else {
+                                // Use existing reason if calculator didn't provide better one
+                                results.push({
+                                    status: leg.status,
+                                    payout: leg.payout || 0,
+                                    reason: existingReason || `${leg.betOption} - ${leg.status}`,
+                                    odds: leg.odds,
+                                    debugInfo: leg.result?.debugInfo || {}
+                                });
+                            }
+                        } catch (error) {
+                            console.warn(`⚠️ [processCombinationBetInternal] Could not get detailed reason for leg ${i + 1}: ${error.message}`);
+                            // Use existing reason on error
+                            results.push({
+                                status: leg.status,
+                                payout: leg.payout || 0,
+                                reason: existingReason || `${leg.betOption} - ${leg.status}`,
+                                odds: leg.odds,
+                                debugInfo: leg.result?.debugInfo || {}
+                            });
+                        }
+                    } else {
+                        // Use existing leg status and result (reason is already detailed or not canceled)
+                        results.push({
+                            status: leg.status,
+                            payout: leg.payout || 0,
+                            reason: existingReason || `${leg.betOption} - ${leg.status}`,
+                            odds: leg.odds,
+                            debugInfo: leg.result?.debugInfo || {}
+                        });
+                    }
+                    continue; // Skip to next leg
+                }
+                
+                console.log(`🔍 [processCombinationBetInternal]    - Event ID: ${calculatorBet.eventId}`);
+                console.log(`🔍 [processCombinationBetInternal]    - Odds: ${leg.odds}`);
+                console.log(`🔍 [processCombinationBetInternal]    - Market: ${calculatorBet.marketName}`);
+                console.log(`🔍 [processCombinationBetInternal]    - Outcome: ${calculatorBet.outcomeLabel}`);
                 
                 try {
                     // Process leg through calculator (don't update database for combination bet legs)
+                    console.log(`🔍 [processCombinationBetInternal] Calling calculator.processBetWithMatchId for leg ${i + 1}...`);
                     const calculatorResult = await this.calculator.processBetWithMatchId(calculatorBet, calculatorBet.eventId, false);
+                    
+                    console.log(`🔍 [processCombinationBetInternal] Leg ${i + 1} calculator result:`, {
+                        success: calculatorResult.success,
+                        status: calculatorResult.outcome?.status,
+                        payout: calculatorResult.outcome?.payout,
+                        reason: calculatorResult.outcome?.reason,
+                        error: calculatorResult.error,
+                        debugInfo: calculatorResult.debugInfo
+                    });
                     
                     // Extract outcome from calculator result
                     const legResult = {
@@ -574,69 +850,144 @@ export class UnibetCalcController {
                     
                     results.push(legResult);
                     
-                    console.log(`[processCombinationBetInternal] Leg ${i + 1} result: ${legResult.status} (payout: ${legResult.payout})`);
+                    console.log(`✅ [processCombinationBetInternal] Leg ${i + 1} result: ${legResult.status} (payout: ${legResult.payout})`);
+                    if (calculatorResult.error) {
+                        console.error(`❌ [processCombinationBetInternal] Leg ${i + 1} error: ${calculatorResult.error}`);
+                    }
                     
                 } catch (error) {
-                    console.error(`[processCombinationBetInternal] Error processing leg ${i + 1}:`, error);
+                    console.error(`❌ [processCombinationBetInternal] Error processing leg ${i + 1}:`, error);
+                    console.error(`❌ [processCombinationBetInternal] Error message:`, error.message);
+                    console.error(`❌ [processCombinationBetInternal] Error stack:`, error.stack);
                     
                     // Add error result for this leg
                     results.push({
                         status: 'error',
                         payout: 0,
                         reason: `Leg processing failed: ${error.message}`,
-                        debugInfo: { error: error.message }
+                        debugInfo: { error: error.message, stack: error.stack }
                     });
                 }
             }
             
+            console.log(`\n🔍 [processCombinationBetInternal] All legs processed. Results summary:`);
+            results.forEach((result, index) => {
+                console.log(`🔍 [processCombinationBetInternal]    Leg ${index + 1}: ${result.status} - ${result.reason}`);
+            });
+            
             // Adapt results back to bet-app format
             const updatedBet = BetSchemaAdapter.adaptCombinationCalculatorResult(results, bet);
-
-            // console.log(`Updatedbet --------------------------------------:`,updatedBet);
             
-            // console.log(`[processCombinationBetInternal] Updating database for bet ${bet._id}:`, {
-            //     status: updatedBet.status,
-            //     payout: updatedBet.payout,
-            //     legs: updatedBet.combination.length
-            // });
-            
-            // console.log(`[processCombinationBetInternal] Updated bet object:`, JSON.stringify(updatedBet, null, 2));
+            console.log(`🔍 [processCombinationBetInternal] Updated bet status: ${updatedBet.status}`);
+            console.log(`🔍 [processCombinationBetInternal] Updated bet payout: ${updatedBet.payout}`);
+            console.log(`🔍 [processCombinationBetInternal] Result summary:`, {
+                wonLegs: updatedBet.result.wonLegs,
+                lostLegs: updatedBet.result.lostLegs,
+                canceledLegs: updatedBet.result.canceledLegs,
+                pendingLegs: updatedBet.result.pendingLegs
+            });
             
             // Update bet in database with main fields first
+            // ✅ FIX: Explicitly set result.reason and all result fields to ensure they're saved
+            const mainReasonToSave = updatedBet.result.reason || 'No reason provided';
+            console.log(`\n💾 [processCombinationBetInternal] Saving main combination bet to database:`);
+            console.log(`💾 [processCombinationBetInternal]    - Status: ${updatedBet.status}`);
+            console.log(`💾 [processCombinationBetInternal]    - Payout: ${updatedBet.payout}`);
+            console.log(`💾 [processCombinationBetInternal]    - Reason: ${mainReasonToSave}`);
+            console.log(`💾 [processCombinationBetInternal]    - Reason length: ${mainReasonToSave.length} characters`);
+            console.log(`💾 [processCombinationBetInternal]    - Legs: ${updatedBet.result.legs} (${updatedBet.result.wonLegs} won, ${updatedBet.result.lostLegs} lost, ${updatedBet.result.canceledLegs} canceled, ${updatedBet.result.pendingLegs} pending)`);
+            
             const savedBet = await Bet.findByIdAndUpdate(
                 bet._id,
                 { 
                     $set: {
                         status: updatedBet.status,
                         payout: updatedBet.payout,
-                        result: updatedBet.result,
+                        'result.status': updatedBet.result.status,
+                        'result.payout': updatedBet.result.payout,
+                        'result.reason': mainReasonToSave,
+                        'result.processedAt': updatedBet.result.processedAt || new Date(),
+                        'result.legs': updatedBet.result.legs,
+                        'result.wonLegs': updatedBet.result.wonLegs,
+                        'result.lostLegs': updatedBet.result.lostLegs,
+                        'result.canceledLegs': updatedBet.result.canceledLegs,
+                        'result.pendingLegs': updatedBet.result.pendingLegs,
                         updatedAt: new Date()
                     }
                 },
                 { new: true, runValidators: true }
             );
 
+            if (!savedBet) {
+                console.error(`❌ [processCombinationBetInternal] Failed to update bet in database`);
+            } else {
+                console.log(`✅ [processCombinationBetInternal] Main bet saved successfully`);
+                console.log(`✅ [processCombinationBetInternal]    - Saved reason: ${savedBet.result?.reason || 'NOT SAVED!'}`);
+                console.log(`✅ [processCombinationBetInternal]    - Reason matches? ${savedBet.result?.reason === mainReasonToSave}`);
+                
+                if (savedBet.result?.reason !== mainReasonToSave) {
+                    console.error(`❌ [processCombinationBetInternal] WARNING: Main bet reason mismatch!`);
+                    console.error(`❌ [processCombinationBetInternal]    - Expected: ${mainReasonToSave}`);
+                    console.error(`❌ [processCombinationBetInternal]    - Actual: ${savedBet.result?.reason || 'NULL'}`);
+                }
+            }
             
             // Update combination array elements individually using array index notation
+            // ✅ FIX: Ensure all result fields including reason are saved
             for (let i = 0; i < updatedBet.combination.length; i++) {
                 const leg = updatedBet.combination[i];
-                await Bet.findByIdAndUpdate(
+                const legResult = leg.result || {};
+                
+                // ✅ ENHANCED: Log the exact reason being saved
+                const reasonToSave = legResult.reason || `Leg ${i + 1}: ${leg.betOption} - ${leg.status}`;
+                
+                console.log(`\n💾 [processCombinationBetInternal] Saving leg ${i + 1} to database:`);
+                console.log(`💾 [processCombinationBetInternal]    - Match ID: ${leg.matchId}`);
+                console.log(`💾 [processCombinationBetInternal]    - Bet Option: ${leg.betOption}`);
+                console.log(`💾 [processCombinationBetInternal]    - Status: ${leg.status}`);
+                console.log(`💾 [processCombinationBetInternal]    - Payout: ${leg.payout || 0}`);
+                console.log(`💾 [processCombinationBetInternal]    - Reason: ${reasonToSave}`);
+                console.log(`💾 [processCombinationBetInternal]    - Reason length: ${reasonToSave.length} characters`);
+                console.log(`💾 [processCombinationBetInternal]    - Is generic? ${reasonToSave.includes('canceled for') && !reasonToSave.includes(':') && !reasonToSave.includes('NO_SUITABLE_MATCH') && !reasonToSave.includes('FOTMOB_DATA_UNAVAILABLE') && !reasonToSave.includes('LEAGUE_MAPPING_NOT_FOUND')}`);
+                
+                const updateResult = await Bet.findByIdAndUpdate(
                     bet._id,
                     { 
                         $set: {
                             [`combination.${i}.status`]: leg.status,
                             [`combination.${i}.payout`]: leg.payout,
-                            [`combination.${i}.result`]: leg.result
+                            [`combination.${i}.result.status`]: legResult.status || leg.status,
+                            [`combination.${i}.result.payout`]: legResult.payout || leg.payout,
+                            [`combination.${i}.result.reason`]: reasonToSave,
+                            [`combination.${i}.result.processedAt`]: legResult.processedAt || new Date(),
+                            [`combination.${i}.result.actualOutcome`]: legResult.actualOutcome || null,
+                            [`combination.${i}.result.finalScore`]: legResult.finalScore || null,
+                            [`combination.${i}.result.fotmobMatchId`]: legResult.fotmobMatchId || null
                         }
                     },
                     { new: true, runValidators: true }
                 );
-                console.log(`[processCombinationBetInternal] Updated leg ${i + 1}: ${leg.betOption} → ${leg.status}`);
+                
+                if (updateResult) {
+                    // Verify the reason was actually saved
+                    const verifyLeg = updateResult.combination[i];
+                    console.log(`✅ [processCombinationBetInternal] Leg ${i + 1} saved successfully`);
+                    console.log(`✅ [processCombinationBetInternal]    - Saved reason: ${verifyLeg.result?.reason || 'NOT SAVED!'}`);
+                    console.log(`✅ [processCombinationBetInternal]    - Reason matches? ${verifyLeg.result?.reason === reasonToSave}`);
+                    
+                    if (verifyLeg.result?.reason !== reasonToSave) {
+                        console.error(`❌ [processCombinationBetInternal] WARNING: Leg ${i + 1} reason mismatch!`);
+                        console.error(`❌ [processCombinationBetInternal]    - Expected: ${reasonToSave}`);
+                        console.error(`❌ [processCombinationBetInternal]    - Actual: ${verifyLeg.result?.reason || 'NULL'}`);
+                    }
+                } else {
+                    console.error(`❌ [processCombinationBetInternal] Failed to update leg ${i + 1} in database`);
+                }
             }
             
             // Verify the combination array was updated correctly
             const verifyBet = await Bet.findById(bet._id);
-            console.log(`Verification - Leg statuses---------------------:`, 
+            console.log(`🔍 [processCombinationBetInternal] Verification - Leg statuses:`, 
                 verifyBet.combination.map((leg, index) => ({
                     leg: index + 1,
                     betOption: leg.betOption,
@@ -645,26 +996,27 @@ export class UnibetCalcController {
             );
             
             if (savedBet) {
-                console.log(`[processCombinationBetInternal] Database updated successfully:`, {
+                console.log(`✅ [processCombinationBetInternal] Database updated successfully:`, {
                     status: savedBet.status,
                     payout: savedBet.payout,
                     updatedAt: savedBet.updatedAt
                 });
             } else {
-                console.error(`[processCombinationBetInternal] Database update failed - no bet returned`);
+                console.error(`❌ [processCombinationBetInternal] Database update failed - no bet returned`);
             }
             
             // Update user balance if combination bet is resolved
             if (updatedBet.status !== 'pending') {
-                console.log(`[processCombinationBetInternal] Updating user balance for resolved bet`);
+                console.log(`🔍 [processCombinationBetInternal] Updating user balance for resolved bet`);
                 try {
                     await this.updateUserBalanceForCombinationBet(savedBet);
-                    console.log(`[processCombinationBetInternal] User balance updated successfully`);
+                    console.log(`✅ [processCombinationBetInternal] User balance updated successfully`);
                 } catch (error) {
-                    console.error(`[processCombinationBetInternal] User balance update failed:`, error.message);
+                    console.error(`❌ [processCombinationBetInternal] User balance update failed:`, error.message);
+                    console.error(`❌ [processCombinationBetInternal] Error stack:`, error.stack);
                 }
             } else {
-                console.log(`[processCombinationBetInternal] Bet still pending, skipping balance update`);
+                console.log(`⏳ [processCombinationBetInternal] Bet still pending, skipping balance update`);
             }
             
             return {
@@ -682,7 +1034,9 @@ export class UnibetCalcController {
             };
             
         } catch (error) {
-            console.error(`[processCombinationBetInternal] Error processing combination bet ${bet._id}:`, error);
+            console.error(`❌ [processCombinationBetInternal] Error processing combination bet ${bet._id}:`, error);
+            console.error(`❌ [processCombinationBetInternal] Error message:`, error.message);
+            console.error(`❌ [processCombinationBetInternal] Error stack:`, error.stack);
             
             // Update bet with error status
             await Bet.findByIdAndUpdate(bet._id, {

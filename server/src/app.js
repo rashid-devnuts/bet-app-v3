@@ -245,16 +245,21 @@ const initializeApp = async () => {
     
     // 2.5. Explicitly initialize agenda jobs after a short delay to ensure MongoDB is ready
     // This ensures jobs are scheduled even if "ready" event doesn't fire
-    setTimeout(async () => {
-      try {
-        const { initializeAgendaJobs } = await import('./config/agendaJobs.js');
-        console.log('[App] 🔄 Explicitly initializing agenda jobs...');
-        await initializeAgendaJobs();
-        console.log('[App] ✅ Agenda jobs initialized successfully');
-      } catch (error) {
-        console.error('[App] ❌ Error initializing agenda jobs:', error);
-        // Don't block server startup
-      }
+    // ✅ FIX: Run in background to avoid blocking
+    setTimeout(() => {
+      (async () => {
+        try {
+          const { initializeAgendaJobs } = await import('./config/agendaJobs.js');
+          console.log('[App] 🔄 Explicitly initializing agenda jobs (non-blocking)...');
+          await initializeAgendaJobs();
+          console.log('[App] ✅ Agenda jobs initialized successfully');
+          console.log('[App] ✅ Server fully ready to accept requests');
+        } catch (error) {
+          console.error('[App] ❌ Error initializing agenda jobs:', error);
+          console.error('[App] Error stack:', error.stack);
+          // Don't block server startup
+        }
+      })(); // Immediately invoked async function - runs in background
     }, 2000); // Wait 2 seconds for MongoDB connection to stabilize
     
     // 3. Start the server
@@ -263,6 +268,8 @@ const initializeApp = async () => {
       console.log(`🌐 API URL: http://localhost:${PORT}/api`);
       console.log(`🔗 Health check: http://localhost:${PORT}/health`);
       console.log(`🔌 WebSocket server ready on port ${PORT}`);
+      console.log(`✅ Server is ready to accept connections`);
+      console.log(`📝 Note: Background jobs (FotMob cache, Agenda) are initializing asynchronously`);
     });
     
     // 4. Initialize live matches after a short delay

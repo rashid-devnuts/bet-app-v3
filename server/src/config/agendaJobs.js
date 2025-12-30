@@ -87,8 +87,15 @@ const scheduleBetProcessingJob = async () => {
     try {
       console.log('[Agenda] ⚙️ Scheduling automated bet processing job...');
       console.log('[Agenda] ⚙️ Job will run every 5 seconds');
-      const job = await agenda.every("5 seconds", "processPendingBets");
-    betProcessingJobScheduled = true;
+      
+      // ✅ FIX: Add timeout to prevent hanging
+      const jobPromise = agenda.every("5 seconds", "processPendingBets");
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: agenda.every() took too long (10s)')), 10000)
+      );
+      const job = await Promise.race([jobPromise, timeoutPromise]);
+      
+      betProcessingJobScheduled = true;
       console.log('[Agenda] ✅ Automated bet processing job scheduled successfully');
       console.log(`[Agenda] ✅ Job ID: ${job.attrs._id}`);
       console.log(`[Agenda] ✅ Next run: ${job.attrs.nextRunAt}`);
@@ -96,7 +103,8 @@ const scheduleBetProcessingJob = async () => {
     } catch (error) {
       console.error('[Agenda] ❌ Failed to schedule bet processing job:', error);
       console.error('[Agenda] ❌ Error stack:', error.stack);
-      throw error; // Re-throw to see the error
+      // Don't throw - continue with other jobs
+      console.warn('[Agenda] ⚠️ Continuing despite bet processing job scheduling failure...');
     }
   } else {
     console.log('[Agenda] ⚠️ Bet processing job already scheduled, skipping...');
@@ -129,7 +137,12 @@ const scheduleFotmobCacheJob = async () => {
       console.log('[Agenda] NOTE: Cron uses server local timezone (PKT)');
       console.log('[Agenda] ========================================');
       
-      const scheduledJob = await agenda.every("20 19 * * *", "refreshFotmobMultidayCache");
+      // ✅ FIX: Add timeout to prevent hanging
+      const jobPromise = agenda.every("20 19 * * *", "refreshFotmobMultidayCache");
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: agenda.every() took too long (10s)')), 10000)
+      );
+      const scheduledJob = await Promise.race([jobPromise, timeoutPromise]);
       
       if (scheduledJob) {
         const nextRunPKT = scheduledJob.attrs.nextRunAt ? (() => {
@@ -149,6 +162,8 @@ const scheduleFotmobCacheJob = async () => {
     } catch (error) {
       console.error('[Agenda] ❌ Error scheduling FotMob cache refresh job:', error);
       console.error('[Agenda] Error details:', error.stack);
+      // Don't throw - continue with other operations
+      console.warn('[Agenda] ⚠️ Continuing despite FotMob cache job scheduling failure...');
     }
   } else {
     console.log('[Agenda] ⚠️ FotMob cache refresh job already scheduled, skipping...');
@@ -182,7 +197,14 @@ const scheduleLeagueMappingJob = async () => {
       console.log('[Agenda] ========================================');
       
       console.log('[Agenda] About to call agenda.every() for updateLeagueMapping...');
-      const scheduledJob = await agenda.every("20 19 * * *", "updateLeagueMapping");
+      
+      // ✅ FIX: Add timeout to prevent hanging
+      const jobPromise = agenda.every("20 19 * * *", "updateLeagueMapping");
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: agenda.every() took too long (10s)')), 10000)
+      );
+      const scheduledJob = await Promise.race([jobPromise, timeoutPromise]);
+      
       console.log('[Agenda] agenda.every() returned:', scheduledJob ? 'Job object' : 'null/undefined');
       
       if (scheduledJob) {
@@ -250,6 +272,8 @@ const scheduleLeagueMappingJob = async () => {
     } catch (error) {
       console.error('[Agenda] ❌ Error scheduling League Mapping job:', error);
       console.error('[Agenda] Error details:', error.stack);
+      // Don't throw - continue with other operations
+      console.warn('[Agenda] ⚠️ Continuing despite League Mapping job scheduling failure...');
     }
   } else {
     console.log('[Agenda] ⚠️ League Mapping job already scheduled, skipping...');
@@ -290,13 +314,27 @@ export const checkFixtureCacheAndManageJobs = async () => {
   // ALWAYS schedule automated bet processing, FotMob cache refresh, and League Mapping update
   // These jobs don't depend on liveFixturesService, so they should always be scheduled
   console.log('[Agenda] Scheduling automated bet processing job...');
-  await scheduleBetProcessingJob();
+  try {
+    await scheduleBetProcessingJob();
+  } catch (error) {
+    console.error('[Agenda] ❌ Failed to schedule bet processing job in checkFixtureCacheAndManageJobs:', error.message);
+  }
   
   console.log('[Agenda] Scheduling FotMob multi-day cache refresh job...');
-  await scheduleFotmobCacheJob();
+  try {
+    await scheduleFotmobCacheJob();
+  } catch (error) {
+    console.error('[Agenda] ❌ Failed to schedule FotMob cache job in checkFixtureCacheAndManageJobs:', error.message);
+  }
   
   console.log('[Agenda] Scheduling League Mapping auto-update job...');
-  await scheduleLeagueMappingJob();
+  try {
+    await scheduleLeagueMappingJob();
+  } catch (error) {
+    console.error('[Agenda] ❌ Failed to schedule League Mapping job in checkFixtureCacheAndManageJobs:', error.message);
+  }
+  
+  console.log('[Agenda] ✅ All job scheduling attempts completed');
 };
 
 // Function to check if there are live matches in cache
@@ -375,11 +413,13 @@ agenda.define("refreshHomepageCache", async (job) => {
 // Define automated bet processing job
 agenda.define("processPendingBets", async (job) => {
   try {
+    const startTime = new Date();
     console.log(`\n[Agenda] ========================================`);
     console.log(`[Agenda] 🚀 Job "processPendingBets" STARTING`);
     console.log(`[Agenda] ========================================`);
-    console.log(`[Agenda] ⏰ Time: ${new Date().toISOString()}`);
+    console.log(`[Agenda] ⏰ Time: ${startTime.toISOString()}`);
     console.log(`[Agenda] 📋 Job ID: ${job.attrs._id}`);
+    console.log(`[Agenda] 🔍 Checking for pending bets...`);
     const unibetCalcController = new UnibetCalcController();
     
     // Create a mock response object to capture the JSON data
@@ -387,37 +427,52 @@ agenda.define("processPendingBets", async (job) => {
     const mockRes = {
       json: (data) => {
         responseData = data;
-        console.log(`[Agenda] Bet processing result:`, data);
+        console.log(`[Agenda] 📊 Bet processing result:`, JSON.stringify(data, null, 2));
         if (data.stats) {
-          console.log(`[Agenda] Bet processing: ${data.stats.processed} processed, ${data.stats.failed} failed, ${data.stats.skipped} skipped`);
+          console.log(`[Agenda] 📈 Statistics:`);
+          console.log(`[Agenda]    - Total: ${data.stats.total}`);
+          console.log(`[Agenda]    - Single bets: ${data.stats.single?.processed || 0} processed (${data.stats.single?.won || 0} won, ${data.stats.single?.lost || 0} lost, ${data.stats.single?.canceled || 0} canceled)`);
+          console.log(`[Agenda]    - Combination bets: ${data.stats.combination?.processed || 0} processed (${data.stats.combination?.won || 0} won, ${data.stats.combination?.lost || 0} lost, ${data.stats.combination?.canceled || 0} canceled)`);
+          console.log(`[Agenda]    - Failed: ${data.stats.failed || 0}`);
+          if (data.stats.errors && data.stats.errors.length > 0) {
+            console.log(`[Agenda]    - Errors:`, data.stats.errors);
+          }
         }
       }
     };
     
-    console.log(`[Agenda] About to call processAll with limit: 50, onlyPending: true`);
+    console.log(`[Agenda] 🔄 Calling processAll with limit: 50, onlyPending: true`);
     
     // Process pending bets (finished matches only)
     const result = await unibetCalcController.processAll({
       body: { limit: 50, onlyPending: true }
     }, mockRes);
     
-    console.log(`[Agenda] processAll completed, result:`, result);
+    const endTime = new Date();
+    const duration = ((endTime.getTime() - startTime.getTime()) / 1000).toFixed(2);
+    
+    console.log(`[Agenda] ✅ processAll completed in ${duration}s`);
+    console.log(`[Agenda] 📋 Result:`, result);
     
     // If no response data was captured, log a warning
     if (!responseData) {
-      console.warn(`[Agenda] No response data captured from processAll`);
+      console.warn(`[Agenda] ⚠️ No response data captured from processAll`);
     }
     
     console.log(`[Agenda] ========================================`);
     console.log(`[Agenda] ✅ Job "processPendingBets" COMPLETED`);
     console.log(`[Agenda] ========================================`);
-    console.log(`[Agenda] ⏰ Completed at: ${new Date().toISOString()}\n`);
+    console.log(`[Agenda] ⏰ Completed at: ${endTime.toISOString()}`);
+    console.log(`[Agenda] ⏱️ Duration: ${duration}s\n`);
   } catch (error) {
+    const errorTime = new Date();
     console.error(`\n[Agenda] ========================================`);
     console.error(`[Agenda] ❌ Job "processPendingBets" FAILED`);
     console.error(`[Agenda] ========================================`);
-    console.error("[Agenda] Error in automated bet processing:", error);
-    console.error("[Agenda] Error stack:", error.stack);
+    console.error(`[Agenda] ⏰ Error at: ${errorTime.toISOString()}`);
+    console.error(`[Agenda] ❌ Error in automated bet processing:`, error);
+    console.error(`[Agenda] 📋 Error message:`, error.message);
+    console.error(`[Agenda] 📋 Error stack:`, error.stack);
     console.error(`[Agenda] ========================================\n`);
   }
 });
@@ -535,6 +590,7 @@ agenda.define("refreshFotmobMultidayCache", async (job) => {
     console.log(`[Agenda] Completed at PKT: ${endPktTime}`);
     console.log(`[Agenda] Duration: ${duration} seconds`);
     console.log(`[Agenda] Result:`, result);
+    console.log(`[Agenda] ✅ Job finished, returning control to event loop...`);
   } catch (error) {
     console.error(`[Agenda] ========================================`);
     console.error(`[Agenda] ❌ FotMob Cache Refresh Job FAILED`);
@@ -543,6 +599,7 @@ agenda.define("refreshFotmobMultidayCache", async (job) => {
     console.error(`[Agenda] Error at PKT: ${pktTime}`);
     console.error("[Agenda] Error details:", error);
     console.error("[Agenda] Error stack:", error.stack);
+    console.error(`[Agenda] ⚠️ Job failed, but continuing...`);
   }
 });
 
@@ -551,11 +608,15 @@ let agendaJobsInitialized = false;
 
 // Initialize agenda jobs
 export const initializeAgendaJobs = async () => {
+  console.log('[Agenda] 🚀 initializeAgendaJobs() called');
+  
   // Prevent duplicate initialization
   if (agendaJobsInitialized) {
     console.log('[Agenda] ⚠️ Agenda jobs already initialized, skipping...');
     return;
   }
+  
+  console.log('[Agenda] ✅ Starting initialization (not previously initialized)');
   
   try {
     agendaJobsInitialized = true; // Set flag immediately to prevent race conditions
@@ -618,29 +679,69 @@ export const initializeAgendaJobs = async () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Check fixture cache and manage jobs accordingly
-    await checkFixtureCacheAndManageJobs();
-    
-    // Immediately refresh FotMob cache when server starts (force refresh on startup)
-    console.log('[Agenda] Triggering immediate FotMob cache refresh on server startup...');
+    // ✅ FIX: Add timeout to prevent hanging
+    console.log('[Agenda] 🔍 Calling checkFixtureCacheAndManageJobs...');
     try {
-      const fotmobController = new FotmobController();
-      await fotmobController.refreshMultidayCache({
-        body: { days: 20, forceRefresh: true }
-      }, {
-        json: (data) => {
-          console.log(`[Agenda] FotMob cache refresh completed on startup:`, data);
-        }
-      });
-      console.log('[Agenda] FotMob cache refresh completed successfully on startup');
+      const checkPromise = checkFixtureCacheAndManageJobs();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: checkFixtureCacheAndManageJobs() took too long (30s)')), 30000)
+      );
+      await Promise.race([checkPromise, timeoutPromise]);
+      console.log('[Agenda] ✅ checkFixtureCacheAndManageJobs completed');
     } catch (error) {
-      console.error('[Agenda] Error refreshing FotMob cache on startup:', error);
-      // Don't block server startup if cache refresh fails
+      console.error('[Agenda] ❌ Error or timeout in checkFixtureCacheAndManageJobs:', error.message);
+      console.error('[Agenda] ⚠️ Continuing with initialization despite error...');
     }
     
-    console.log('[Agenda] Agenda jobs initialization completed');
+    // Immediately refresh FotMob cache when server starts (force refresh on startup)
+    // ✅ FIX: Run in background to avoid blocking server startup
+    console.log('[Agenda] Triggering immediate FotMob cache refresh on server startup (non-blocking)...');
+    // Don't await - let it run in background
+    (async () => {
+      try {
+        const fotmobController = new FotmobController();
+        console.log('[Agenda] Starting FotMob cache refresh in background...');
+        const result = await fotmobController.refreshMultidayCache({
+          body: { days: 20, forceRefresh: true }
+        }, {
+          json: (data) => {
+            console.log(`[Agenda] FotMob cache refresh completed on startup:`, data);
+          }
+        });
+        console.log('[Agenda] ✅ FotMob cache refresh completed successfully on startup');
+        console.log('[Agenda] Background cache refresh finished');
+        console.log('[Agenda] ✅ FotMob cache refresh async task completed - returning control');
+      } catch (error) {
+        console.error('[Agenda] ❌ Error refreshing FotMob cache on startup:', error);
+        console.error('[Agenda] Error stack:', error.stack);
+        // Don't block server startup if cache refresh fails
+      }
+    })().catch(err => {
+      console.error('[Agenda] ❌ Unhandled error in FotMob cache refresh background task:', err);
+    }); // Immediately invoked async function - runs in background
+    
+    // ✅ IMPORTANT: Continue immediately - don't wait for FotMob cache refresh
+    console.log('[Agenda] ⏭️ FotMob cache refresh started in background, continuing with initialization...');
+    console.log('[Agenda] ✅ Agenda jobs initialization completed');
+    console.log('[Agenda] Server ready to accept requests');
+    console.log('[Agenda] 📋 Proceeding to log job summary...');
     
     // Log current scheduled jobs (summary only)
-    const jobs = await agenda.jobs({});
+    console.log('[Agenda] 🔍 Fetching scheduled jobs from database...');
+    let jobs = [];
+    try {
+      // Add timeout to prevent hanging
+      const jobsPromise = agenda.jobs({});
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: agenda.jobs() took too long')), 10000)
+      );
+      jobs = await Promise.race([jobsPromise, timeoutPromise]);
+      console.log(`[Agenda] ✅ Fetched ${jobs.length} jobs from database`);
+    } catch (error) {
+      console.error(`[Agenda] ❌ Error fetching jobs: ${error.message}`);
+      console.error(`[Agenda] Continuing without job summary...`);
+      // Continue with empty jobs array (already set above)
+    }
     console.log(`\n[Agenda] ========================================`);
     console.log(`[Agenda] 📊 JOB SUMMARY`);
     console.log(`[Agenda] ========================================`);
@@ -750,6 +851,10 @@ export const initializeAgendaJobs = async () => {
     
     // Run initial check after 10 seconds
     setTimeout(checkJobStatus, 10000);
+    
+    // ✅ Final completion log
+    console.log('[Agenda] ✅ All agenda initialization steps completed');
+    console.log('[Agenda] ✅ Function returning - server fully operational');
     
   } catch (error) {
     agendaJobsInitialized = false; // Reset flag on error so it can be retried

@@ -34,7 +34,10 @@ export class BetSchemaAdapter {
             criterionEnglishLabel: unibetMeta.criterionEnglishLabel || betDetails.market_description,
 
             // Participant information
-            participant: betDetails.name || unibetMeta.participant,
+            // ✅ FIX: Prioritize unibetMeta.participant for player markets (it contains actual player name from Unibet API)
+            // betDetails.name might be "Over 0.5" which is not a player name, especially for combination bets
+            // For combination bets, leg.unibetMeta.participant contains the actual player name like "Washington Navaya"
+            participant: unibetMeta.participant || betDetails.name,
             participantId: unibetMeta.participantId,
             eventParticipantId: unibetMeta.eventParticipantId,
 
@@ -324,29 +327,46 @@ export class BetSchemaAdapter {
         const updatedCombination = originalBet.combination.map((leg, index) => {
             const result = calculatorResults[index];
             
-            // Normalize status to handle both 'canceled' and 'cancelled' spellings
-            const normalizedStatus = result.status === 'cancelled' ? 'canceled' : result.status;
+            // ✅ FIX: Preserve existing final status if leg was already finalized
+            // Only update if leg was pending or if calculator returned a final status
+            const existingStatus = leg.status;
+            const isExistingFinal = existingStatus === 'won' || existingStatus === 'lost' || 
+                                   existingStatus === 'canceled' || existingStatus === 'cancelled' || 
+                                   existingStatus === 'void';
             
-            console.log(`[adaptCombinationCalculatorResult] Leg ${index + 1}: ${leg.betOption} → ${result.status} → ${normalizedStatus} (payout: ${result.payout})`);
+            // Use calculator result only if:
+            // 1. Leg was pending, OR
+            // 2. Calculator returned a different final status (shouldn't happen, but handle it)
+            let finalStatus;
+            if (isExistingFinal && result.status === 'pending') {
+                // Leg was already finalized, keep existing status
+                finalStatus = existingStatus;
+                console.log(`[adaptCombinationCalculatorResult] Leg ${index + 1}: Preserving existing final status: ${existingStatus}`);
+            } else {
+                // Use calculator result (normalize canceled/cancelled)
+                finalStatus = result.status === 'cancelled' ? 'canceled' : result.status;
+            }
+            
+            console.log(`[adaptCombinationCalculatorResult] Leg ${index + 1}: ${leg.betOption} → ${result.status} → ${finalStatus} (payout: ${result.payout})`);
             console.log(`[adaptCombinationCalculatorResult] Leg ${index + 1} status details:`, {
                 originalStatus: leg.status,
                 calculatorStatus: result.status,
-                normalizedStatus: normalizedStatus,
-                statusType: typeof result.status
+                finalStatus: finalStatus,
+                isExistingFinal: isExistingFinal
             });
             
             return {
                 ...leg,
-                status: normalizedStatus,
-                payout: result.payout || 0,
+                status: finalStatus,
+                payout: result.payout !== undefined ? result.payout : (leg.payout || 0), // Preserve existing payout if calculator didn't provide one
                 odds: leg.odds, // Explicitly preserve odds for payout calculation
                 // Add result metadata
                 result: {
-                    status: normalizedStatus,
-                    payout: result.payout || 0,
-                    reason: this.generateLegReason(leg, result, normalizedStatus),
-                    processedAt: new Date(),
-                    debugInfo: result.debugInfo || {},
+                    status: finalStatus,
+                    payout: result.payout !== undefined ? result.payout : (leg.payout || 0),
+                    reason: result.reason || leg.result?.reason || this.generateLegReason(leg, result, finalStatus),
+                    processedAt: leg.result?.processedAt || new Date(), // Preserve existing processedAt if available
+                    debugInfo: result.debugInfo || leg.result?.debugInfo || {},
                     calculatorVersion: 'unibet-api-v1'
                 }
             };
@@ -509,25 +529,29 @@ export class BetSchemaAdapter {
         const legCount = legs.length;
         const wonLegs = legs.filter(leg => leg.status === 'won');
         const lostLegs = legs.filter(leg => leg.status === 'lost');
-        const canceledLegs = legs.filter(leg => leg.status === 'canceled');
+        const canceledLegs = legs.filter(leg => leg.status === 'canceled' || leg.status === 'cancelled');
+        const voidLegs = legs.filter(leg => leg.status === 'void');
+        const pendingLegs = legs.filter(leg => leg.status === 'pending');
+        
+        // ✅ FIX: Include actual leg reasons from result.reason if available
+        const legDetails = legs.map((leg, index) => {
+            const matchName = leg.unibetMeta?.eventName || leg.teams || 'Unknown match';
+            const legReason = leg.result?.reason || `${leg.betOption} - ${leg.status}`;
+            return `Leg ${index + 1} (${matchName}): ${legReason}`;
+        }).join(' | ');
         
         if (overallStatus === 'won') {
-            const legDetails = legs.map((leg, index) => 
-                `Leg ${index + 1}: ${leg.betOption} (${leg.unibetMeta?.eventName || 'Unknown match'}) - ${leg.status}`
-            ).join(', ');
-            return `Combination bet won: All ${legCount} legs successful.`;
+            return `Combination bet won: All ${legCount} legs successful. Details: ${legDetails}`;
         } else if (overallStatus === 'lost') {
-            const lostDetails = lostLegs.map((leg, index) => 
-                `Leg ${legs.indexOf(leg) + 1}: ${leg.betOption} (${leg.unibetMeta?.eventName || 'Unknown match'}) - ${leg.status}`
-            ).join(', ');
-            return `Combination bet lost: ${lostLegs.length} of ${legCount} legs failed.`;
-        } else if (overallStatus === 'canceled') {
-            const canceledDetails = canceledLegs.map((leg, index) => 
-                `Leg ${legs.indexOf(leg) + 1}: ${leg.betOption} (${leg.unibetMeta?.eventName || 'Unknown match'}) - ${leg.status}`
-            ).join(', ');
-            return `Combination bet canceled: ${canceledLegs.length} of ${legCount} legs canceled.`;
+            return `Combination bet lost: ${lostLegs.length} of ${legCount} legs failed. Details: ${legDetails}`;
+        } else if (overallStatus === 'canceled' || overallStatus === 'cancelled') {
+            return `Combination bet canceled: ${canceledLegs.length} of ${legCount} legs canceled. Details: ${legDetails}`;
+        } else if (overallStatus === 'void') {
+            return `Combination bet void: ${voidLegs.length} of ${legCount} legs void. Details: ${legDetails}`;
+        } else if (overallStatus === 'pending') {
+            return `Combination bet pending: ${pendingLegs.length} of ${legCount} legs still pending. Details: ${legDetails}`;
         } else {
-            return `Combination bet status: ${overallStatus} (${wonLegs.length} won, ${lostLegs.length} lost, ${canceledLegs.length} canceled)`;
+            return `Combination bet status: ${overallStatus} (${wonLegs.length} won, ${lostLegs.length} lost, ${canceledLegs.length} canceled, ${voidLegs.length} void, ${pendingLegs.length} pending). Details: ${legDetails}`;
         }
     }
 
@@ -539,15 +563,32 @@ export class BetSchemaAdapter {
      * @returns {string} - Reason string for this leg
      */
     static generateLegReason(leg, result, status) {
+        // ✅ FIX: Use actual reason from calculator if available, otherwise generate generic one
+        // Check both result.reason (from calculator outcome) and result.debugInfo for cancellation details
+        const actualReason = result?.reason || result?.debugInfo?.cancellationReason || result?.debugInfo?.error;
+        
+        if (actualReason) {
+            const betOption = leg.betOption || 'Unknown bet';
+            const teams = leg.teams || leg.unibetMeta?.eventName || 'Unknown teams';
+            // For cancelled bets, include the detailed reason
+            if (status === 'canceled' || status === 'cancelled') {
+                return `${betOption} (${teams}): ${actualReason}`;
+            }
+            return `${betOption} (${teams}): ${actualReason}`;
+        }
+        
+        // Fallback to generic reason if calculator didn't provide one
         const betOption = leg.betOption || 'Unknown bet';
-        const teams = leg.teams || 'Unknown teams';
+        const teams = leg.teams || leg.unibetMeta?.eventName || 'Unknown teams';
         
         if (status === 'won') {
             return `${betOption} won for ${teams}`;
         } else if (status === 'lost') {
             return `${betOption} lost for ${teams}`;
-        } else if (status === 'canceled') {
-            return `${betOption} canceled for ${teams}`;
+        } else if (status === 'canceled' || status === 'cancelled') {
+            return `${betOption} canceled for ${teams} - No detailed reason available`;
+        } else if (status === 'void') {
+            return `${betOption} void for ${teams}`;
         } else {
             return `${betOption} status: ${status} for ${teams}`;
         }
