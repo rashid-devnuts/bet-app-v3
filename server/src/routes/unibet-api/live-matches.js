@@ -643,6 +643,9 @@ function extractFootballMatches(data) {
   };
 }
 
+// Export extractFootballMatches for use in other services
+export { extractFootballMatches };
+
 // Initialize cache on startup (one-time only)
 console.log('🚀 Initializing live matches cache...');
 refreshAllFootballCache().then(() => {

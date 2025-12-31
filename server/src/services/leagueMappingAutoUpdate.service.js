@@ -11,6 +11,17 @@ class LeagueMappingAutoUpdate {
     constructor() {
         this.clientCsvPath = path.join(__dirname, '../../../client/league_mapping_clean.csv');
         this.serverCsvPath = path.join(__dirname, '../unibet-calc/league_mapping_clean.csv');
+        this.urlsCsvPath = path.join(__dirname, '../../../league_mapping_with_urls.csv');
+        
+        // ✅ Add path verification logging
+        console.log('[LeagueMapping] 📁 File paths initialized:');
+        console.log(`[LeagueMapping]   - Client CSV: ${this.clientCsvPath}`);
+        console.log(`[LeagueMapping]   - Server CSV: ${this.serverCsvPath}`);
+        console.log(`[LeagueMapping]   - URLs CSV: ${this.urlsCsvPath}`);
+        console.log(`[LeagueMapping]   - URLs CSV exists: ${fs.existsSync(this.urlsCsvPath)}`);
+        console.log(`[LeagueMapping]   - Current working directory: ${process.cwd()}`);
+        console.log(`[LeagueMapping]   - __dirname: ${__dirname}`);
+        
         this.existingMappings = new Map(); // Key: Unibet_ID, Value: mapping object
         this.existingFotmobIds = new Set(); // Track all Fotmob IDs already mapped
         this.newMappings = []; // Store new mappings to add
@@ -108,11 +119,20 @@ class LeagueMappingAutoUpdate {
 
     /**
      * Extract country from Unibet path array
+     * For international leagues, path is: [Football, League] (no country) - only 2 entries
+     * For country leagues, path is: [Football, Country, League] - 3+ entries
      */
     extractCountryFromPath(pathArray) {
         if (!pathArray || !Array.isArray(pathArray)) return null;
         
-        // Country is usually the second entry (after Soccer)
+        // ✅ SIMPLE FIX: If path has only 2 entries total (Football + League), it's international
+        // If path has 3+ entries (Football + Country + League), first non-football is country
+        if (pathArray.length === 2) {
+            // Only Football and League - no country = International
+            return 'International';
+        }
+        
+        // For 3+ entries, first non-football entry is usually the country
         for (const item of pathArray) {
             const termKey = (item.termKey || '').toLowerCase();
             // Skip soccer/football
@@ -120,6 +140,7 @@ class LeagueMappingAutoUpdate {
             // First non-soccer entry is usually country
             return item.name;
         }
+        
         return null;
     }
 
@@ -396,17 +417,14 @@ class LeagueMappingAutoUpdate {
      */
     findMatchingFotmobLeague(unibetLeague, fotmobLeagues) {
         console.log(`[LeagueMapping] Finding match for Unibet league: ${unibetLeague.name} (ID: ${unibetLeague.id})`);
+        console.log(`[LeagueMapping]   - Unibet country: "${unibetLeague.country || '(empty)'}"`);
+        console.log(`[LeagueMapping]   - Unibet englishName: "${unibetLeague.englishName || unibetLeague.name}"`);
+        console.log(`[LeagueMapping]   - Unibet league has ${unibetLeague.matches?.length || 0} matches`);
 
-        // Simple case: Exact country + league name match
+        // PRIORITY 1: Exact country + league name match
         for (const fotmobLeague of fotmobLeagues) {
-            // Check country match first (from actual API responses)
             const unibetCountry = unibetLeague.country || '';
             const fotmobCcode = fotmobLeague.ccode || '';
-            
-            // Skip if countries don't match (unless both are international/empty)
-            if (!this.compareCountries(unibetCountry, fotmobCcode)) {
-                continue; // Skip this Fotmob league - different country
-            }
             
             // Use parentLeagueName if it's a group, otherwise use name
             const fotmobName = fotmobLeague.isGroup && fotmobLeague.parentLeagueName 
@@ -417,41 +435,81 @@ class LeagueMappingAutoUpdate {
             // Normalize names for comparison
             const fotmobNameNorm = normalizeTeamName(fotmobName);
             const unibetNameNorm = normalizeTeamName(unibetName);
-
-            // Check if names match exactly (after normalization)
-            // Only consider it exact match if names are exactly equal after normalization
-            // Don't use includes() as it causes false positives (e.g., "Cup" in "Africa Cup of Nations")
-            if (fotmobNameNorm === unibetNameNorm) {
+            
+            // ✅ ROOT CAUSE FIX: Check international status first
+            const isInternational = !unibetCountry || 
+                                   unibetCountry.toLowerCase().includes('international') ||
+                                   fotmobCcode === 'INT' ||
+                                   fotmobCcode === 'INTERNATIONAL' ||
+                                   !fotmobCcode;
+            
+            const countryMatch = this.compareCountries(unibetCountry, fotmobCcode);
+            const nameMatch = fotmobNameNorm === unibetNameNorm;
+            
+            // Detailed logging for debugging
+            if (nameMatch || fotmobNameNorm.includes('africa') || unibetNameNorm.includes('africa') || 
+                fotmobNameNorm.includes('professional') || unibetNameNorm.includes('professional') ||
+                fotmobNameNorm.includes('pro league') || unibetNameNorm.includes('pro league')) {
+                console.log(`[LeagueMapping] 🔍 Checking: "${fotmobName}" (FotMob) vs "${unibetName}" (Unibet)`);
+                console.log(`[LeagueMapping]   - Normalized: "${fotmobNameNorm}" vs "${unibetNameNorm}"`);
+                console.log(`[LeagueMapping]   - Country match: ${countryMatch} (Unibet: "${unibetCountry}", FotMob: "${fotmobCcode}")`);
+                console.log(`[LeagueMapping]   - Name match: ${nameMatch}`);
+                console.log(`[LeagueMapping]   - Is international: ${isInternational}`);
+            }
+            
+            // ✅ PRIORITY 1: For international leagues OR if names match exactly, accept it
+            if (nameMatch && (countryMatch || isInternational)) {
                 const fotmobId = String(fotmobLeague.primaryId || fotmobLeague.id);
                 console.log(`[LeagueMapping] ✅ Exact name match found: ${fotmobName} (Fotmob ID: ${fotmobId}, Country: ${fotmobCcode})`);
                 return {
                     id: fotmobLeague.primaryId || fotmobLeague.id,
-                    name: fotmobName, // Use parent league name for groups
+                    name: fotmobName,
                     exactMatch: true
                 };
             }
         }
 
-        // Complex case: Match by teams + time
+        // PRIORITY 2: Match by teams + time (check ALL leagues, prioritize by score)
         console.log(`[LeagueMapping] No exact match found, trying team + time comparison...`);
+        console.log(`[LeagueMapping]   - Will check ALL FotMob leagues for team+time matches`);
         
         let bestMatch = null;
         let bestMatchScore = 0;
+        let checkedLeagues = 0;
+        let leaguesWithMatches = 0;
 
         for (const fotmobLeague of fotmobLeagues) {
-            // Check country match first (from actual API responses)
             const unibetCountry = unibetLeague.country || '';
             const fotmobCcode = fotmobLeague.ccode || '';
             
-            // Skip if countries don't match (unless both are international/empty)
-            if (!this.compareCountries(unibetCountry, fotmobCcode)) {
-                continue; // Skip this Fotmob league - different country
+            // Use parentLeagueName if it's a group, otherwise use name
+            const fotmobName = fotmobLeague.isGroup && fotmobLeague.parentLeagueName 
+                ? fotmobLeague.parentLeagueName 
+                : (fotmobLeague.name || fotmobLeague.parentLeagueName || '');
+            
+            if (!fotmobLeague.matches || !Array.isArray(fotmobLeague.matches) || fotmobLeague.matches.length === 0) {
+                continue;
             }
             
-            if (!fotmobLeague.matches || !Array.isArray(fotmobLeague.matches)) continue;
+            checkedLeagues++;
+            
+            // ✅ FIX: Check international status for team+time matching
+            const isInternational = !unibetCountry || 
+                                   unibetCountry.toLowerCase().includes('international') ||
+                                   fotmobCcode === 'INT' ||
+                                   fotmobCcode === 'INTERNATIONAL' ||
+                                   !fotmobCcode;
+            
+            const countryMatch = this.compareCountries(unibetCountry, fotmobCcode);
+            
+            // ✅ IMPORTANT: For team+time matching, we check ALL leagues first
+            // Then we'll prioritize matches with same country, but won't skip if country doesn't match
+            // This allows "Professional League" (Saudi) to match "Saudi Pro League" (Saudi) via teams+time
 
             let matchCount = 0;
             let totalScore = 0;
+            let perfectMatches = 0; // Teams + time both match
+            let teamOnlyMatches = 0; // Teams match but time doesn't
 
             for (const fotmobMatch of fotmobLeague.matches) {
                 for (const unibetMatch of unibetLeague.matches) {
@@ -470,9 +528,11 @@ class LeagueMappingAutoUpdate {
 
                         if (timeMatch) {
                             matchCount++;
-                            totalScore += 1.0; // Perfect match
-                        } else if (teamsMatch) {
+                            perfectMatches++;
+                            totalScore += 1.0; // Perfect match (teams + time)
+                        } else {
                             matchCount++;
+                            teamOnlyMatches++;
                             totalScore += 0.5; // Teams match but time doesn't
                         }
                     }
@@ -481,25 +541,47 @@ class LeagueMappingAutoUpdate {
 
             // Calculate match score (percentage of matches that matched)
             if (matchCount > 0) {
+                leaguesWithMatches++;
                 const score = totalScore / Math.max(unibetLeague.matches.length, fotmobLeague.matches.length);
-                if (score > bestMatchScore && score >= 0.5) { // At least 50% matches
+                
+                // ✅ PRIORITY LOGIC: 
+                // - If country matches, use standard threshold (0.5)
+                // - If country doesn't match BUT we have perfect matches (teams+time), still consider it
+                //   but require higher threshold (0.7) to avoid false positives
+                const requiredScore = (countryMatch || isInternational) ? 0.5 : 0.7;
+                
+                if (score > bestMatchScore && score >= requiredScore) {
+                    // Additional check: if country doesn't match, require at least some perfect matches
+                    if (!countryMatch && !isInternational && perfectMatches === 0) {
+                        continue; // Skip if no perfect matches and country doesn't match
+                    }
+                    
                     bestMatchScore = score;
                     bestMatch = {
                         id: fotmobLeague.primaryId || fotmobLeague.id,
-                        name: fotmobLeague.isGroup && fotmobLeague.parentLeagueName 
-                            ? fotmobLeague.parentLeagueName 
-                            : (fotmobLeague.name || fotmobLeague.parentLeagueName || ''),
+                        name: fotmobName,
                         exactMatch: false,
                         matchScore: score,
-                        matchCount
+                        matchCount,
+                        perfectMatches,
+                        teamOnlyMatches,
+                        countryMatch
                     };
+                    
+                    console.log(`[LeagueMapping]   📊 Found candidate: "${fotmobName}" (Score: ${score.toFixed(2)}, Perfect: ${perfectMatches}, Team-only: ${teamOnlyMatches}, Country: ${countryMatch ? '✅' : '❌'})`);
                 }
             }
         }
 
+        console.log(`[LeagueMapping]   📈 Team+Time summary: Checked ${checkedLeagues} leagues with matches, ${leaguesWithMatches} had team matches`);
+
         if (bestMatch) {
-            console.log(`[LeagueMapping] ✅ Team+time match found: ${bestMatch.name} (Fotmob ID: ${bestMatch.id}, Score: ${bestMatch.matchScore.toFixed(2)})`);
-            return bestMatch;
+            console.log(`[LeagueMapping] ✅ Team+time match found: ${bestMatch.name} (Fotmob ID: ${bestMatch.id}, Score: ${bestMatch.matchScore.toFixed(2)}, Perfect matches: ${bestMatch.perfectMatches})`);
+            return {
+                id: bestMatch.id,
+                name: bestMatch.name,
+                exactMatch: false
+            };
         }
 
         console.log(`[LeagueMapping] ❌ No match found for Unibet league: ${unibetLeague.name}`);
@@ -521,33 +603,31 @@ class LeagueMappingAutoUpdate {
         ].join(',');
 
         try {
-            // Ensure file ends with newline before appending
-            const ensureNewline = (filePath) => {
+            // ✅ FIX: Use async file operations
+            const ensureNewline = async (filePath) => {
                 if (fs.existsSync(filePath)) {
-                    const content = fs.readFileSync(filePath, 'utf8');
-                    // Remove trailing empty lines and ensure single newline at end
+                    const content = await fs.promises.readFile(filePath, 'utf8');
                     const trimmed = content.replace(/\n+$/, '');
                     if (trimmed && !trimmed.endsWith('\n')) {
-                        fs.writeFileSync(filePath, trimmed + '\n', 'utf8');
+                        await fs.promises.writeFile(filePath, trimmed + '\n', 'utf8');
                     } else if (trimmed) {
-                        // Content exists and already ends with newline, just ensure single newline
-                        fs.writeFileSync(filePath, trimmed + '\n', 'utf8');
+                        await fs.promises.writeFile(filePath, trimmed + '\n', 'utf8');
                     }
                 }
             };
 
             // Append to both CSV files
             if (fs.existsSync(this.clientCsvPath)) {
-                ensureNewline(this.clientCsvPath);
-                fs.appendFileSync(this.clientCsvPath, row + '\n');
+                await ensureNewline(this.clientCsvPath);
+                await fs.promises.appendFile(this.clientCsvPath, row + '\n', 'utf8');
                 console.log(`[LeagueMapping] ✅ Added to client CSV: ${mapping.unibetName} → ${mapping.fotmobName}`);
             } else {
                 console.warn(`[LeagueMapping] ⚠️ Client CSV not found: ${this.clientCsvPath}`);
             }
 
             if (fs.existsSync(this.serverCsvPath)) {
-                ensureNewline(this.serverCsvPath);
-                fs.appendFileSync(this.serverCsvPath, row + '\n');
+                await ensureNewline(this.serverCsvPath);
+                await fs.promises.appendFile(this.serverCsvPath, row + '\n', 'utf8');
                 console.log(`[LeagueMapping] ✅ Added to server CSV: ${mapping.unibetName} → ${mapping.fotmobName}`);
             } else {
                 console.warn(`[LeagueMapping] ⚠️ Server CSV not found: ${this.serverCsvPath}`);
@@ -565,11 +645,239 @@ class LeagueMappingAutoUpdate {
             // Track Fotmob ID
             this.existingFotmobIds.add(mapping.fotmobId);
 
-            return true;
+            return {
+                success: true,
+                mapping: {
+                    unibetId: mapping.unibetId,
+                    unibetName: mapping.unibetName,
+                    fotmobId: mapping.fotmobId,
+                    fotmobName: mapping.fotmobName,
+                    matchType: matchType,
+                    country: mapping.country || ''
+                }
+            };
         } catch (error) {
             console.error(`[LeagueMapping] ❌ Error adding mapping to CSV:`, error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Normalize a string to URL slug format
+     * @param {string} str - String to normalize
+     * @returns {string} - Normalized slug
+     */
+    normalizeToSlug(str) {
+        if (!str) return '';
+        
+        return str
+            .toLowerCase()
+            .replace(/[''"]/g, '_') // Replace apostrophes/quotes with underscores FIRST
+            .replace(/[^a-z0-9\s_-]/g, '') // Remove other special chars (but keep spaces, hyphens, underscores)
+            .replace(/\s+/g, '_') // Replace spaces with underscores
+            .replace(/-+/g, '_') // Replace hyphens with underscores
+            .replace(/_+/g, '_') // Replace multiple underscores with single
+            .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
+            .trim();
+    }
+
+    /**
+     * Construct Unibet URL from league data
+     * @param {Object} league - League object with unibetName and country
+     * @returns {string} - Constructed Unibet URL
+     */
+    constructUnibetUrl(league) {
+        const baseUrl = 'https://www.unibet.com.au/betting/sports/filter/football';
+        
+        // For international leagues (no country or country is "International")
+        if (!league.country || league.country === 'International' || league.country === 'Unknown') {
+            const leagueSlug = this.normalizeToSlug(league.unibetName);
+            return `${baseUrl}/${leagueSlug}`;
+        }
+        
+        // ✅ FIX: If country and league name are the same (e.g., "Africa Cup of Nations"),
+        // use only the league slug, not both
+        const countrySlug = this.normalizeToSlug(league.country);
+        const leagueSlug = this.normalizeToSlug(league.unibetName);
+        
+        // Normalize both for comparison
+        const countryNorm = normalizeTeamName(league.country || '');
+        const leagueNorm = normalizeTeamName(league.unibetName || '');
+        
+        // If country and league name are essentially the same, use only league slug
+        if (countryNorm === leagueNorm || countrySlug === leagueSlug) {
+            return `${baseUrl}/${leagueSlug}`;
+        }
+        
+        // For country-based leagues (different country and league)
+        return `${baseUrl}/${countrySlug}/${leagueSlug}`;
+    }
+
+    /**
+     * Verify if a Unibet URL is valid by checking if it returns data
+     * @param {string} url - URL to verify
+     * @returns {Promise<boolean>} - True if URL is valid
+     */
+    async verifyUnibetUrl(url) {
+        try {
+            // Convert webpage URL to API URL
+            const urlParts = url.split('/');
+            const filterIndex = urlParts.findIndex(part => part === 'filter');
+            if (filterIndex === -1) return false;
+            
+            const matchesPath = urlParts.slice(filterIndex + 1).join('/');
+            const apiUrl = `https://www.unibet.com.au/sportsbook-feeds/views/filter/${matchesPath}/all/matches?includeParticipants=true&useCombined=true&ncid=${Date.now()}`;
+            
+            const response = await axios.get(apiUrl, {
+                headers: {
+                    'accept': '*/*',
+                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'referer': url
+                },
+                timeout: 10000,
+                validateStatus: (status) => status < 500 // Don't throw on 404
+            });
+            
+            // If we get valid JSON with data, URL is valid
+            if (response.status === 200 && response.data && response.data.layout) {
+                return true;
+            }
+            
+            return false;
+        } catch (error) {
             return false;
         }
+    }
+
+    /**
+     * Add a league to league_mapping_with_urls.csv
+     * @param {Object} mapping - Mapping object with all league data
+     * @param {string} url - Unibet URL
+     * @returns {boolean} - True if successful
+     */
+    async addToUrlsCsv(mapping, url) {
+        try {
+            console.log(`[LeagueMapping] 🔍 Attempting to add to URLs CSV:`);
+            console.log(`[LeagueMapping]   - Path: ${this.urlsCsvPath}`);
+            console.log(`[LeagueMapping]   - Path exists: ${fs.existsSync(this.urlsCsvPath)}`);
+            console.log(`[LeagueMapping]   - League: ${mapping.unibetName} (ID: ${mapping.unibetId})`);
+            
+            if (!fs.existsSync(this.urlsCsvPath)) {
+                console.error(`[LeagueMapping] ❌ URLs CSV not found at: ${this.urlsCsvPath}`);
+                console.error(`[LeagueMapping] ❌ Current working directory: ${process.cwd()}`);
+                console.error(`[LeagueMapping] ❌ __dirname: ${__dirname}`);
+                return false;
+            }
+
+            // Construct Fotmob URL from Fotmob ID
+            const fotmobUrl = mapping.fotmobId 
+                ? `https://www.fotmob.com/leagues/${mapping.fotmobId}`
+                : '';
+
+            // Create row: Unibet_ID,Unibet_URL,Unibet_Name,Fotmob_URL,Fotmob_Name,Match_Type,Country/Region
+            const row = [
+                mapping.unibetId,
+                url,
+                mapping.unibetName,
+                fotmobUrl,
+                mapping.fotmobName,
+                mapping.matchType || '',
+                mapping.country || ''
+            ].join(',');
+
+            // ✅ FIX: Use async file operations
+            const content = await fs.promises.readFile(this.urlsCsvPath, 'utf8');
+            console.log(`[LeagueMapping] 📄 Current file size: ${content.length} bytes`);
+            console.log(`[LeagueMapping] 📄 Current file lines: ${content.split('\n').length}`);
+            
+            // Check if entry already exists
+            if (content.includes(mapping.unibetId)) {
+                console.log(`[LeagueMapping] ⚠️ League ID ${mapping.unibetId} already exists in URLs CSV - skipping`);
+                return false;
+            }
+            
+            // Ensure file ends with newline before appending
+            const trimmed = content.replace(/\n+$/, '');
+            const finalContent = trimmed + (trimmed.endsWith('\n') ? '' : '\n') + row + '\n';
+            
+            // Write to file
+            await fs.promises.writeFile(this.urlsCsvPath, finalContent, 'utf8');
+            
+            // Verify write
+            const verifyContent = await fs.promises.readFile(this.urlsCsvPath, 'utf8');
+            const verifyLines = verifyContent.split('\n').length;
+            console.log(`[LeagueMapping] ✅ File written successfully`);
+            console.log(`[LeagueMapping] ✅ New file size: ${verifyContent.length} bytes`);
+            console.log(`[LeagueMapping] ✅ New file lines: ${verifyLines}`);
+            console.log(`[LeagueMapping] ✅ Added to URLs CSV: ${mapping.unibetName} → ${url}`);
+            console.log(`[LeagueMapping] ✅ Row added: ${row}`);
+            
+            return true;
+        } catch (error) {
+            console.error(`[LeagueMapping] ❌ Error adding to URLs CSV:`, error);
+            console.error(`[LeagueMapping] ❌ Error stack:`, error.stack);
+            console.error(`[LeagueMapping] ❌ Path attempted: ${this.urlsCsvPath}`);
+            return false;
+        }
+    }
+
+    /**
+     * Sync newly added leagues to league_mapping_with_urls.csv
+     * @param {Array} newMappings - Array of mapping objects to sync
+     * @returns {Promise<Object>} - Sync result
+     */
+    async syncLeagueUrlsForNewMappings(newMappings) {
+        if (!newMappings || newMappings.length === 0) {
+            return { success: true, added: 0, skipped: 0 };
+        }
+
+        console.log(`[LeagueMapping] 🔄 Syncing ${newMappings.length} new league(s) to URLs CSV...`);
+        
+        let added = 0;
+        let skipped = 0;
+        const skippedLeagues = [];
+
+        for (const mapping of newMappings) {
+            try {
+                // Construct URL
+                const constructedUrl = this.constructUnibetUrl(mapping);
+                console.log(`[LeagueMapping] 🔍 Verifying URL for ${mapping.unibetName}: ${constructedUrl}`);
+                
+                // Verify URL
+                const isValid = await this.verifyUnibetUrl(constructedUrl);
+                
+                if (isValid) {
+                    // Add to URLs CSV
+                    const success = await this.addToUrlsCsv(mapping, constructedUrl);
+                    if (success) {
+                        added++;
+                    } else {
+                        skipped++;
+                        skippedLeagues.push(mapping.unibetName);
+                    }
+                } else {
+                    skipped++;
+                    skippedLeagues.push(mapping.unibetName);
+                    console.log(`[LeagueMapping] ⚠️ URL verification failed for ${mapping.unibetName} - skipping`);
+                }
+            } catch (error) {
+                console.error(`[LeagueMapping] ❌ Error syncing ${mapping.unibetName}:`, error.message);
+                skipped++;
+                skippedLeagues.push(mapping.unibetName);
+            }
+        }
+
+        console.log(`[LeagueMapping] ✅ URL Sync Summary: ${added} added, ${skipped} skipped`);
+        if (skippedLeagues.length > 0) {
+            console.log(`[LeagueMapping] ⚠️ Skipped leagues: ${skippedLeagues.join(', ')}`);
+        }
+
+        return {
+            success: true,
+            added,
+            skipped,
+            skippedLeagues
+        };
     }
 
     /**
@@ -585,7 +893,8 @@ class LeagueMappingAutoUpdate {
                 return false;
             }
 
-            const csvContent = fs.readFileSync(this.clientCsvPath, 'utf8');
+            // ✅ FIX: Use async readFile
+            const csvContent = await fs.promises.readFile(this.clientCsvPath, 'utf8');
             const lines = csvContent.split('\n').slice(1); // Skip header
 
             const mappings = [];
@@ -648,9 +957,9 @@ export const getFotmobLogoByUnibetId = (unibetId) => {
 };
 `;
 
-            // Write to client folder
+            // ✅ FIX: Use async writeFile
             const clientLeagueUtilsPath = path.join(__dirname, '../../../client/lib/leagueUtils.js');
-            fs.writeFileSync(clientLeagueUtilsPath, fileContent, 'utf8');
+            await fs.promises.writeFile(clientLeagueUtilsPath, fileContent, 'utf8');
             
             console.log(`[LeagueMapping] ✅ Generated leagueUtils.js with ${mappings.length} mappings`);
             console.log(`[LeagueMapping] 📁 Saved to: ${clientLeagueUtilsPath}`);
@@ -740,19 +1049,30 @@ export const getFotmobLogoByUnibetId = (unibetId) => {
                     }
                     
                     // Add to CSV
-                    const success = await this.addMappingToCsv({
+                    const mappingData = {
                         unibetId: unibetLeague.id,
                         unibetName: unibetLeague.englishName || unibetLeague.name, // Use englishName
                         fotmobId: fotmobId,
                         fotmobName: fotmobLeague.name, // Already using parentLeagueName for groups
                         exactMatch: fotmobLeague.exactMatch,
                         country: unibetLeague.country || ''
-                    });
+                    };
 
-                    if (success) {
+                    const result = await this.addMappingToCsv(mappingData);
+
+                    if (result.success) {
                         newMappingsCount++;
                         // Track the new Fotmob ID
                         this.existingFotmobIds.add(fotmobId);
+                        
+                        // ✅ NEW: Sync to URLs CSV
+                        try {
+                            await this.syncLeagueUrlsForNewMappings([result.mapping]);
+                            console.log(`[LeagueMapping] ✅ Synced ${result.mapping.unibetName} to URLs CSV`);
+                        } catch (error) {
+                            console.warn(`[LeagueMapping] ⚠️ Failed to sync ${result.mapping.unibetName} to URLs CSV:`, error.message);
+                            // Don't fail the whole job if URL sync fails
+                        }
                     }
                 } else {
                     notFoundCount++;

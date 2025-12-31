@@ -5,7 +5,7 @@ const agenda = new Agenda({
     address: process.env.MONGODB_URI || "mongodb://localhost:27017/bet-app",
     collection: "agendaJobs",
   },
-  processEvery: '5 seconds', // Check for jobs every 5 seconds
+  processEvery: '30 seconds', // ✅ FIX: Increased from 5 to 30 seconds to reduce MongoDB query frequency and prevent event loop blocking
   maxConcurrency: 20,
   defaultConcurrency: 5,
   lockLimit: 0, // No limit on locked jobs

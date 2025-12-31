@@ -144,7 +144,7 @@ class BetController {
         leagueName: req.body.leagueName,
         homeName: req.body.homeName || inferredHome,
         awayName: req.body.awayName || inferredAway,
-        start: req.body.start || req.body.matchDate,
+        start: req.body.start || req.body.matchDate || req.body.unibetMeta?.start || req.body.event?.start,
         odds: (typeof req.body.odds === 'number') ? req.body.odds : Number(req.body.odds)
       };
 

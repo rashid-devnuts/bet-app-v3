@@ -342,26 +342,20 @@ const betSlipSlice = createSlice({
     updateBetOdds: (state, action) => {
       const { matchId, oddId, newOdds } = action.payload;
       
-      // #region agent log
-      if (typeof fetch !== 'undefined') fetch('http://127.0.0.1:7242/ingest/36e9cd0b-a351-407e-8f20-cf67918d6e8e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'betSlipSlice.js:342',message:'updateBetOdds action received',data:{matchId,oddId,newOdds,betsCount:state.bets.length},timestamp:Date.now(),sessionId:'debug-session',runId:'home-page-bet',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
+     
       
       // Find and update the bet with matching matchId and oddId
       const betIndex = state.bets.findIndex(
         bet => bet.match.id === matchId && bet.oddId === oddId
       );
       
-      // #region agent log
-      if (typeof fetch !== 'undefined') fetch('http://127.0.0.1:7242/ingest/36e9cd0b-a351-407e-8f20-cf67918d6e8e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'betSlipSlice.js:351',message:'Bet search result',data:{betIndex,found:betIndex!==-1,searchCriteria:{matchId,oddId}},timestamp:Date.now(),sessionId:'debug-session',runId:'home-page-bet',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
+      
       
       if (betIndex !== -1) {
         const oldOdds = state.bets[betIndex].odds;
         const newOddsValue = parseFloat(newOdds);
         
-        // #region agent log
-        if (typeof fetch !== 'undefined') fetch('http://127.0.0.1:7242/ingest/36e9cd0b-a351-407e-8f20-cf67918d6e8e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'betSlipSlice.js:360',message:'Bet found - checking odds difference',data:{betId:state.bets[betIndex].id,oldOdds,newOddsValue,difference:Math.abs(newOddsValue-oldOdds),willUpdate:Math.abs(newOddsValue-oldOdds)>0.001},timestamp:Date.now(),sessionId:'debug-session',runId:'home-page-bet',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
+       
         
         // Only update if odds have actually changed
         if (Math.abs(newOddsValue - oldOdds) > 0.001) {
@@ -379,9 +373,7 @@ const betSlipSlice = createSlice({
           };
           state.placeBetDisabled = true;
           
-          // #region agent log
-          if (typeof fetch !== 'undefined') fetch('http://127.0.0.1:7242/ingest/36e9cd0b-a351-407e-8f20-cf67918d6e8e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'betSlipSlice.js:383',message:'ODDS UPDATED IN REDUX + placeBetDisabled=true',data:{betId:state.bets[betIndex].id,oldOdds,newOddsValue,placeBetDisabled:state.placeBetDisabled,notificationShow:state.oddsChangeNotification.show},timestamp:Date.now(),sessionId:'debug-session',runId:'home-page-bet',hypothesisId:'C'})}).catch(()=>{});
-          // #endregion
+         
           
           console.log(`🔄 Updated odds for bet ${state.bets[betIndex].id}: ${oldOdds} → ${newOddsValue}`);
           
@@ -619,9 +611,7 @@ export const placeBetThunk = createAsyncThunk(
           const currentBetState = state.bets.find(b => b.id === bet.id);
           const latestOdds = currentBetState?.odds || bet.odds; // Use current state odds, fallback to bet.odds
           
-          // #region agent log
-          if (typeof fetch !== 'undefined') fetch('http://127.0.0.1:7242/ingest/36e9cd0b-a351-407e-8f20-cf67918d6e8e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'betSlipSlice.js:604',message:'placeBetThunk reading odds',data:{betId:bet.id,oddId:bet.oddId,currentBetStateFound:!!currentBetState,currentBetStateOdds:currentBetState?.odds,betObjectOdds:bet.odds,latestOdds,previousOdds:bet.previousOdds},timestamp:Date.now(),sessionId:'debug-session',runId:'home-page-bet',hypothesisId:'D'})}).catch(()=>{});
-          // #endregion
+         
           
           console.log(`🔍 [placeBetThunk] Using latest odds for bet ${bet.id}: ${latestOdds} (was ${bet.odds})`);
           
@@ -629,6 +619,25 @@ export const placeBetThunk = createAsyncThunk(
           const matchData = getMatchDataFromState(bet.match.id, matchesState, leaguesState);
           const unibetMetadata = extractUnibetMetadata(bet, matchData);
           
+          // ✅ CRITICAL: Extract match start time from multiple sources for bet placement
+          // Priority: unibetMetadata.start (from Unibet API) > bet.match.starting_at > matchData
+          const matchStartTime = unibetMetadata?.start || 
+                                 bet.match.starting_at || 
+                                 matchData?.data?.events?.[0]?.start || 
+                                 matchData?.data?.start || 
+                                 null;
+          
+          
+          
+          if (!matchStartTime) {
+            console.warn(`⚠️ [placeBetThunk] No match start time found for match ${bet.match.id}`, {
+              unibetMetadataStart: unibetMetadata?.start,
+              betMatchStartingAt: bet.match.starting_at,
+              matchDataEventsStart: matchData?.data?.events?.[0]?.start,
+              matchDataStart: matchData?.data?.start,
+              hasMatchData: !!matchData
+            });
+          }
           
           // Use label for betOption and selection
           const label = bet.label || bet.selection;
@@ -651,9 +660,12 @@ export const placeBetThunk = createAsyncThunk(
               total: bet.total || null,
               market_description: bet.marketDescription || null,
               handicap: bet.handicapValue || null,
-              name: bet.name || label
+              name: bet.name || label,
+              // ✅ Add matchDate to betDetails as well
+              ...(matchStartTime && { matchDate: matchStartTime })
             },
-            ...(bet.match.starting_at && { matchDate: bet.match.starting_at }),
+            // ✅ CRITICAL: Always include start time for bet placement (from Unibet API or match data)
+            ...(matchStartTime && { start: matchStartTime, matchDate: matchStartTime }),
             ...(bet.match.estimatedMatchEnd && { estimatedMatchEnd: bet.match.estimatedMatchEnd }),
             ...(bet.match.betOutcomeCheckTime && { betOutcomeCheckTime: bet.match.betOutcomeCheckTime }),
             inplay: bet.inplay || false,
@@ -702,9 +714,7 @@ export const placeBetThunk = createAsyncThunk(
             'payload.leagueName': payload.leagueName
           });
           
-          // #region agent log
-          if (typeof fetch !== 'undefined') fetch('http://127.0.0.1:7242/ingest/36e9cd0b-a351-407e-8f20-cf67918d6e8e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'betSlipSlice.js:705',message:'FINAL PAYLOAD SENT TO BACKEND',data:{betId:bet.id,oddId:payload.oddId,odds:payload.odds,previousOdds:payload.previousOdds,stake:payload.stake,selection:payload.selection},timestamp:Date.now(),sessionId:'debug-session',runId:'home-page-bet',hypothesisId:'D'})}).catch(()=>{});
-          // #endregion
+          
           
           const response = await apiClient.post("/bet/place-bet", payload);
           results.push(response.data);

@@ -252,8 +252,10 @@ const initializeApp = async () => {
           const { initializeAgendaJobs } = await import('./config/agendaJobs.js');
           console.log('[App] 🔄 Explicitly initializing agenda jobs (non-blocking)...');
           await initializeAgendaJobs();
+          
           console.log('[App] ✅ Agenda jobs initialized successfully');
           console.log('[App] ✅ Server fully ready to accept requests');
+          
         } catch (error) {
           console.error('[App] ❌ Error initializing agenda jobs:', error);
           console.error('[App] Error stack:', error.stack);

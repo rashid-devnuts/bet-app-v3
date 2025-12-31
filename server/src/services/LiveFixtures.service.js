@@ -127,24 +127,22 @@ class LiveFixturesService {
           } else {
             console.log(`[LiveFixtures] No league info found for ${match.league_id} in cache, trying to fetch from API`);
             
+            // ❌ DISABLED: SportMonks API calls removed - using Unibet API only
             // Try to fetch league info from API if not in cache
-            try {
-              const apiToken = process.env.SPORTSMONKS_API_KEY;
-              if (apiToken) {
-                const url = `https://api.sportmonks.com/v3/football/leagues/${match.league_id}?api_token=${apiToken}`;
-                const response = await axios.get(url);
-                const leagueData = response.data?.data;
-                
-                if (leagueData) {
-                  console.log(`[LiveFixtures] Fetched league info from API for ${match.league_id}:`, leagueData.name);
-                  league.name = leagueData.name;
-                  league.imageUrl = leagueData.image_path || null;
-                  league.country = leagueData.country?.name || null;
-                }
-              }
-            } catch (apiError) {
-              console.log(`[LiveFixtures] Error fetching league info from API for ${match.league_id}:`, apiError.message);
-            }
+            console.log(`[LiveFixtures] ⚠️ SportMonks API disabled - skipping league info fetch for ${match.league_id}`);
+            // const apiToken = process.env.SPORTSMONKS_API_KEY;
+            // if (apiToken) {
+            //   const url = `https://api.sportmonks.com/v3/football/leagues/${match.league_id}?api_token=${apiToken}`;
+            //   const response = await axios.get(url);
+            //   const leagueData = response.data?.data;
+            //   
+            //   if (leagueData) {
+            //     console.log(`[LiveFixtures] Fetched league info from API for ${match.league_id}:`, leagueData.name);
+            //     league.name = leagueData.name;
+            //     league.imageUrl = leagueData.image_path || null;
+            //     league.country = leagueData.country?.name || null;
+            //   }
+            // }
           }
         } catch (error) {
           console.log(`[LiveFixtures] Error fetching league info for ${match.league_id}:`, error);
@@ -427,111 +425,115 @@ class LiveFixturesService {
     return grouped;
   }
 
-  // Fetch inplay matches from SportMonks API
+  // ✅ UPDATED: Fetch inplay matches from Unibet API (replacing SportMonks)
   async updateInplayMatches() {
     // Use queue to prevent multiple simultaneous updates
     return this.updateQueue.add(async () => {
-      console.log('[LiveFixtures] Starting inplay matches update...');
+      console.log('[LiveFixtures] Starting inplay matches update from Unibet API...');
       
       try {
-        const apiToken = process.env.SPORTSMONKS_API_KEY;
-      if (!apiToken) {
-        console.error('[LiveFixtures] SPORTSMONKS_API_KEY is not set');
-        return;
-      }
-
-      const url = `https://api.sportmonks.com/v3/football/livescores/inplay?api_token=${apiToken}&include=periods;state`;
-      console.log('[LiveFixtures] Fetching inplay matches from API');
-      
-      const response = await axios.get(url);
-      const inplayData = response.data?.data || [];
-      
-      console.log(`[LiveFixtures] API returned ${inplayData.length} inplay matches`);
-      
-      // Process inplay matches concurrently
-      const matchProcessingPromises = inplayData.map(async (match) => {
-        // Check if match is ticking (has active timer)
-        const isTicking = match.periods?.some(period => period.ticking) || false;
-        const hasStarted = match.state_id && [2, 3, 4, 22, 23, 24].includes(match.state_id); // INPLAY states (2=live, 3=halftime, 4=extra time, 22=2nd half, 23=2nd half HT, 24=extra time)
+        // Fetch live matches from Unibet API via internal route
+        const axios = (await import('../config/axios-proxy.js')).default;
+        const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+        const url = `${baseUrl}/api/v2/live-matches`;
         
-        if (hasStarted) {
+        console.log(`[LiveFixtures] Fetching live matches from Unibet API: ${url}`);
+        
+        const response = await axios.get(url, { timeout: 10000 });
+        
+        if (!response.data || !response.data.success) {
+          console.error('[LiveFixtures] Failed to fetch live matches from Unibet API');
+          return;
+        }
+        
+        const liveMatches = response.data.matches || [];
+        console.log(`[LiveFixtures] Unibet API returned ${liveMatches.length} live matches`);
+        
+        // Process live matches to match the expected format
+        const processedMatches = liveMatches.map((match) => {
           // Get additional match details from fixture cache (non-blocking)
-          const fixtureDetails = await this.getMatchDataFromCache(match.id);
+          const fixtureDetails = this.getMatchDataFromCacheSync(match.id);
           
-          // Create timing object for frontend using SportMonks periods data
-          const currentPeriod = match.periods?.find(p => p.ticking) || match.periods?.[0]; // Use first period if none ticking (halftime)
-          const now = Date.now();
-          
-          // Use SportMonks periods data for timing
-          const sportMonksMinutes = currentPeriod?.minutes || 0;
-          const sportMonksSeconds = currentPeriod?.seconds || 0;
-          
-          console.log(`[LiveFixtures] Match ${match.id} timing from SportMonks: ${sportMonksMinutes}:${sportMonksSeconds.toString().padStart(2, '0')} (${currentPeriod?.description}) - State: ${match.state?.name}`);
-          
-          const timing = {
-            matchStarted: match.starting_at_timestamp, // Keep for reference only
-            currentMinute: sportMonksMinutes,
-            currentSecond: sportMonksSeconds,
-            period: currentPeriod?.description || 'Unknown',
-            periodType: currentPeriod?.type_id || 0,
-            isTicking: currentPeriod?.ticking || false,
-            cacheTime: now,
-            timeSource: 'sportmonks_only',
-            matchState: match.state?.name || 'Unknown'
-          };
-
           const processedMatch = {
-            ...match,
-            ...fixtureDetails,
-            isLive: true,
-            isTicking,
-            currentPeriod: currentPeriod,
-            matchState: match.state,
-            timing: timing,
-            state_id: match.state_id // Ensure state_id is included
+            id: match.id,
+            name: match.name || `${match.team1 || 'Team 1'} vs ${match.team2 || 'Team 2'}`,
+            team1: match.team1 || match.homeName,
+            team2: match.team2 || match.awayName,
+            starting_at: match.start || match.starting_at,
+            state_id: match.state === 'STARTED' ? 2 : 1, // Map Unibet state to state_id
+            state: { name: match.state || 'Unknown' },
+            isLive: match.state === 'STARTED',
+            isTicking: match.state === 'STARTED',
+            league_id: match.league?.id || match.groupId,
+            participants: match.participants || [
+              { name: match.team1 || match.homeName, position: 'home' },
+              { name: match.team2 || match.awayName, position: 'away' }
+            ],
+            timing: match.timing || null,
+            kambiLiveData: match.kambiLiveData || null,
+            liveData: match.liveData || null,
+            ...fixtureDetails
           };
-          
-          // Update delayed matches cache - remove if now inplay (non-blocking)
-          this.delayedMatchesCache.del(match.id);
           
           return processedMatch;
-        }
-        return null; // Return null for matches that haven't started
-      });
-      
-      // Wait for all match processing to complete concurrently
-      const processedMatchesResults = await Promise.all(matchProcessingPromises);
-      
-      // Filter out null results (matches that haven't started)
-      const processedMatches = processedMatchesResults.filter(match => match !== null);
-      
-      // Check for delayed matches (should have started but not in inplay) - non-blocking
-      setImmediate(() => {
-        this.checkDelayedMatches().catch(error => {
-          console.error('[LiveFixtures] Error checking delayed matches:', error);
         });
-      });
-      
-      // Cache the processed matches (non-blocking)
-      this.inplayMatchesCache.set('inplay_matches', processedMatches);
-      
-      console.log(`[LiveFixtures] Cached ${processedMatches.length} inplay matches`);
-      
-      // Update odds for the inplay matches (non-blocking)
-      if (processedMatches.length > 0) {
-        console.log(`[LiveFixtures] Updating odds for ${processedMatches.length} inplay matches`);
-        // Use setImmediate to make odds update non-blocking
-        setImmediate(() => {
-          this.updateInplayMatchesOdds(processedMatches).catch(error => {
-            console.error('[LiveFixtures] Error updating inplay matches odds:', error);
+        
+        // Cache the processed matches
+        this.inplayMatchesCache.set('inplay_matches', processedMatches);
+        console.log(`[LiveFixtures] Cached ${processedMatches.length} inplay matches from Unibet API`);
+        
+        // Update odds for the inplay matches (non-blocking)
+        if (processedMatches.length > 0) {
+          setImmediate(() => {
+            this.updateInplayMatchesOdds(processedMatches).catch(error => {
+              console.error('[LiveFixtures] Error updating inplay matches odds:', error);
+            });
           });
-        });
-      }
-      
-          } catch (error) {
-        console.error('[LiveFixtures] Error fetching inplay matches:', error);
+        }
+        
+      } catch (error) {
+        console.error('[LiveFixtures] Error fetching inplay matches from Unibet API:', error.message);
+        // Don't throw - keep existing cache if available
       }
     });
+  }
+  
+  // Helper to get match data from cache synchronously (for use in updateInplayMatches)
+  getMatchDataFromCacheSync(matchId) {
+    try {
+      const numericMatchId = parseInt(matchId);
+      const cacheKey = `match_data_${numericMatchId}`;
+      const cachedMatchData = this.matchDataCache.get(cacheKey);
+      if (cachedMatchData) {
+        return cachedMatchData;
+      }
+      
+      // Search in fixture cache
+      const cacheKeys = this.fixtureCache.keys();
+      for (const key of cacheKeys) {
+        if (key.startsWith("fixtures_")) {
+          const cachedData = this.fixtureCache.get(key);
+          let fixtures = [];
+          
+          if (Array.isArray(cachedData)) {
+            fixtures = cachedData;
+          } else if (cachedData && Array.isArray(cachedData.data)) {
+            fixtures = cachedData.data;
+          } else {
+            continue;
+          }
+          
+          const matchData = fixtures.find(m => m.id === numericMatchId);
+          if (matchData) {
+            this.matchDataCache.set(cacheKey, matchData);
+            return matchData;
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`[LiveFixtures] Error in getMatchDataFromCacheSync for ${matchId}:`, error);
+    }
+    return {};
   }
 
   // Check for delayed matches that should have started
@@ -740,11 +742,16 @@ class LiveFixturesService {
           return { success: false, matchId: match.id, reason: 'not_live' };
         }
 
+        // ❌ DISABLED: SportMonks API calls removed - using Unibet API only
         // Use the fixture endpoint with inplayOdds included
-        const url = `https://api.sportmonks.com/v3/football/fixtures/${match.id}?api_token=${apiToken}&include=inplayOdds&filters=bookmakers:2`;
+        // const url = `https://api.sportmonks.com/v3/football/fixtures/${match.id}?api_token=${apiToken}&include=inplayOdds&filters=bookmakers:2`;
 
-        console.log(`[LiveFixtures] Fetching odds for match ${match.id} from: ${url}`);
-        const response = await axios.get(url);
+        // console.log(`[LiveFixtures] Fetching odds for match ${match.id} from: ${url}`);
+        // const response = await axios.get(url);
+        
+        // Return early - SportMonks API disabled
+        console.log(`[LiveFixtures] ⚠️ SportMonks API disabled - skipping odds fetch for match ${match.id}`);
+        return { success: false, matchId: match.id, reason: 'sportmonks_disabled' };
         const allOdds = response.data?.data?.inplayodds || [];
         
         console.log(`[LiveFixtures] Match ${match.id} - Raw odds count: ${allOdds.length}`);
@@ -919,10 +926,13 @@ class LiveFixturesService {
         }
 
         try {
+          // ❌ DISABLED: SportMonks API calls removed - using Unibet API only
           // Use the fixture endpoint with inplayOdds included
-          const url = `https://api.sportmonks.com/v3/football/fixtures/${match.id}?api_token=${apiToken}&include=inplayOdds&filters=bookmakers:2`;
+          // const url = `https://api.sportmonks.com/v3/football/fixtures/${match.id}?api_token=${apiToken}&include=inplayOdds&filters=bookmakers:2`;
 
-          const response = await axios.get(url);
+          // const response = await axios.get(url);
+          console.log(`[LiveFixtures] ⚠️ SportMonks API disabled - skipping worker odds fetch for match ${match.id}`);
+          return { success: false, matchId: match.id, reason: 'sportmonks_disabled' };
           const allOdds = response.data?.data?.inplayodds || [];
           
           // Filter odds by allowed market IDs
@@ -1102,141 +1112,34 @@ class LiveFixturesService {
     const maxRetries = 3;
     let lastError;
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`[fetchOddsDirectly] Attempt ${attempt}/${maxRetries} for match ${matchId}`);
-        
-        const url = `https://api.sportmonks.com/v3/football/fixtures/${matchId}?api_token=${apiToken}&include=inplayOdds&filters=bookmakers:2`;
-        console.log(`[fetchOddsDirectly] Fetching odds for match ${matchId} from: ${url}`);
-        
-        // Add timeout and retry logic
-        const response = await axios.get(url, {
-          timeout: 5000, // 5 second timeout (reduced from 10s)
-          headers: {
-            'User-Agent': 'BetApp/1.0'
-          }
-        });
-        
-        console.log(`[fetchOddsDirectly] Response status: ${response.status}`);
-        console.log(`[fetchOddsDirectly] Response data keys:`, Object.keys(response.data || {}));
-        
-        const allOddsData = response.data?.data?.inplayodds || [];
-        console.log(`[fetchOddsDirectly] Raw odds count: ${allOddsData.length}`);
-
-        // Filter odds by allowed market IDs
-        let oddsData = allOddsData.filter((odd) =>
-          this.allowedMarketIds.includes(odd.market_id)
-        );
-
-        // Get match data for team names
-        let matchData = await this.getMatchDataFromCache(matchId);
-
-        // Group odds by market for classification
-        const odds_by_market = {};
-        for (const odd of oddsData) {
-          if (!odd.market_id) continue;
-          if (!odds_by_market[odd.market_id]) {
-            odds_by_market[odd.market_id] = {
-              market_id: odd.market_id,
-              market_description: odd.market_description,
-              odds: [],
-            };
-          }
-          odds_by_market[odd.market_id].odds.push({
-            ...odd,
-            id: odd.id,
-            value: odd.value,
-            label: odd.label,
-            name: odd.name || odd.label,
-            suspended: odd.suspended,
-            stopped: odd.stopped,
-          });
-          odds_by_market[odd.market_id].market_description = odd.market_description;
-        }
-
-        const classified = classifyOdds({ odds_by_market });
-        const betting_data = transformToBettingData(classified, matchData);
-
-        // Store in unified format
-        const result = {
-          betting_data: betting_data,
-          odds_classification: classified,
-          cached_at: Date.now(),
-          source: 'direct_fetch',
-          api_timestamp: new Date().toISOString()
-        };
-
-        console.log(
-          `[ensureLiveOdds] Fetched and cached ${result.betting_data.length} sections for match ${matchId}`
-        );
-
-        // Cache the result in unified format (1 second TTL ensures fresh data)
-        this.liveOddsCache.set(matchId, result);
-        return result;
-        
-      } catch (err) {
-        lastError = err;
-        console.error(`[fetchOddsDirectly] Attempt ${attempt} failed for match ${matchId}:`, {
-          message: err.message,
-          status: err.response?.status,
-          statusText: err.response?.statusText,
-          data: err.response?.data,
-          url: err.config?.url
-        });
-        
-        // If it's a 404, the match might not have inplay odds available
-        if (err.response?.status === 404) {
-          console.log(`[fetchOddsDirectly] Match ${matchId} has no inplay odds available`);
-          return {
-            betting_data: [],
-            odds_classification: {
-              categories: [{ id: "all", label: "All", odds_count: 0 }],
-              classified_odds: {},
-              stats: { total_categories: 0, total_odds: 0 },
-            },
-            cached_at: Date.now(),
-            source: 'no_odds_available',
-            api_timestamp: new Date().toISOString()
-          };
-        }
-        
-        // Handle network errors (socket hang up, timeouts, etc.)
-        if (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT' || err.message.includes('socket hang up')) {
-          console.log(`[fetchOddsDirectly] Network error for match ${matchId}: ${err.message}`);
-          
-          // If this is the last attempt, return empty odds
-          if (attempt === maxRetries) {
-            return {
-              betting_data: [],
-              odds_classification: {
-                categories: [{ id: "all", label: "All", odds_count: 0 }],
-                classified_odds: {},
-                stats: { total_categories: 0, total_odds: 0 },
-              },
-              cached_at: Date.now(),
-              source: 'network_error',
-              api_timestamp: new Date().toISOString()
-            };
-          }
-          
-          // Wait before retrying (exponential backoff)
-          const delay = 500 * attempt; // 0.5s, 1s, 1.5s (reduced delays)
-          console.log(`[fetchOddsDirectly] Waiting ${delay}ms before retry ${attempt + 1}`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          continue;
-        }
-        
-        // For other errors, throw immediately
-        throw err;
-      }
-    }
+    // ❌ DISABLED: SportMonks API calls removed - using Unibet API only
+    console.log(`[fetchOddsDirectly] ⚠️ SportMonks API disabled - skipping odds fetch for match ${matchId}`);
+    return null; // Early return - SportMonks disabled
     
-    // If all retries failed, throw the last error
-    throw new CustomError(
-      `Failed to fetch live odds after ${maxRetries} attempts: ${lastError.message}`,
-      500,
-      "LIVE_ODDS_FETCH_ERROR"
-    );
+    // ❌ ALL CODE BELOW IS DISABLED - SportMonks API removed
+    // for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    //   try {
+    //     console.log(`[fetchOddsDirectly] Attempt ${attempt}/${maxRetries} for match ${matchId}`);
+    //     
+    //     const url = `https://api.sportmonks.com/v3/football/fixtures/${matchId}?api_token=${apiToken}&include=inplayOdds&filters=bookmakers:2`;
+    //     const response = await axios.get(url, {
+    //       timeout: 5000,
+    //       headers: { 'User-Agent': 'BetApp/1.0' }
+    //     });
+    //     
+    //     const allOddsData = response.data?.data?.inplayodds || [];
+    //     // ... rest of processing code ...
+    //     
+    //   } catch (err) {
+    //     lastError = err;
+    //     if (err.response?.status === 404) {
+    //       // ... handle 404 ...
+    //     }
+    //     // ... error handling ...
+    //   }
+    // }
+    // 
+    // throw new CustomError(...);
   }
 
   // Helper to get match data from cache (optimized)

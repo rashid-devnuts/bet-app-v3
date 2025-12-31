@@ -309,20 +309,20 @@ export class FotmobController {
 
             // Only save cache file and update metadata if actual refresh happened OR if force refresh
             if (actualRefreshHappened || forceRefresh) {
-                // Save multi-day cache (reuse multiDayFile declared earlier)
-            fs.writeFileSync(multiDayFile, JSON.stringify(cacheData, null, 2));
+                // ✅ FIX: Use async writeFile to prevent blocking
+                await fs.promises.writeFile(multiDayFile, JSON.stringify(cacheData, null, 2));
                 console.log(`✅ Cache file saved successfully`);
 
                 // Update metadata only if actual refresh happened
-            const metaFile = path.join(STORAGE_PATH, 'fotmob_cache_meta.json');
-            const meta = {
-                lastRefresh: new Date().toISOString(),
-                days: days + 1, // Include the previous day
+                const metaFile = path.join(STORAGE_PATH, 'fotmob_cache_meta.json');
+                const meta = {
+                    lastRefresh: new Date().toISOString(),
+                    days: days + 1, // Include the previous day
                     totalMatches: totalMatches,
                     datesRefreshed: datesRefreshed,
                     datesSkipped: datesSkipped
-            };
-            fs.writeFileSync(metaFile, JSON.stringify(meta, null, 2));
+                };
+                await fs.promises.writeFile(metaFile, JSON.stringify(meta, null, 2));
                 console.log(`✅ Metadata file saved (actual refresh: ${actualRefreshHappened})`);
             } else {
                 console.log(`⏭️ No actual refresh needed - all dates already cached. Metadata NOT updated.`);

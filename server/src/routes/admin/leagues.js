@@ -45,8 +45,14 @@ router.get('/', async (req, res) => {
     const leagues = dataLines.map((line, index) => {
       if (!line.trim()) return null;
       
-      const [unibetId, unibetName, fotmobId, fotmobName, matchType, country] = line.split(',');
+      // ✅ FIX: Properly parse CSV with quoted values
+      // Strip quotes from each field and trim whitespace
+      const fields = line.split(',').map(field => field.replace(/^"|"$/g, '').trim());
+      const [unibetId, unibetName, fotmobId, fotmobName, matchType, country] = fields;
       const leagueId = parseInt(unibetId) || index + 1;
+      
+      // ✅ FIX: Normalize country name - trim and ensure consistent casing
+      const normalizedCountry = country?.trim() || 'Other';
       
       // Check if this league is marked as popular in database
       const dbLeague = popularLeaguesMap.get(leagueId);
@@ -59,8 +65,8 @@ router.get('/', async (req, res) => {
         fotmobName: fotmobName?.trim(),
         matchType: matchType?.trim(),
         country: {
-          name: country?.trim(),
-          official_name: country?.trim(),
+          name: normalizedCountry,
+          official_name: normalizedCountry,
           image: null // No country images in CSV
         },
         image_path: null, // No league images in CSV

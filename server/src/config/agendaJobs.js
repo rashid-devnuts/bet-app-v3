@@ -184,22 +184,33 @@ const scheduleLeagueMappingJob = async () => {
   
   if (!leagueMappingJobScheduled) {
     try {
-      // TESTING: Schedule at 7:20 PM Pakistan Time (LOCAL)
+      // Schedule at 18:00 PM (6:00 PM) Pakistan Time
       // Cron syntax: "minute hour dayOfMonth month dayOfWeek"
-      // NOTE: Agenda.js interprets cron in SERVER'S LOCAL TIMEZONE (PKT = UTC+5)
-      // "20 19 * * *" = 7:20 PM PKT (LOCAL) = 2:20 PM UTC
-      // TODO: Change back to "0 9 * * *" for production (9:00 AM PKT LOCAL TIME)
+      // IMPORTANT: Agenda.js uses server's LOCAL timezone for cron
+      // - On local dev (PKT): "0 18 * * *" = 6:00 PM PKT
+      // - On Render (UTC): "0 13 * * *" = 13:00 UTC = 6:00 PM PKT
+      // Since we want same time on both, we need to detect timezone
+      const serverTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const isUTC = serverTimezone === 'UTC' || process.env.TZ === 'UTC';
+      // ✅ TESTING: Schedule job for 6:50 PM PKT (18:50 PKT) = 13:50 UTC
+      const cronExpression = isUTC ? "50 13 * * *" : "50 18 * * *"; // UTC: 13:50 = 6:50 PM PKT, PKT: 18:50 = 6:50 PM
+      
       console.log('[Agenda] ========================================');
       console.log('[Agenda] Scheduling League Mapping auto-update job...');
-      console.log('[Agenda] ⚠️ TESTING MODE: Time: 7:20 PM PKT (LOCAL TIME)');
-      console.log('[Agenda] Cron: "20 19 * * *"');
-      console.log('[Agenda] NOTE: Cron uses server local timezone (PKT)');
+      console.log('[Agenda] Target Time: 18:50 PM (6:50 PM) PKT (TESTING)');
+      console.log(`[Agenda] Server Timezone: ${serverTimezone} (isUTC: ${isUTC})`);
+      console.log(`[Agenda] Cron Expression: "${cronExpression}"`);
+      if (isUTC) {
+        console.log('[Agenda] Using UTC cron: "50 13 * * *" = 13:50 UTC = 6:50 PM PKT');
+      } else {
+        console.log('[Agenda] Using PKT cron: "50 18 * * *" = 6:50 PM PKT');
+      }
       console.log('[Agenda] ========================================');
       
       console.log('[Agenda] About to call agenda.every() for updateLeagueMapping...');
       
       // ✅ FIX: Add timeout to prevent hanging
-      const jobPromise = agenda.every("20 19 * * *", "updateLeagueMapping");
+      const jobPromise = agenda.every(cronExpression, "updateLeagueMapping");
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Timeout: agenda.every() took too long (10s)')), 10000)
       );
@@ -223,6 +234,7 @@ const scheduleLeagueMappingJob = async () => {
         
         console.log('[Agenda] ✅ League Mapping auto-update job scheduled successfully!');
         console.log(`[Agenda] Job ID: ${scheduledJob.attrs._id}`);
+        console.log(`[Agenda] Server Timezone: ${serverTimezone}`);
         console.log(`[Agenda] Current time (UTC): ${now.toISOString()}`);
         console.log(`[Agenda] Current time (PKT): ${nowPKT}`);
         console.log(`[Agenda] Next run (UTC): ${nextRunUTC}`);
@@ -464,6 +476,11 @@ agenda.define("processPendingBets", async (job) => {
     console.log(`[Agenda] ========================================`);
     console.log(`[Agenda] ⏰ Completed at: ${endTime.toISOString()}`);
     console.log(`[Agenda] ⏱️ Duration: ${duration}s\n`);
+    
+    // ✅ CRITICAL FIX: Force event loop to continue immediately
+    setImmediate(() => {
+      console.log(`[Agenda] 🔄 Event loop released after processPendingBets`);
+    });
   } catch (error) {
     const errorTime = new Date();
     console.error(`\n[Agenda] ========================================`);
@@ -474,6 +491,11 @@ agenda.define("processPendingBets", async (job) => {
     console.error(`[Agenda] 📋 Error message:`, error.message);
     console.error(`[Agenda] 📋 Error stack:`, error.stack);
     console.error(`[Agenda] ========================================\n`);
+    
+    // ✅ CRITICAL FIX: Force event loop to continue even on error
+    setImmediate(() => {
+      console.log(`[Agenda] 🔄 Event loop released after processPendingBets error`);
+    });
   }
 });
 
@@ -523,7 +545,15 @@ agenda.define("updateLeagueMapping", async (job) => {
     console.log(`[Agenda] ========================================`);
     console.log(''); // Empty line to ensure logs don't get stuck
     
-    // Return result directly, don't wrap in Promise.resolve
+    // ✅ CRITICAL FIX: Force event loop to continue immediately
+    setImmediate(() => {
+      console.log(`[Agenda] 🔄 Event loop released after League Mapping job`);
+      // ✅ CRITICAL: Add nested setImmediate for extra safety
+      setImmediate(() => {
+        console.log(`[Agenda] 🔄 Nested setImmediate after League Mapping job executed`);
+      });
+    });
+    
     return result;
   } catch (error) {
     const endTime = new Date();
@@ -543,7 +573,15 @@ agenda.define("updateLeagueMapping", async (job) => {
     console.error(`[Agenda] Stack:`, error.stack);
     console.error(`[Agenda] ========================================\n`);
     
-    // Re-throw to let Agenda handle it
+    // ✅ CRITICAL FIX: Force event loop to continue even on error
+    setImmediate(() => {
+      console.log(`[Agenda] 🔄 Event loop released after League Mapping job error`);
+      // ✅ CRITICAL: Add nested setImmediate for extra safety
+      setImmediate(() => {
+        console.log(`[Agenda] 🔄 Nested setImmediate after League Mapping job error executed`);
+      });
+    });
+    
     throw error;
   }
 });
@@ -591,6 +629,13 @@ agenda.define("refreshFotmobMultidayCache", async (job) => {
     console.log(`[Agenda] Duration: ${duration} seconds`);
     console.log(`[Agenda] Result:`, result);
     console.log(`[Agenda] ✅ Job finished, returning control to event loop...`);
+    
+    // ✅ CRITICAL FIX: Force event loop to continue immediately
+    setImmediate(() => {
+      console.log(`[Agenda] 🔄 Event loop released after FotMob cache refresh`);
+    });
+    
+    return result;
   } catch (error) {
     console.error(`[Agenda] ========================================`);
     console.error(`[Agenda] ❌ FotMob Cache Refresh Job FAILED`);
@@ -600,6 +645,11 @@ agenda.define("refreshFotmobMultidayCache", async (job) => {
     console.error("[Agenda] Error details:", error);
     console.error("[Agenda] Error stack:", error.stack);
     console.error(`[Agenda] ⚠️ Job failed, but continuing...`);
+    
+    // ✅ CRITICAL FIX: Force event loop to continue even on error
+    setImmediate(() => {
+      console.log(`[Agenda] 🔄 Event loop released after FotMob cache refresh error`);
+    });
   }
 });
 
@@ -627,13 +677,45 @@ export const initializeAgendaJobs = async () => {
     leagueMappingJobScheduled = false;
     
     console.log('[Agenda] 🔄 Starting Agenda...');
-    await agenda.start();
-    console.log('[Agenda] ✅ Agenda started successfully');
+    
+    try {
+      const startPromise = agenda.start();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: agenda.start() took too long (15s)')), 15000)
+      );
+      await Promise.race([startPromise, timeoutPromise]);
+      
+      console.log('[Agenda] ✅ Agenda started successfully');
+      
+      // ✅ CRITICAL FIX: Force event loop to continue after agenda.start()
+      setImmediate(() => {
+        console.log('[Agenda] 🔄 Event loop released after agenda.start()');
+        // ✅ CRITICAL: Add nested setImmediate for extra safety
+        setImmediate(() => {
+          console.log('[Agenda] 🔄 Nested setImmediate after agenda.start() executed');
+        });
+      });
+    } catch (error) {
+      console.error('[Agenda] ❌ Error or timeout starting Agenda:', error.message);
+      console.error('[Agenda] ⚠️ Continuing with initialization despite error...');
+      // Try to continue - Agenda might still work
+    }
     
     // Aggressive cleanup - remove ALL existing jobs
     console.log('[Agenda] Cleaning up all existing jobs...');
-    const existingJobs = await agenda.jobs({});
-    console.log(`[Agenda] Found ${existingJobs.length} existing jobs to clean up`);
+    let existingJobs = [];
+    try {
+      const jobsPromise = agenda.jobs({});
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: agenda.jobs() took too long (10s)')), 10000)
+      );
+      existingJobs = await Promise.race([jobsPromise, timeoutPromise]);
+      console.log(`[Agenda] Found ${existingJobs.length} existing jobs to clean up`);
+    } catch (error) {
+      console.error('[Agenda] ❌ Error or timeout fetching existing jobs:', error.message);
+      console.error('[Agenda] ⚠️ Continuing with cleanup despite error...');
+      existingJobs = []; // Continue with empty array
+    }
     
     // Log existing FotMob cache jobs before cleanup
     const existingFotmobJobs = existingJobs.filter(job => job.attrs.name === 'refreshFotmobMultidayCache');
@@ -645,23 +727,48 @@ export const initializeAgendaJobs = async () => {
       });
     }
     
-    // Cancel all jobs by name
-    await agenda.cancel({ name: 'updateLiveOdds' });
-    await agenda.cancel({ name: 'updateInplayMatches' });
-    await agenda.cancel({ name: 'refreshHomepageCache' });
-    await agenda.cancel({ name: 'processPendingBets' });
-    const cancelledFotmob = await agenda.cancel({ name: 'refreshFotmobMultidayCache' });
-    console.log(`[Agenda] Cancelled FotMob cache jobs: ${cancelledFotmob} jobs removed`);
-    const cancelledLeagueMapping = await agenda.cancel({ name: 'updateLeagueMapping' });
-    console.log(`[Agenda] Cancelled League Mapping jobs: ${cancelledLeagueMapping} jobs removed`);
-    await agenda.cancel({ name: 'checkBetOutcome' }); // Cancel old bet outcome jobs
+    // Cancel all jobs by name with timeouts
+    console.log('[Agenda] Cancelling existing jobs...');
+    const cancelOperations = [
+      { name: 'updateLiveOdds' },
+      { name: 'updateInplayMatches' },
+      { name: 'refreshHomepageCache' },
+      { name: 'processPendingBets' },
+      { name: 'refreshFotmobMultidayCache' },
+      { name: 'updateLeagueMapping' },
+      { name: 'checkBetOutcome' }
+    ];
+
+    for (const jobName of cancelOperations) {
+      try {
+        const cancelPromise = agenda.cancel({ name: jobName.name });
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error(`Timeout: cancel(${jobName.name}) took too long (5s)`)), 5000)
+        );
+        const result = await Promise.race([cancelPromise, timeoutPromise]);
+        if (jobName.name === 'refreshFotmobMultidayCache') {
+          console.log(`[Agenda] Cancelled FotMob cache jobs: ${result} jobs removed`);
+        } else if (jobName.name === 'updateLeagueMapping') {
+          console.log(`[Agenda] Cancelled League Mapping jobs: ${result} jobs removed`);
+        }
+      } catch (error) {
+        console.warn(`[Agenda] ⚠️ Could not cancel job ${jobName.name}: ${error.message}`);
+        // Continue with next job
+      }
+    }
     
-    // Remove any remaining jobs
+    // Remove any remaining jobs with timeout per operation
+    console.log('[Agenda] Removing remaining jobs...');
     for (const job of existingJobs) {
       try {
-        await job.remove();
+        const removePromise = job.remove();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error(`Timeout: job.remove() took too long (3s)`)), 3000)
+        );
+        await Promise.race([removePromise, timeoutPromise]);
       } catch (error) {
-        console.warn(`[Agenda] Could not remove job ${job.attrs.name}:`, error.message);
+        console.warn(`[Agenda] ⚠️ Could not remove job ${job.attrs?.name || 'unknown'}: ${error.message}`);
+        // Continue with next job
       }
     }
     
@@ -711,150 +818,222 @@ export const initializeAgendaJobs = async () => {
         console.log('[Agenda] ✅ FotMob cache refresh completed successfully on startup');
         console.log('[Agenda] Background cache refresh finished');
         console.log('[Agenda] ✅ FotMob cache refresh async task completed - returning control');
+        // ✅ CRITICAL: Force event loop to continue - don't let this block other operations
+        setImmediate(() => {
+          console.log('[Agenda] 🔄 FotMob cache refresh background task fully released');
+          // ✅ CRITICAL FIX: Add another setImmediate to ensure event loop continues
+          setImmediate(() => {
+            console.log('[Agenda] 🔄 Event loop fully released after FotMob refresh (nested setImmediate)');
+            // ✅ CRITICAL: Add one more setImmediate to ensure Agenda.js operations complete
+            setImmediate(() => {
+              console.log('[Agenda] 🔄 Final event loop release after FotMob refresh');
+            });
+          });
+        });
       } catch (error) {
         console.error('[Agenda] ❌ Error refreshing FotMob cache on startup:', error);
         console.error('[Agenda] Error stack:', error.stack);
+        // ✅ CRITICAL FIX: Force event loop to continue even on error
+        setImmediate(() => {
+          console.log('[Agenda] 🔄 Event loop released after FotMob cache refresh error');
+        });
         // Don't block server startup if cache refresh fails
       }
     })().catch(err => {
       console.error('[Agenda] ❌ Unhandled error in FotMob cache refresh background task:', err);
+      // ✅ CRITICAL FIX: Force event loop to continue even on unhandled error
+      setImmediate(() => {
+        console.log('[Agenda] 🔄 Event loop released after FotMob cache refresh unhandled error');
+      });
     }); // Immediately invoked async function - runs in background
     
     // ✅ IMPORTANT: Continue immediately - don't wait for FotMob cache refresh
     console.log('[Agenda] ⏭️ FotMob cache refresh started in background, continuing with initialization...');
     console.log('[Agenda] ✅ Agenda jobs initialization completed');
     console.log('[Agenda] Server ready to accept requests');
-    console.log('[Agenda] 📋 Proceeding to log job summary...');
     
-    // Log current scheduled jobs (summary only)
-    console.log('[Agenda] 🔍 Fetching scheduled jobs from database...');
-    let jobs = [];
-    try {
-      // Add timeout to prevent hanging
-      const jobsPromise = agenda.jobs({});
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout: agenda.jobs() took too long')), 10000)
-      );
-      jobs = await Promise.race([jobsPromise, timeoutPromise]);
-      console.log(`[Agenda] ✅ Fetched ${jobs.length} jobs from database`);
-    } catch (error) {
-      console.error(`[Agenda] ❌ Error fetching jobs: ${error.message}`);
-      console.error(`[Agenda] Continuing without job summary...`);
-      // Continue with empty jobs array (already set above)
-    }
-    console.log(`\n[Agenda] ========================================`);
-    console.log(`[Agenda] 📊 JOB SUMMARY`);
-    console.log(`[Agenda] ========================================`);
-    console.log(`[Agenda] Total scheduled jobs: ${jobs.length}`);
-    
-    if (jobs.length === 0) {
-      console.error(`[Agenda] ⚠️ WARNING: No jobs scheduled!`);
-    }
-    
-    // Group jobs by name and show summary
-    const jobSummary = {};
-    jobs.forEach(job => {
-      const name = job.attrs.name;
-      if (!jobSummary[name]) {
-        jobSummary[name] = { count: 0, nextRun: job.attrs.nextRunAt, interval: job.attrs.repeatInterval };
-      }
-      jobSummary[name].count++;
-    });
-    
-    Object.entries(jobSummary).forEach(([name, info]) => {
-      const nextRunPKT = info.nextRun ? new Date(info.nextRun.getTime() + (5 * 60 * 60 * 1000)).toISOString().replace('Z', ' PKT') : 'N/A';
-      console.log(`\n[Agenda] ─────────────────────────────────────`);
-      console.log(`[Agenda] Job Name: ${name}`);
-      console.log(`[Agenda] Count: ${info.count}`);
-      console.log(`[Agenda] Next run (UTC): ${info.nextRun}`);
-      console.log(`[Agenda] Next run (PKT): ${nextRunPKT}`);
-      console.log(`[Agenda] Interval: ${info.interval}`);
+    // ✅ CRITICAL: Defer job summary logging to next tick to ensure initialization completes first
+    setImmediate(() => {
+      // ✅ FIX: Make job summary logging non-blocking with strict timeout
+      console.log('[Agenda] 📋 Proceeding to log job summary (non-blocking)...');
+      // Don't await - let it run in background
+      (async () => {
+      // Wrap entire job summary in a timeout to prevent any blocking
+      const summaryTimeout = setTimeout(() => {
+        console.warn('[Agenda] ⚠️ Job summary logging timed out after 15s - skipping to prevent blocking');
+      }, 15000); // 15 second overall timeout
       
-      // Special logging for bet processing job
-      if (name === 'processPendingBets') {
-        console.log(`[Agenda] ⚙️ Bet Processing Job Status:`);
-        console.log(`[Agenda]    - Scheduled: ${betProcessingJobScheduled ? 'YES ✅' : 'NO ❌'}`);
-        if (info.nextRun) {
-          const now = new Date();
-          const timeUntilNext = info.nextRun.getTime() - now.getTime();
-          const secondsUntil = Math.floor(timeUntilNext / 1000);
-          console.log(`[Agenda]    - Time until next run: ${secondsUntil} seconds`);
-        }
-      }
-      
-      // Special logging for FotMob cache job
-      if (name === 'refreshFotmobMultidayCache') {
-        console.log(`[Agenda] ⏰ FotMob Cache Job Status:`);
-        console.log(`[Agenda]    - Scheduled: ${fotmobCacheJobScheduled ? 'YES ✅' : 'NO ❌'}`);
-        if (info.nextRun) {
-          const now = new Date();
-          const timeUntilNext = info.nextRun.getTime() - now.getTime();
-          const hoursUntil = Math.floor(timeUntilNext / (1000 * 60 * 60));
-          const minsUntil = Math.floor((timeUntilNext % (1000 * 60 * 60)) / (1000 * 60));
-          console.log(`[Agenda]    - Time until next run: ${hoursUntil}h ${minsUntil}m`);
-        }
-      }
-      
-      // Special logging for League Mapping job
-      if (name === 'updateLeagueMapping') {
-        console.log(`[Agenda] 🗺️ League Mapping Job Status:`);
-        console.log(`[Agenda]    - Scheduled: ${leagueMappingJobScheduled ? 'YES ✅' : 'NO ❌'}`);
-        if (info.nextRun) {
-          const now = new Date();
-          const timeUntilNext = info.nextRun.getTime() - now.getTime();
-          const hoursUntil = Math.floor(timeUntilNext / (1000 * 60 * 60));
-          const minsUntil = Math.floor((timeUntilNext % (1000 * 60 * 60)) / (1000 * 60));
-          console.log(`[Agenda]    - Time until next run: ${hoursUntil}h ${minsUntil}m`);
-        }
-      }
-    });
-    
-    console.log(`[Agenda] ========================================\n`);
-    
-    // Add job status checker for debugging (runs every 5 minutes, less verbose)
-    const checkJobStatus = async () => {
       try {
-        const jobs = await agenda.jobs({ name: 'updateLeagueMapping' });
-        if (jobs.length > 0) {
-          jobs.forEach((job, index) => {
-            const nextRunUTC = job.attrs.nextRunAt;
-            const now = new Date();
-            const timeUntil = nextRunUTC ? nextRunUTC.getTime() - now.getTime() : null;
-            const minutesUntil = timeUntil ? Math.floor(timeUntil / (1000 * 60)) : null;
-            
-            // Only log if job is running or if there's an issue
-            if (job.attrs.lockedAt || (timeUntil && timeUntil < 0)) {
-              const nextRunPKT = nextRunUTC ? (() => {
-                const pktDate = new Date(nextRunUTC);
-                pktDate.setUTCHours(pktDate.getUTCHours() + 5);
-                return pktDate.toISOString().replace('Z', ' PKT');
-              })() : 'N/A';
-              
-              console.log(`[Agenda] 📊 Job Status - updateLeagueMapping:`);
-              console.log(`[Agenda]   - Status: ${job.attrs.lockedAt ? 'RUNNING' : 'IDLE'}`);
-              console.log(`[Agenda]   - Next run (PKT): ${nextRunPKT}`);
-              console.log(`[Agenda]   - Time until run: ${minutesUntil ? (minutesUntil + 'm') : 'N/A'}`);
-            }
-            // Silent check - no logging for normal idle state
-          });
-        } else {
-          console.log('[Agenda] ⚠️ No updateLeagueMapping jobs found in database!');
+        // Log current scheduled jobs (summary only)
+        console.log('[Agenda] 🔍 Fetching scheduled jobs from database...');
+        let jobs = [];
+        try {
+          // Add timeout to prevent hanging
+          const jobsPromise = agenda.jobs({});
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout: agenda.jobs() took too long (10s)')), 10000)
+          );
+          jobs = await Promise.race([jobsPromise, timeoutPromise]);
+          console.log(`[Agenda] ✅ Fetched ${jobs.length} jobs from database`);
+        } catch (error) {
+          console.error(`[Agenda] ❌ Error fetching jobs: ${error.message}`);
+          console.error(`[Agenda] Continuing without job summary...`);
+          clearTimeout(summaryTimeout);
+          jobs = []; // Continue with empty jobs array
+          return; // Exit early if can't fetch jobs
         }
+        
+        console.log(`\n[Agenda] ========================================`);
+        console.log(`[Agenda] 📊 JOB SUMMARY`);
+        console.log(`[Agenda] ========================================`);
+        console.log(`[Agenda] Total scheduled jobs: ${jobs.length}`);
+        
+        if (jobs.length === 0) {
+          console.error(`[Agenda] ⚠️ WARNING: No jobs scheduled!`);
+        }
+        
+        // Group jobs by name and show summary
+        const jobSummary = {};
+        jobs.forEach(job => {
+          const name = job.attrs.name;
+          if (!jobSummary[name]) {
+            jobSummary[name] = { count: 0, nextRun: job.attrs.nextRunAt, interval: job.attrs.repeatInterval };
+          }
+          jobSummary[name].count++;
+        });
+        
+        Object.entries(jobSummary).forEach(([name, info]) => {
+          const nextRunPKT = info.nextRun ? new Date(info.nextRun.getTime() + (5 * 60 * 60 * 1000)).toISOString().replace('Z', ' PKT') : 'N/A';
+          console.log(`\n[Agenda] ─────────────────────────────────────`);
+          console.log(`[Agenda] Job Name: ${name}`);
+          console.log(`[Agenda] Count: ${info.count}`);
+          console.log(`[Agenda] Next run (UTC): ${info.nextRun}`);
+          console.log(`[Agenda] Next run (PKT): ${nextRunPKT}`);
+          console.log(`[Agenda] Interval: ${info.interval}`);
+          
+          // Special logging for bet processing job
+          if (name === 'processPendingBets') {
+            console.log(`[Agenda] ⚙️ Bet Processing Job Status:`);
+            console.log(`[Agenda]    - Scheduled: ${betProcessingJobScheduled ? 'YES ✅' : 'NO ❌'}`);
+            if (info.nextRun) {
+              const now = new Date();
+              const timeUntilNext = info.nextRun.getTime() - now.getTime();
+              const secondsUntil = Math.floor(timeUntilNext / 1000);
+              console.log(`[Agenda]    - Time until next run: ${secondsUntil} seconds`);
+            }
+          }
+          
+          // Special logging for FotMob cache job
+          if (name === 'refreshFotmobMultidayCache') {
+            console.log(`[Agenda] ⏰ FotMob Cache Job Status:`);
+            console.log(`[Agenda]    - Scheduled: ${fotmobCacheJobScheduled ? 'YES ✅' : 'NO ❌'}`);
+            if (info.nextRun) {
+              const now = new Date();
+              const timeUntilNext = info.nextRun.getTime() - now.getTime();
+              const hoursUntil = Math.floor(timeUntilNext / (1000 * 60 * 60));
+              const minsUntil = Math.floor((timeUntilNext % (1000 * 60 * 60)) / (1000 * 60));
+              console.log(`[Agenda]    - Time until next run: ${hoursUntil}h ${minsUntil}m`);
+            }
+          }
+          
+          // Special logging for League Mapping job
+          if (name === 'updateLeagueMapping') {
+            console.log(`[Agenda] 🗺️ League Mapping Job Status:`);
+            console.log(`[Agenda]    - Scheduled: ${leagueMappingJobScheduled ? 'YES ✅' : 'NO ❌'}`);
+            if (info.nextRun) {
+              const now = new Date();
+              const timeUntilNext = info.nextRun.getTime() - now.getTime();
+              const hoursUntil = Math.floor(timeUntilNext / (1000 * 60 * 60));
+              const minsUntil = Math.floor((timeUntilNext % (1000 * 60 * 60)) / (1000 * 60));
+              console.log(`[Agenda]    - Time until next run: ${hoursUntil}h ${minsUntil}m`);
+            }
+          }
+        });
+        
+        console.log(`[Agenda] ========================================\n`);
+        
+        // Add job status checker for debugging (runs every 5 minutes, less verbose)
+        const checkJobStatus = async () => {
+          try {
+            const statusJobsPromise = agenda.jobs({ name: 'updateLeagueMapping' });
+            const statusTimeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Timeout: agenda.jobs() took too long (5s)')), 5000)
+            );
+            const jobs = await Promise.race([statusJobsPromise, statusTimeoutPromise]);
+            
+            if (jobs.length > 0) {
+              jobs.forEach((job, index) => {
+                const nextRunUTC = job.attrs.nextRunAt;
+                const now = new Date();
+                const timeUntil = nextRunUTC ? nextRunUTC.getTime() - now.getTime() : null;
+                const minutesUntil = timeUntil ? Math.floor(timeUntil / (1000 * 60)) : null;
+                
+                // Only log if job is running or if there's an issue
+                if (job.attrs.lockedAt || (timeUntil && timeUntil < 0)) {
+                  const nextRunPKT = nextRunUTC ? (() => {
+                    const pktDate = new Date(nextRunUTC);
+                    pktDate.setUTCHours(pktDate.getUTCHours() + 5);
+                    return pktDate.toISOString().replace('Z', ' PKT');
+                  })() : 'N/A';
+                  
+                  console.log(`[Agenda] 📊 Job Status - updateLeagueMapping:`);
+                  console.log(`[Agenda]   - Status: ${job.attrs.lockedAt ? 'RUNNING' : 'IDLE'}`);
+                  console.log(`[Agenda]   - Next run (PKT): ${nextRunPKT}`);
+                  console.log(`[Agenda]   - Time until run: ${minutesUntil ? (minutesUntil + 'm') : 'N/A'}`);
+                }
+              });
+            } else {
+              console.log('[Agenda] ⚠️ No updateLeagueMapping jobs found in database!');
+            }
+          } catch (error) {
+            console.error('[Agenda] Error checking job status:', error.message);
+          }
+        };
+        
+        // Check job status every 5 minutes (reduced from 30 seconds for production)
+        console.log('[Agenda] 🔍 Starting job status checker (every 5 minutes)...');
+        // ✅ CRITICAL FIX: Wrap setInterval in setImmediate to ensure it doesn't block
+        setImmediate(() => {
+          setInterval(checkJobStatus, 300000); // 5 minutes = 300000ms
+          // Run initial check after 10 seconds
+          setTimeout(checkJobStatus, 10000);
+        });
+        
+        // Clear timeout on successful completion
+        clearTimeout(summaryTimeout);
+        console.log('[Agenda] ✅ Job summary logging completed successfully');
+        // ✅ CRITICAL FIX: Force event loop to continue after job summary logging
+        setImmediate(() => {
+          console.log('[Agenda] 🔄 Job summary logging async IIFE fully released');
+        });
+        
       } catch (error) {
-        console.error('[Agenda] Error checking job status:', error.message);
+        clearTimeout(summaryTimeout);
+        console.error('[Agenda] ❌ Error in job summary logging:', error.message);
+        console.error('[Agenda] ⚠️ Continuing despite error...');
       }
-    };
+      })(); // ✅ Immediately invoked async function - runs in background
+     
+      // ✅ CRITICAL FIX: Add another setImmediate to ensure event loop continues
+      setImmediate(() => {
+        console.log('[Agenda] 🔄 Event loop released after job summary setImmediate');
+       
+      });
+    }); // End of setImmediate for job summary
     
-    // Check job status every 5 minutes (reduced from 30 seconds for production)
-    console.log('[Agenda] 🔍 Starting job status checker (every 5 minutes)...');
-    setInterval(checkJobStatus, 300000); // 5 minutes = 300000ms
-    
-    // Run initial check after 10 seconds
-    setTimeout(checkJobStatus, 10000);
-    
-    // ✅ Final completion log
+    // ✅ Final completion log - return immediately (BEFORE job summary)
     console.log('[Agenda] ✅ All agenda initialization steps completed');
     console.log('[Agenda] ✅ Function returning - server fully operational');
+    
+    // ✅ CRITICAL: Force event loop to continue - ensure no blocking operations
+    setImmediate(() => {
+      console.log('[Agenda] 🔄 Event loop released - all operations non-blocking');
+      
+      // ✅ CRITICAL: Add another setImmediate to ensure function truly returns
+      setImmediate(() => {
+        console.log('[Agenda] 🔄 initializeAgendaJobs fully released');
+      });
+    });
     
   } catch (error) {
     agendaJobsInitialized = false; // Reset flag on error so it can be retried
@@ -908,16 +1087,23 @@ export const setupAgendaListeners = () => {
   });
 
   agenda.on("start:updateLeagueMapping", (job) => {
+   
+    
     console.log(`\n[Agenda] ========================================`);
     console.log(`[Agenda] 🟢 Job "updateLeagueMapping" STARTING`);
     console.log(`[Agenda] ⏰ Time: ${new Date().toISOString()}`);
     console.log(`[Agenda] 📋 Job ID: ${job.attrs._id}`);
+    console.log(`[Agenda] Next run: ${job.attrs.nextRunAt}`);
     console.log(`[Agenda] ========================================\n`);
+    
+    
   });
 
   // Generic job start handler for any other jobs
   agenda.on("start", (job) => {
     const jobName = job.attrs.name;
+    
+    
     if (jobName !== 'processPendingBets' && jobName !== 'refreshFotmobMultidayCache' && jobName !== 'updateLeagueMapping') {
       console.log(`[Agenda] 🟢 Job "${jobName}" starting at ${new Date().toISOString()}`);
     }
@@ -925,6 +1111,8 @@ export const setupAgendaListeners = () => {
 
   agenda.on("complete", (job) => {
     const jobName = job.attrs.name;
+   
+    
     if (jobName === 'processPendingBets' || jobName === 'refreshFotmobMultidayCache' || jobName === 'updateLeagueMapping') {
       console.log(`\n[Agenda] ========================================`);
       console.log(`[Agenda] ✅ Job "${jobName}" COMPLETED`);
@@ -933,6 +1121,8 @@ export const setupAgendaListeners = () => {
     } else {
       console.log(`[Agenda] ✅ Job "${jobName}" completed at ${new Date().toISOString()}`);
     }
+    
+    
   });
 
   agenda.on("fail", (err, job) => {

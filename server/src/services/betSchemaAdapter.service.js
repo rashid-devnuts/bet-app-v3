@@ -62,7 +62,9 @@ export class BetSchemaAdapter {
                 market_description: betDetails.market_description,
                 label: betDetails.label,
                 value: betDetails.value,
-                name: betDetails.name
+                name: betDetails.name,
+                // ✅ FIX: Preserve matchDate in betDetails for combination bet legs
+                matchDate: betDetails.matchDate || bet.matchDate || null
             },
 
             // Match context - prioritize direct league fields over unibetMeta, but ensure unibetMeta is used as fallback
@@ -70,7 +72,39 @@ export class BetSchemaAdapter {
             leagueName: bet.leagueName || unibetMeta.leagueName || null,
             homeName: unibetMeta.homeName || this.extractTeamName(bet.teams, 'home'),
             awayName: unibetMeta.awayName || this.extractTeamName(bet.teams, 'away'),
-            start: unibetMeta.start || bet.matchDate,
+            // ✅ FIX: Prioritize bet.matchDate (from DB) over unibetMeta.start
+            // bet.matchDate is the source of truth stored in database when bet was placed
+            // IMPORTANT: Set both matchDate AND start so calculator can find it
+            matchDate: (() => {
+                let matchDateValue, matchDateSource;
+                if (bet.matchDate) {
+                    matchDateValue = bet.matchDate;
+                    matchDateSource = 'bet.matchDate (from DB)';
+                } else if (unibetMeta.start) {
+                    matchDateValue = unibetMeta.start;
+                    matchDateSource = 'unibetMeta.start';
+                } else {
+                    matchDateValue = null;
+                    matchDateSource = 'NONE';
+                }
+                console.log(`✅ [adaptBetForCalculator] Using ${matchDateSource} as source of truth for matchDate field: ${matchDateValue}`);
+                return matchDateValue;
+            })(),
+            start: (() => {
+                let startValue, startSource;
+                if (bet.matchDate) {
+                    startValue = bet.matchDate;
+                    startSource = 'bet.matchDate (from DB)';
+                } else if (unibetMeta.start) {
+                    startValue = unibetMeta.start;
+                    startSource = 'unibetMeta.start';
+                } else {
+                    startValue = null;
+                    startSource = 'NONE';
+                }
+                console.log(`✅ [adaptBetForCalculator] Using ${startSource} as source of truth for start field: ${startValue}`);
+                return startValue;
+            })(),
 
             // Additional fields
             eventName: unibetMeta.eventName || `${unibetMeta.homeName || 'Home'} vs ${unibetMeta.awayName || 'Away'}`,
@@ -254,6 +288,36 @@ export class BetSchemaAdapter {
         
         return bet.combination.map((leg, index) => {
             
+            // ✅ FIX: Check both locations - leg.betDetails.matchDate (actual data) and leg.matchDate (schema)
+            // Priority: leg.betDetails.matchDate > leg.matchDate
+            // For combination bets, each leg has its own matchDate in betDetails
+            let legMatchDate, legMatchDateSource;
+            if (leg.betDetails?.matchDate) {
+                legMatchDate = leg.betDetails.matchDate;
+                legMatchDateSource = 'leg.betDetails.matchDate';
+            } else if (leg.matchDate) {
+                legMatchDate = leg.matchDate;
+                legMatchDateSource = 'leg.matchDate';
+            } else {
+                legMatchDate = null;
+                legMatchDateSource = 'NONE';
+            }
+            
+            const legEstimatedMatchEnd = leg.betDetails?.estimatedMatchEnd || leg.estimatedMatchEnd;
+            const legBetOutcomeCheckTime = leg.betDetails?.betOutcomeCheckTime || leg.betOutcomeCheckTime;
+            
+            console.log(`[adaptCombinationBetForCalculator] Leg ${index + 1} matchDate sources:`, {
+                legMatchDate: leg.matchDate,
+                legBetDetailsMatchDate: leg.betDetails?.matchDate,
+                legBetDetailsMatchDateType: typeof leg.betDetails?.matchDate,
+                legBetDetailsMatchDateValue: leg.betDetails?.matchDate ? new Date(leg.betDetails.matchDate).toISOString() : 'N/A',
+                finalMatchDate: legMatchDate,
+                finalMatchDateType: typeof legMatchDate,
+                finalMatchDateValue: legMatchDate ? new Date(legMatchDate).toISOString() : 'N/A',
+                matchId: leg.matchId
+            });
+            console.log(`✅ [adaptCombinationBetForCalculator] Leg ${index + 1} using ${legMatchDateSource} as source of truth for matchDate: ${legMatchDate ? new Date(legMatchDate).toISOString() : 'NONE'}`);
+            
             // Create a single bet object for this leg using the leg's data
             const legBet = {
                 // Core bet fields from the main combination bet
@@ -275,15 +339,17 @@ export class BetSchemaAdapter {
                 teams: leg.teams,
                 selection: leg.selection,
                 inplay: leg.inplay,
-                matchDate: leg.matchDate,
-                estimatedMatchEnd: leg.estimatedMatchEnd,
-                betOutcomeCheckTime: leg.betOutcomeCheckTime,
+                // ✅ FIX: Use leg's matchDate (from betDetails or directly on leg), not main bet's matchDate
+                matchDate: legMatchDate,
+                estimatedMatchEnd: legEstimatedMatchEnd,
+                betOutcomeCheckTime: legBetOutcomeCheckTime,
                 // Include league information directly from the leg
                 leagueId: leg.leagueId,
                 leagueName: leg.leagueName
             };
             
             console.log(`[adaptCombinationBetForCalculator] Processing leg ${index + 1}: ${leg.betOption} @ ${leg.odds} for match ${leg.matchId}`);
+            console.log(`[adaptCombinationBetForCalculator] Leg ${index + 1} matchDate: ${legMatchDate}`);
             console.log(`[adaptCombinationBetForCalculator] Leg ${index + 1} league info:`, {
                 legLeagueId: leg.leagueId,
                 legLeagueName: leg.leagueName,

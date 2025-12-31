@@ -11,16 +11,29 @@ const router = express.Router();
 
 // Load CSV data into memory
 let leagueMappingWithUrls = new Map();
+let lastCsvModified = null; // ✅ Track CSV file modification time
 
 // Load league_mapping_with_urls.csv (ID -> URL mapping) - Now with Unibet_ID column
 function loadLeagueMappingWithUrls() {
   try {
     const csvPath = path.join(__dirname, '../../../../league_mapping_with_urls.csv');
+    
+    if (!fs.existsSync(csvPath)) {
+      console.warn('⚠️ league_mapping_with_urls.csv not found');
+      return;
+    }
+    
+    // ✅ Track file modification time
+    const stats = fs.statSync(csvPath);
+    lastCsvModified = stats.mtime;
+    
     const csvContent = fs.readFileSync(csvPath, 'utf-8');
     const lines = csvContent.split('\n').filter(line => line.trim());
     
     // Skip header line
     const dataLines = lines.slice(1);
+    
+    leagueMappingWithUrls.clear();
     
     dataLines.forEach(line => {
       if (!line.trim()) return;
@@ -33,23 +46,99 @@ function loadLeagueMappingWithUrls() {
     });
     
     console.log(`✅ Loaded ${leagueMappingWithUrls.size} league URLs from league_mapping_with_urls.csv`);
-    console.log(`🌐 Sample URL mappings:`, Array.from(leagueMappingWithUrls.entries()).slice(0, 3));
   } catch (error) {
     console.error('❌ Error loading league_mapping_with_urls.csv:', error);
   }
 }
 
+// ✅ NEW: Check if CSV file was modified and reload if needed
+function checkAndReloadCsv() {
+  try {
+    const csvPath = path.join(__dirname, '../../../../league_mapping_with_urls.csv');
+    if (!fs.existsSync(csvPath)) return false;
+    
+    const stats = fs.statSync(csvPath);
+    if (!lastCsvModified || stats.mtime > lastCsvModified) {
+      console.log('📝 CSV file was modified, reloading...');
+      loadLeagueMappingWithUrls();
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('❌ Error checking CSV file:', error);
+    return false;
+  }
+}
+
+// ✅ NEW: Get league URL with fallback (checks file directly if not in cache)
+function getLeagueUrl(leagueId) {
+  // First check in-memory cache
+  let leagueUrl = leagueMappingWithUrls.get(leagueId);
+  
+  if (leagueUrl) {
+    return leagueUrl;
+  }
+  
+  // ✅ FALLBACK: Check if CSV was updated and reload
+  checkAndReloadCsv();
+  
+  // Check cache again after reload
+  leagueUrl = leagueMappingWithUrls.get(leagueId);
+  if (leagueUrl) {
+    return leagueUrl;
+  }
+  
+  // ✅ FINAL FALLBACK: Read CSV file directly (in case cache is still stale)
+  try {
+    const csvPath = path.join(__dirname, '../../../../league_mapping_with_urls.csv');
+    if (fs.existsSync(csvPath)) {
+      const csvContent = fs.readFileSync(csvPath, 'utf-8');
+      const lines = csvContent.split('\n').filter(line => line.trim());
+      const dataLines = lines.slice(1);
+      
+      for (const line of dataLines) {
+        if (!line.trim()) continue;
+        const [unibetId, unibetUrl] = line.split(',');
+        if (unibetId && parseInt(unibetId) === leagueId && unibetUrl) {
+          const url = unibetUrl.trim();
+          // Update cache for next time
+          leagueMappingWithUrls.set(leagueId, url);
+          console.log(`✅ Found league ${leagueId} in CSV file (cache was stale)`);
+          return url;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('❌ Error reading CSV file directly:', error);
+  }
+  
+  return null;
+}
+
 // Initialize CSV data on startup
 loadLeagueMappingWithUrls();
+
+// ✅ NEW: Watch for CSV file changes
+const csvPath = path.join(__dirname, '../../../../league_mapping_with_urls.csv');
+if (fs.existsSync(csvPath)) {
+  fs.watchFile(csvPath, { interval: 2000 }, (curr, prev) => {
+    if (curr.mtime !== prev.mtime) {
+      console.log('📝 league_mapping_with_urls.csv changed, reloading...');
+      loadLeagueMappingWithUrls();
+    }
+  });
+  console.log('👀 Watching league_mapping_with_urls.csv for changes...');
+}
 
 // GET /api/unibet-api/breadcrumbs/:leagueId - Get breadcrumbs data for a specific league
 router.get('/:leagueId', async (req, res) => {
   try {
     const { leagueId } = req.params;
+    const leagueIdInt = parseInt(leagueId);
     console.log(`🔍 Fetching breadcrumbs for league ID: ${leagueId}`);
     
-    // Direct mapping: League ID -> URL (no name mapping needed!)
-    const leagueUrl = leagueMappingWithUrls.get(parseInt(leagueId));
+    // ✅ FIX: Use getLeagueUrl() which has fallback logic
+    const leagueUrl = getLeagueUrl(leagueIdInt);
     
     if (!leagueUrl) {
       console.error(`❌ League ID ${leagueId} not found in league_mapping_with_urls.csv`);

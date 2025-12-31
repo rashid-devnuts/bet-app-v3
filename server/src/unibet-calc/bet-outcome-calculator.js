@@ -7796,8 +7796,34 @@ class BetOutcomeCalculator {
             console.log(`   - Stake: €${bet.stake}`);
             console.log(`   - League: ${bet.leagueName} (ID: ${bet.leagueId})`);
             // ✅ FIX: Check all possible field locations for match date
-            const matchDateValue = bet.matchDate || bet.start || bet.unibetMeta?.start || bet._originalBet?.matchDate || bet._originalBet?.result?.matchDate;
+            // Priority: bet.matchDate (DB) > betDetails.matchDate (combination legs) > bet.start > other sources
+            let matchDateValue, matchDateSource;
+            if (bet.matchDate) {
+                matchDateValue = bet.matchDate;
+                matchDateSource = 'bet.matchDate (from DB)';
+            } else if (bet.betDetails?.matchDate) {
+                matchDateValue = bet.betDetails.matchDate;
+                matchDateSource = 'bet.betDetails.matchDate (combination leg)';
+            } else if (bet.start) {
+                matchDateValue = bet.start;
+                matchDateSource = 'bet.start (from adapter)';
+            } else if (bet.unibetMeta?.start) {
+                matchDateValue = bet.unibetMeta.start;
+                matchDateSource = 'bet.unibetMeta.start';
+            } else if (bet._originalBet?.matchDate) {
+                matchDateValue = bet._originalBet.matchDate;
+                matchDateSource = 'bet._originalBet.matchDate';
+            } else if (bet._originalBet?.result?.matchDate) {
+                matchDateValue = bet._originalBet.result.matchDate;
+                matchDateSource = 'bet._originalBet.result.matchDate';
+            } else {
+                matchDateValue = null;
+                matchDateSource = 'NONE';
+            }
+            
             console.log(`   - Date: ${matchDateValue}`);
+            console.log(`   - Date sources checked: bet.matchDate=${bet.matchDate}, bet.betDetails.matchDate=${bet.betDetails?.matchDate}, bet.start=${bet.start}, bet.unibetMeta.start=${bet.unibetMeta?.start}`);
+            console.log(`✅ Using ${matchDateSource} as source of truth for matchDate: ${matchDateValue}`);
             console.log(`   - Market: ${bet.marketName}`);
 
             // Import mongoose for ObjectId conversion
@@ -7826,9 +7852,11 @@ class BetOutcomeCalculator {
             console.log(`\n🔍 STEP 1: Validating bet data...`);
 
             // ✅ FIX: Check all possible field locations for match date
-            if (!bet.matchDate && !bet.start && !bet.unibetMeta?.start && !bet._originalBet?.matchDate && !bet._originalBet?.result?.matchDate) {
+            // Priority: bet.matchDate (DB) > betDetails.matchDate (combination legs) > bet.start > other sources
+            if (!bet.matchDate && !bet.betDetails?.matchDate && !bet.start && !bet.unibetMeta?.start && !bet._originalBet?.matchDate && !bet._originalBet?.result?.matchDate) {
                 console.log(`❌ VALIDATION FAILED: Bet has no match date in any expected location`);
-                console.log(`   - bet.matchDate: ${bet.matchDate}`);
+                console.log(`   - bet.matchDate (DB): ${bet.matchDate}`);
+                console.log(`   - bet.betDetails?.matchDate: ${bet.betDetails?.matchDate}`);
                 console.log(`   - bet.start: ${bet.start}`);
                 console.log(`   - bet.unibetMeta?.start: ${bet.unibetMeta?.start}`);
                 console.log(`   - bet._originalBet?.matchDate: ${bet._originalBet?.matchDate}`);

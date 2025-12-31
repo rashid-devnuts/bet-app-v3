@@ -342,6 +342,9 @@ const Sidebar = () => {
                     countryName = 'Other';
                 }
                 
+                // ✅ FIX: Normalize country name - trim and ensure consistent casing
+                countryName = countryName.trim();
+                
                 const countryNameLower = countryName.toLowerCase();
                 const leagueNameLower = league.name.toLowerCase();
                 
@@ -350,12 +353,12 @@ const Sidebar = () => {
                 const leagueMatches = leagueNameLower.includes(searchTerm);
                 
                 if (countryMatches || leagueMatches) {
-                    // Use country name as the key (normalized)
-                    const countryId = countryName.toLowerCase().replace(/\s+/g, '-');
+                    // Use country name as the key (normalized) - case-insensitive and trimmed
+                    const countryId = countryName.toLowerCase().trim().replace(/\s+/g, '-');
                     
                     if (!groups[countryId]) {
                         groups[countryId] = {
-                            name: countryName,
+                            name: countryName, // ✅ FIX: Use normalized country name
                             id: countryId,
                             flag: league.country?.image_path || league.country?.image,
                             leagues: []
@@ -375,12 +378,15 @@ const Sidebar = () => {
                     countryName = 'Other';
                 }
                 
-                // Use country name as the key (normalized)
-                const countryId = countryName.toLowerCase().replace(/\s+/g, '-');
+                // ✅ FIX: Normalize country name - trim and ensure consistent casing
+                countryName = countryName.trim();
+                
+                // Use country name as the key (normalized) - case-insensitive and trimmed
+                const countryId = countryName.toLowerCase().trim().replace(/\s+/g, '-');
                 
                 if (!groups[countryId]) {
                     groups[countryId] = {
-                        name: countryName,
+                        name: countryName, // ✅ FIX: Use normalized country name
                         id: countryId,
                         flag: league.country?.image_path || league.country?.image,
                         leagues: []

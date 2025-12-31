@@ -12,7 +12,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import winnningOddsCalculation from "./winningOddsCalculation.service.js";
-import TeamRestriction from "../models/TeamRestriction.js";
+// import TeamRestriction from "../models/TeamRestriction.js"; // ✅ REMOVED: No longer used - team restriction check disabled
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -435,6 +435,19 @@ class BetService {
   }
 
   async placeBet(userId, matchId, oddId, stake, betOption, inplay = false, combinationData = null, unibetMetaPayload = undefined, clientBetDetails = undefined) {
+    // ✅ FIX: Check if oddId is synthetic (format: matchId_selection_marketId) - define early for use throughout function
+    const oddIdStr = String(oddId);
+    const isSyntheticOddId = oddIdStr.includes('_') && oddIdStr.split('_').length >= 2;
+    let syntheticSelection = null;
+    let syntheticMarketId = null;
+    
+    if (isSyntheticOddId) {
+      const parts = oddIdStr.split('_');
+      syntheticSelection = parts[1]; // e.g., "home", "draw", "away"
+      syntheticMarketId = parts[2] || '1'; // Default to market 1 if not specified
+      console.log(`[placeBet] 🔍 Detected synthetic oddId: ${oddIdStr} -> selection: ${syntheticSelection}, marketId: ${syntheticMarketId}`);
+    }
+    
     // Handle combination bets
     if (combinationData && Array.isArray(combinationData)) {
       console.log(`[placeBet] Processing combination bet with ${combinationData.length} legs`);
@@ -962,38 +975,43 @@ class BetService {
     const homeName = unibetMetaPayload?.homeName;
     const awayName = unibetMetaPayload?.awayName;
     
-    if (homeName && awayName) {
-      // Check BOTH teams in the match - if user has restriction on either team, block the bet
-      // This applies to ALL markets (1, X, 2, Over/Under, etc.) for that match
-      const teamsToCheck = [
-        { name: homeName, normalized: homeName.toLowerCase().trim() },
-        { name: awayName, normalized: awayName.toLowerCase().trim() }
-      ];
-      
-      console.log(`[placeBet] Checking team restrictions for match: ${homeName} vs ${awayName}`);
-      
-      for (const team of teamsToCheck) {
-        // Check if user has an active restriction for this team
-        const activeRestriction = await TeamRestriction.findOne({
-          userId: userId,
-          normalizedTeamName: team.normalized,
-          expiresAt: { $gt: new Date() } // Only active restrictions
-        });
-        
-        if (activeRestriction) {
-          const daysRemaining = Math.ceil((activeRestriction.expiresAt - new Date()) / (1000 * 60 * 60 * 24));
-          console.log(`[placeBet] ❌ User has active team restriction for "${team.name}" (expires in ${daysRemaining} days)`);
-          console.log(`[placeBet] ❌ Blocking bet on match ${homeName} vs ${awayName} - cannot bet on ANY market for this match`);
-          throw new CustomError(
-            `You have already selected "${team.name}" for this week. You cannot place another bet on any market for matches involving "${team.name}" for ${daysRemaining} more day(s).`,
-            400,
-            "TEAM_RESTRICTION_ACTIVE"
-          );
-        }
-      }
-      
-      console.log(`[placeBet] ✅ No active team restrictions found for ${homeName} or ${awayName}`);
-    }
+    // ✅ REMOVED: Team restriction check - users can now place bets on any team from leagues page
+    // Previously blocked bets if user had won a bet on a team in the last 7 days
+    // This constraint has been removed to allow betting on leagues page
+    // if (homeName && awayName) {
+    //   // Check BOTH teams in the match - if user has restriction on either team, block the bet
+    //   // This applies to ALL markets (1, X, 2, Over/Under, etc.) for that match
+    //   const teamsToCheck = [
+    //     { name: homeName, normalized: homeName.toLowerCase().trim() },
+    //     { name: awayName, normalized: awayName.toLowerCase().trim() }
+    //   ];
+    //   
+    //   console.log(`[placeBet] Checking team restrictions for match: ${homeName} vs ${awayName}`);
+    //   
+    //   for (const team of teamsToCheck) {
+    //     // Check if user has an active restriction for this team
+    //     const activeRestriction = await TeamRestriction.findOne({
+    //       userId: userId,
+    //       normalizedTeamName: team.normalized,
+    //       expiresAt: { $gt: new Date() } // Only active restrictions
+    //     });
+    //     
+    //     if (activeRestriction) {
+    //       const daysRemaining = Math.ceil((activeRestriction.expiresAt - new Date()) / (1000 * 60 * 60 * 24));
+    //       console.log(`[placeBet] ❌ User has active team restriction for "${team.name}" (expires in ${daysRemaining} days)`);
+    //       console.log(`[placeBet] ❌ Blocking bet on match ${homeName} vs ${awayName} - cannot bet on ANY market for this match`);
+    //       throw new CustomError(
+    //         `You have already selected "${team.name}" for this week. You cannot place another bet on any market for matches involving "${team.name}" for ${daysRemaining} more day(s).`,
+    //         400,
+    //         "TEAM_RESTRICTION_ACTIVE"
+    //       );
+    //     }
+    //   }
+    //   
+    //   console.log(`[placeBet] ✅ No active team restrictions found for ${homeName} or ${awayName}`);
+    // }
+    
+    console.log(`[placeBet] ✅ Team restriction check disabled - allowing bet placement on any team`);
     
     let matchData;
     let odds;
@@ -1043,6 +1061,8 @@ class BetService {
       let foundOdd = null;
       let foundMarket = null;
 
+      // ✅ Note: isSyntheticOddId, syntheticSelection, and syntheticMarketId are already defined at function start
+
       // Search for the exact odd ID in all sections
       for (const section of liveOdds) {
         // Try multiple comparison methods
@@ -1070,7 +1090,25 @@ class BetService {
             return true;
           }
           
-          console.log(`[placeBet] ❌ NO MATCH: ${optionId} (${typeof optionId}) !== ${requestedId} (${typeof requestedId})`);
+          // ✅ NEW: For synthetic oddIds, try to match by selection and market
+          if (isSyntheticOddId && syntheticSelection) {
+            const optionLabel = (o.label || '').toLowerCase();
+            const optionMarketId = o.market_id?.toString() || section.market_id?.toString() || '';
+            
+            const matchesSelection = (
+              (syntheticSelection === 'home' && (optionLabel.includes('home') || optionLabel === '1' || optionLabel === 'team 1')) ||
+              (syntheticSelection === 'draw' && (optionLabel.includes('draw') || optionLabel === 'x')) ||
+              (syntheticSelection === 'away' && (optionLabel.includes('away') || optionLabel === '2' || optionLabel === 'team 2'))
+            );
+            
+            const matchesMarket = !syntheticMarketId || optionMarketId === syntheticMarketId || optionMarketId === '1';
+            
+            if (matchesSelection && matchesMarket) {
+              console.log(`[placeBet] ✅ SYNTHETIC MATCH: Found ${optionId} for synthetic ${oddId} (selection: ${syntheticSelection}, market: ${syntheticMarketId})`);
+              return true;
+            }
+          }
+          
           return false;
         });
 
@@ -1154,36 +1192,71 @@ class BetService {
           const isStillLive = global.liveFixturesService ? global.liveFixturesService.isMatchLive(matchId) : false;
           console.log(`[placeBet] Match ${matchId} is still live: ${isStillLive}`);
           
-          // Try to find a similar odd with the same market_id and label
-          console.log(`[placeBet] Attempting to find similar odd...`);
-          let similarOdd = null;
-          
-          for (const section of liveOdds) {
-            if (section.options && Array.isArray(section.options)) {
-              // Try to find by market_id and label
-              const found = section.options.find((o) => {
-                // Check if this is a similar odd (same market, similar label)
-                return o.market_id && o.label && 
-                       (o.label.toLowerCase().includes('home') || 
-                        o.label.toLowerCase().includes('away') || 
-                        o.label.toLowerCase().includes('draw'));
-              });
-              
-              if (found) {
-                similarOdd = found;
-                console.log(`[placeBet] Found similar odd: ${found.label} with ID: ${found.id}, market_id: ${found.market_id}`);
-                break;
+          // ✅ NEW: For synthetic oddIds, try to find by selection and market
+          if (isSyntheticOddId && syntheticSelection) {
+            console.log(`[placeBet] 🔍 Searching for synthetic oddId by selection: ${syntheticSelection}, marketId: ${syntheticMarketId}`);
+            
+            for (const section of liveOdds) {
+              if (section.options && Array.isArray(section.options)) {
+                const matchingOdd = section.options.find((o) => {
+                  const optionLabel = (o.label || '').toLowerCase();
+                  const optionMarketId = o.market_id?.toString() || section.market_id?.toString() || '';
+                  
+                  const matchesSelection = (
+                    (syntheticSelection === 'home' && (optionLabel.includes('home') || optionLabel === '1' || optionLabel === 'team 1')) ||
+                    (syntheticSelection === 'draw' && (optionLabel.includes('draw') || optionLabel === 'x')) ||
+                    (syntheticSelection === 'away' && (optionLabel.includes('away') || optionLabel === '2' || optionLabel === 'team 2'))
+                  );
+                  
+                  const matchesMarket = !syntheticMarketId || optionMarketId === syntheticMarketId || optionMarketId === '1';
+                  
+                  return matchesSelection && matchesMarket;
+                });
+                
+                if (matchingOdd) {
+                  console.log(`[placeBet] ✅ FOUND SYNTHETIC MATCH: ${matchingOdd.id} for synthetic ${oddId}`);
+                  foundOdd = matchingOdd;
+                  foundMarket = section;
+                  break;
+                }
               }
             }
           }
           
-          if (similarOdd) {
-            console.log(`[placeBet] Using similar odd as fallback: ${similarOdd.id}`);
-            foundOdd = similarOdd;
-            foundMarket = liveOdds.find(section => 
-              section.options && section.options.some(o => o.id === similarOdd.id)
-            );
-          } else {
+          // Try to find a similar odd with the same market_id and label
+          if (!foundOdd) {
+            console.log(`[placeBet] Attempting to find similar odd...`);
+            let similarOdd = null;
+            
+            for (const section of liveOdds) {
+              if (section.options && Array.isArray(section.options)) {
+                // Try to find by market_id and label
+                const found = section.options.find((o) => {
+                  // Check if this is a similar odd (same market, similar label)
+                  return o.market_id && o.label && 
+                         (o.label.toLowerCase().includes('home') || 
+                          o.label.toLowerCase().includes('away') || 
+                          o.label.toLowerCase().includes('draw'));
+                });
+                
+                if (found) {
+                  similarOdd = found;
+                  console.log(`[placeBet] Found similar odd: ${found.label} with ID: ${found.id}, market_id: ${found.market_id}`);
+                  break;
+                }
+              }
+            }
+            
+            if (similarOdd) {
+              console.log(`[placeBet] Using similar odd as fallback: ${similarOdd.id}`);
+              foundOdd = similarOdd;
+              foundMarket = liveOdds.find(section => 
+                section.options && section.options.some(o => o.id === similarOdd.id)
+              );
+            }
+          }
+          
+          if (!foundOdd) {
             throw new CustomError(
               `Invalid odd ID for live bet. Odd ID ${oddId} not found in current live odds. ${isStillLive ? 'Match is still live but odd may have been removed.' : 'Match may no longer be live.'}`,
               400,
@@ -1236,22 +1309,60 @@ class BetService {
       };
     }
 
+    // ✅ CRITICAL: For bet placement, ALWAYS prioritize unibetMetaPayload.start (from Unibet API)
+    // This is the actual match start time from Unibet, not from DB or cache
+    let unibetStartTime = null;
+    if (unibetMetaPayload?.start) {
+      unibetStartTime = unibetMetaPayload.start;
+      console.log(`✅ [placeBet] Found Unibet start time from API: ${unibetStartTime}`);
+    }
+    
     // For inplay bets, try to get match data from live matches cache first
     if (inplay && global.liveFixturesService) {
       const liveMatches = global.liveFixturesService.inplayMatchesCache.get('inplay_matches') || [];
       const liveMatch = liveMatches.find(match => match.id == matchId || match.id === parseInt(matchId));
-      
       if (liveMatch) {
         console.log(`Using live match data from inplay cache for match ${matchId}`);
+        
+        // ✅ FIX: For live matches, check multiple sources for start time
+        // Priority: unibetMetaPayload.start > clientBetDetails > liveMatch.starting_at
+        const liveMatchStartTime = unibetStartTime || 
+                                   unibetMetaPayload?.start || 
+                                   clientBetDetails?.matchDate || 
+                                   clientBetDetails?.startTime || 
+                                   liveMatch.starting_at;
+        
+        if (!liveMatchStartTime) {
+          console.error(`[placeBet] ❌ CRITICAL: No start time found for live match ${matchId}`);
+          console.error(`[placeBet] Available sources:`, {
+            unibetStartTime,
+            unibetMetaPayloadStart: unibetMetaPayload?.start,
+            clientBetDetailsMatchDate: clientBetDetails?.matchDate,
+            clientBetDetailsStartTime: clientBetDetails?.startTime,
+            liveMatchStartingAt: liveMatch.starting_at
+          });
+        }
+        
         matchData = {
           id: liveMatch.id,
-          starting_at: liveMatch.starting_at,
+          // ✅ Use resolved start time from multiple sources
+          starting_at: liveMatchStartTime,
           participants: liveMatch.participants || [],
           state: liveMatch.state || {},
           name: liveMatch.name,
           league_id: liveMatch.league_id,
           isLive: true
         };
+        
+        let source;
+        if (unibetStartTime || unibetMetaPayload?.start) {
+          source = 'unibetMetaPayload.start (Unibet API)';
+        } else if (clientBetDetails?.matchDate || clientBetDetails?.startTime) {
+          source = 'clientBetDetails (frontend)';
+        } else {
+          source = 'liveMatch.starting_at (cache)';
+        }
+        console.log(`✅ [placeBet] Using ${source} as source of truth for live match start time: ${matchData.starting_at}`);
       }
     }
     
@@ -1271,13 +1382,16 @@ class BetService {
           const away = participants.find(p => (p.position || '').toLowerCase() === 'away') || participants[1];
           matchData = {
             id: matchId,
-            starting_at: event?.start || new Date().toISOString(),
+            // ✅ Prioritize Unibet API start time over cache
+            starting_at: unibetStartTime || event?.start || new Date().toISOString(),
             participants: participants,
             state: { state: event?.state },
             name: event?.name || event?.englishName || (home?.name && away?.name ? `${home.name} vs ${away.name}` : undefined),
             league: { id: event?.groupId, name: event?.group }
           };
           console.log(`[placeBet] Using Unibet V2 cache for match ${matchId}`);
+          const source = unibetStartTime ? 'unibetMetaPayload.start (Unibet API)' : 'unibetV2Data.event.start (cache)';
+          console.log(`✅ [placeBet] Using ${source} as source of truth for matchDate: ${matchData.starting_at}`);
         }
       } catch (e) { console.warn('[placeBet] Unibet V2 cache error:', e?.message); }
     }
@@ -1292,12 +1406,19 @@ class BetService {
         console.log(
           `Using match data from all-cached-matches utility for match ${matchId}`
         );
-        console.log(
-          `[DEBUG] Raw starting_at from cached match: ${matchData.starting_at}`
-        );
-        console.log(
-          `[DEBUG] Type of starting_at: ${typeof matchData.starting_at}`
-        );
+        // ✅ Prioritize Unibet API start time over cache
+        if (unibetStartTime) {
+          matchData.starting_at = unibetStartTime;
+          console.log(`✅ [placeBet] Overriding cache with unibetMetaPayload.start (Unibet API): ${unibetStartTime}`);
+        } else {
+          console.log(
+            `[DEBUG] Raw starting_at from cached match: ${matchData.starting_at}`
+          );
+          console.log(
+            `[DEBUG] Type of starting_at: ${typeof matchData.starting_at}`
+          );
+          console.log(`✅ [placeBet] Using allCachedMatches.starting_at as source of truth for matchDate: ${matchData.starting_at}`);
+        }
       }
     }
     
@@ -1310,6 +1431,7 @@ class BetService {
         matchData.updatedAt > new Date(Date.now() - cacheTTL)
       ) {
         console.log(`Using in-memory cached match data for match ${matchId}`);
+        console.log(`✅ [placeBet] Using fixtureCache.starting_at as source of truth for matchDate: ${matchData.starting_at}`);
       } else {
         // Step 2: Check MongoDB cache
         const cachedOdds = await MatchOdds.findOne({ matchId });
@@ -1318,6 +1440,9 @@ class BetService {
           cachedOdds.updatedAt > new Date(Date.now() - cacheTTL)
         ) {
           console.log(`Using MongoDB cached odds for match ${matchId}`);
+          // ✅ Prioritize Unibet API start time over DB cache
+          const matchStartTime = unibetStartTime || cachedOdds.starting_at;
+          const source = unibetStartTime ? 'unibetMetaPayload.start (Unibet API)' : 'MatchOdds.starting_at (DB cache)';
           matchData = {
             id: matchId,
             odds: cachedOdds.odds.map((odd) => ({
@@ -1326,23 +1451,131 @@ class BetService {
               name: odd.name,
               value: odd.value,
             })),
-            starting_at: cachedOdds.starting_at,
+            starting_at: matchStartTime,
             participants: cachedOdds.participants || [],
             state: cachedOdds.state || {},
           };
+          console.log(`✅ [placeBet] Using ${source} as source of truth for matchDate: ${matchStartTime}`);
         } else {
         // Step 3: As last resort, treat minimal payload as match context (Unibet only)
           console.log(
             `Using minimal Unibet context for match ${matchId} (no SportsMonk fallback)`
           );
           
-          // Use the correct match date from frontend data instead of current time
-          const correctMatchDate = unibetMetaPayload?.start || 
+          // ✅ FIX: For synthetic oddIds, try to fetch match data from internal API route
+          // Use internal /api/v2/live-matches route instead of direct Unibet API call
+          // This route already fetches from Unibet API and returns matches with 'start' attribute
+          let fetchedMatchData = null;
+          if (isSyntheticOddId) {
+            try {
+              console.log(`[placeBet] 🔍 Synthetic oddId detected - fetching match data from internal API for match ${matchId}`);
+              
+              // Try 1: Use fixtureOptimizationService (might have date range limitations)
+              if (global.fixtureOptimizationService) {
+                try {
+                  fetchedMatchData = await global.fixtureOptimizationService.getMatchById(matchId, { includeOdds: false });
+                  if (fetchedMatchData && fetchedMatchData.start) {
+                    console.log(`[placeBet] ✅ Fetched match data from fixtureOptimizationService - start time: ${fetchedMatchData.start}`);
+                    unibetStartTime = fetchedMatchData.start;
+                  }
+                } catch (fixtureError) {
+                  console.warn(`[placeBet] ⚠️ fixtureOptimizationService failed:`, fixtureError.message);
+                }
+              }
+              
+              // Try 2: If not found, use frontend Next.js API route (/api/unibet/live-matches)
+              // This route fetches from Unibet API and returns matches with 'start' attribute
+              // Response structure: { success: true, allMatches: [], matches: [], upcomingMatches: [] }
+              if (!unibetStartTime) {
+                try {
+                  // Use CLIENT_URL from env (same as CORS config) or default to localhost
+                  const frontendUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+                  const apiUrl = `${frontendUrl}/api/unibet/live-matches`;
+                  
+                  console.log(`[placeBet] 🔍 Fetching from frontend Next.js API route: ${apiUrl}`);
+                  const axios = (await import('axios')).default;
+                  const response = await axios.get(apiUrl, { 
+                    timeout: 10000,
+                    headers: {
+                      'Accept': 'application/json'
+                    }
+                  });
+                  
+                  if (response.data && response.data.success) {
+                    // Response structure from Next.js route:
+                    // { success: true, allMatches: [], matches: [], upcomingMatches: [] }
+                    // Each match has: { id, start, name, homeName, awayName, ... }
+                    const allMatches = response.data.allMatches || [];
+                    const liveMatches = response.data.matches || [];
+                    const upcomingMatches = response.data.upcomingMatches || [];
+                    
+                    // Search in all match arrays
+                    const allMatchesToSearch = [...allMatches, ...liveMatches, ...upcomingMatches];
+                    const matchEvent = allMatchesToSearch.find(m => String(m.id) === String(matchId));
+                    
+                    if (matchEvent && matchEvent.start) {
+                      console.log(`[placeBet] ✅ Found match in frontend API response - start time: ${matchEvent.start}`);
+                      unibetStartTime = matchEvent.start;
+                      fetchedMatchData = { start: matchEvent.start, id: matchEvent.id };
+                    } else {
+                      console.warn(`[placeBet] ⚠️ Match ${matchId} not found in frontend API response (searched ${allMatchesToSearch.length} matches)`);
+                      console.warn(`[placeBet] Available match IDs (first 10):`, allMatchesToSearch.slice(0, 10).map(m => m.id));
+                    }
+                  } else {
+                    console.warn(`[placeBet] ⚠️ Frontend API returned unsuccessful response:`, response.data);
+                  }
+                } catch (apiError) {
+                  console.warn(`[placeBet] ⚠️ Frontend API fetch failed:`, apiError.message);
+                  if (apiError.response) {
+                    console.warn(`[placeBet] Frontend API error status: ${apiError.response.status}, data:`, apiError.response.data);
+                  }
+                }
+              }
+            } catch (fetchError) {
+              console.warn(`[placeBet] ⚠️ Failed to fetch match data:`, fetchError.message);
+            }
+          }
+          
+          // ✅ FIX: For bet placement, ALWAYS prioritize unibetMetaPayload.start (from Unibet API)
+          // This is the actual match start time from Unibet API response (event.start)
+          // NEVER use current time as fallback - that would be bet placement time, not match time!
+          const correctMatchDate = unibetStartTime || // First priority: Unibet API response (from fetch or payload)
+                                 unibetMetaPayload?.start || // Fallback to unibetMetaPayload if not set above
+                                 fetchedMatchData?.start || // Use fetched match data start time
                                  clientBetDetails?.matchDate || 
                                  clientBetDetails?.startTime ||
-                                 new Date().toISOString();
+                                 null; // Use null instead of current time
+          
+          if (!correctMatchDate) {
+            console.error(`[placeBet] ❌ CRITICAL: No match start time available for match ${matchId}`);
+            console.error(`[placeBet] Available sources:`, {
+              unibetStartTime,
+              unibetMetaPayloadStart: unibetMetaPayload?.start,
+              fetchedMatchDataStart: fetchedMatchData?.start,
+              clientBetDetailsMatchDate: clientBetDetails?.matchDate,
+              clientBetDetailsStartTime: clientBetDetails?.startTime,
+              isSyntheticOddId
+            });
+            throw new CustomError(
+              `Match start time not available for match ${matchId}. Cannot place bet without match time.`,
+              400,
+              "MATCH_TIME_UNAVAILABLE"
+            );
+          }
           
           console.log(`[DEBUG] Using match date from frontend: ${correctMatchDate}`);
+          
+          // ✅ LOG: Track which frontend source was used
+          let frontendSource;
+          if (unibetMetaPayload?.start) {
+            frontendSource = 'unibetMetaPayload.start';
+          } else if (clientBetDetails?.matchDate) {
+            frontendSource = 'clientBetDetails.matchDate';
+          } else if (clientBetDetails?.startTime) {
+            frontendSource = 'clientBetDetails.startTime';
+          } else {
+            frontendSource = 'NONE';
+          }
           
           matchData = {
             id: matchId,
@@ -1350,6 +1583,7 @@ class BetService {
             participants: [],
             state: {}
           };
+          console.log(`✅ [placeBet] Using ${frontendSource} as source of truth for matchDate: ${correctMatchDate}`);
           // Update MongoDB cache
           await MatchOdds.findOneAndUpdate(
             { matchId: matchData.id },
@@ -1537,6 +1771,7 @@ class BetService {
 
     const matchDate = this.parseMatchStartTime(matchData.starting_at);
     console.log(`[DEBUG] Final match date: ${this.formatTo12Hour(matchDate)}`);
+    console.log(`✅ [placeBet] Final matchDate parsed from matchData.starting_at: ${matchDate.toISOString()}`);
     
     // Calculate when the bet outcome check should run (2 hours 5 minutes after match START)
     const betOutcomeCheckTime = this.calculateBetOutcomeCheckTime(matchDate);
