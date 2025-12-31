@@ -35,14 +35,25 @@ export async function GET(request) {
     // Mark as refreshing
     cache.isRefreshing = true;
     
-    // Use backend API URL from env or default to localhost:4000 (backend port)
-    // Check both NEXT_PUBLIC_API_URL and API_URL (server-side env)
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 
-                       process.env.API_URL || 
-                       'http://localhost:4000';
+    // ✅ FIX: Use NEXT_PUBLIC_BASE_API_URL first (without /api)
+    // If not available, use NEXT_PUBLIC_API_URL and remove /api suffix if present
+    let backendUrl = process.env.NEXT_PUBLIC_BASE_API_URL || 
+                     process.env.API_URL || 
+                     'http://localhost:4000';
+    
+    // If using NEXT_PUBLIC_API_URL (which has /api), remove the /api suffix
+    if (!process.env.NEXT_PUBLIC_BASE_API_URL && process.env.NEXT_PUBLIC_API_URL) {
+      backendUrl = process.env.NEXT_PUBLIC_API_URL;
+      // Remove /api suffix if present
+      if (backendUrl.endsWith('/api')) {
+        backendUrl = backendUrl.replace(/\/api$/, '');
+      }
+    }
+    
     const url = `${backendUrl}/api/admin/leagues/mapping`;
     
     console.log(`🔍 [NEXT API] Fetching league mapping from backend: ${url}`);
+    console.log(`🔍 [NEXT API] Backend URL resolved: ${backendUrl}`);
     
     const response = await fetch(url, {
       headers: {
