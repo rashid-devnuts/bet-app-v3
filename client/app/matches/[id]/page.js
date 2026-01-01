@@ -14,6 +14,20 @@ export default function MatchDetail({ params }) {
   const [hasError, setHasError] = useState(false);
   const matchId = resolvedParams.id;
 
+  // ✅ FIX: Move useEffect before conditional return (React Hooks rules)
+  useEffect(() => {
+    // Add a global error handler for this page
+    const handleError = () => {
+      setHasError(true);
+    };
+
+    window.addEventListener('error', handleError);
+    
+    return () => {
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
+
   // ✅ FIX: Validate that matchId is numeric before rendering
   const isNumeric = /^\d+$/.test(String(matchId));
   
@@ -26,7 +40,7 @@ export default function MatchDetail({ params }) {
               <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-600" />
               <p className="text-red-600 font-medium text-xl mb-2">Invalid Match ID</p>
               <p className="text-gray-600 mb-2">
-                The match ID must be numeric, but received: <code className="bg-gray-100 px-2 py-1 rounded">"{matchId}"</code>
+                The match ID must be numeric, but received: <code className="bg-gray-100 px-2 py-1 rounded">&quot;{matchId}&quot;</code>
               </p>
               <p className="text-gray-500 text-sm mb-6">
                 This appears to be a slug instead of a numeric event ID. Please use a valid match ID.
@@ -43,19 +57,6 @@ export default function MatchDetail({ params }) {
       </div>
     );
   }
-
-  useEffect(() => {
-    // Add a global error handler for this page
-    const handleError = () => {
-      setHasError(true);
-    };
-
-    window.addEventListener('error', handleError);
-    
-    return () => {
-      window.removeEventListener('error', handleError);
-    };
-  }, []);
 
   if (hasError) {
     return (
