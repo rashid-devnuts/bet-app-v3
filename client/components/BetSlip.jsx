@@ -518,7 +518,7 @@ const SinglesBets = ({ bets, stakes, onStakeChange, onRemoveBet }) => {
                                 placeholder="0.00"
                                 value={stakes[bet.id] || ''}
                                 onChange={(e) => onStakeChange(bet.id, e.target.value)}
-                                className="flex-1 h-6 p-0 px-1 !text-[11px] bg-gray-700 border-gray-600 text-white transition-colors duration-200 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                                className="flex-1 h-6 p-0 px-1 !text-[16px] md:!text-[11px] bg-gray-700 border-gray-600 text-white transition-colors duration-200 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
                                 step="0.01"
                                 min="0"
                             />
@@ -593,7 +593,7 @@ const CombinationBet = ({ bets, stake, onStakeChange, onRemoveBet }) => {
                         pattern="[0-9]*[.,]?[0-9]*"
                         value={stake}
                         onChange={(e) => onStakeChange(e.target.value)}
-                        className="flex-1 h-6 p-0 px-1 !text-[11px] bg-gray-700 border-gray-600 text-white transition-all duration-200 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 focus:scale-105"
+                        className="flex-1 h-6 p-0 px-1 !text-[16px] md:!text-[11px] bg-gray-700 border-gray-600 text-white transition-all duration-200 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 focus:scale-105"
                         step="0.01"
                         min="0"
                     />
