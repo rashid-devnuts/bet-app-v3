@@ -182,10 +182,16 @@ async function fetchKambiLiveData() {
     const url = `${KAMBI_LIVE_API_URL}?lang=en_AU&market=AU&client_id=2&channel_id=1&ncid=${Date.now()}`;
     console.log('🎲 [NEXT API] Fetching live data from Kambi API...');
     
+    // ✅ INCREASE TIMEOUT for deployment (3 seconds instead of 1) - better compatibility
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 seconds for deployment latency
+    
     const response = await fetch(url, {
       headers: KAMBI_LIVE_HEADERS,
-      signal: AbortSignal.timeout(1000) // 1 second timeout for Kambi (faster response)
+      signal: controller.signal // Use AbortController instead of AbortSignal.timeout
     });
+    
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
       throw new Error(`Kambi API returned ${response.status}`);
@@ -204,7 +210,13 @@ async function fetchKambiLiveData() {
     
     return null;
   } catch (error) {
-    console.error('❌ [NEXT API] Failed to fetch Kambi live data:', error.message);
+    // ✅ BETTER ERROR LOGGING for deployment debugging
+    console.error('❌ [NEXT API] Failed to fetch Kambi live data:', {
+      message: error.message,
+      name: error.name,
+      cause: error.cause,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
     return null;
   }
 }
@@ -395,21 +407,21 @@ export async function GET(request) {
     console.log(`   - 24 hours later: ${twentyFourHoursLater.toISOString()}`);
     
     // ✅ OPTIMIZATION: Try to get Kambi data quickly (race condition)
-    // If Kambi completes in < 1s, merge it. Otherwise return without it.
+    // If Kambi completes in < 3s, merge it. Otherwise return without it.
     console.log('🎲 [NEXT API] Fetching Kambi live data (fast race)...');
     const kambiPromise = fetchKambiLiveData().catch(err => {
       console.warn('⚠️ [NEXT API] Kambi fetch failed:', err.message);
       return null;
     });
     
-    // Race: Wait max 1 second for Kambi, then return matches
+    // Race: Wait max 3 seconds for Kambi, then return matches
     let enrichedLiveMatches = filteredLiveMatches;
     let liveDataMap = {};
     
     try {
       const kambiData = await Promise.race([
         kambiPromise,
-        new Promise((resolve) => setTimeout(() => resolve(null), 1000)) // 1s timeout for Kambi
+        new Promise((resolve) => setTimeout(() => resolve(null), 3000)) // ✅ Increase to 3 seconds for deployment
       ]);
       
       if (kambiData) {
@@ -420,7 +432,7 @@ export async function GET(request) {
         console.log(`⏱️ [NEXT API] Kambi data not ready in time, returning without it (will update in background)`);
       }
     } catch (error) {
-      console.warn('⚠️ [NEXT API] Kambi data fetch failed, continuing without it');
+      console.warn('⚠️ [NEXT API] Kambi data fetch failed, continuing without it:', error.message);
     }
     
     // Prepare response data
