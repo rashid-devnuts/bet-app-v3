@@ -25,3 +25,7 @@ Unibet_ID,Unibet_Name,Fotmob_ID,Fotmob_Name,Match_Type,Country/Region
 2000109034,"Liga MX Femenil (W)",9906,"Liga MX Femenil Clausura",Different Name,Mexico
 1000265213,"Liga 2",185,"Liga Portugal 2",Different Name,Portugal
 1000095677,"Süper Kupa",166,"Super Cup",Different Name,Turkey
+1000385084,"National League South",8944,"National League South",Exact Match,England
+1000095001,"Serie A",55,"Serie A",Exact Match,Italy
+2000054001,"Qatar Stars League",535,"Qatar Stars League",Exact Match,Qatar
+1000095050,"Copa del Rey",138,"Copa del Rey",Exact Match,Spain

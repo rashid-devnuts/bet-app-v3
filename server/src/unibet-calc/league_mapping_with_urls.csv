@@ -26,3 +26,7 @@ Unibet_ID,Unibet_URL,Unibet_Name,Fotmob_URL,Fotmob_Name,Match_Type,Country/Regio
 2000109034,https://www.unibet.com.au/betting/sports/filter/football/mexico/liga_mx_femenil_w,Liga MX Femenil (W),https://www.fotmob.com/leagues/9906,Liga MX Femenil Clausura,Different Name,Mexico
 1000265213,https://www.unibet.com.au/betting/sports/filter/football/portugal/liga_2,Liga 2,https://www.fotmob.com/leagues/185,Liga Portugal 2,Different Name,Portugal
 1000095677,https://www.unibet.com.au/betting/sports/filter/football/turkey/sper_kupa,Süper Kupa,https://www.fotmob.com/leagues/166,Super Cup,Different Name,Turkey
+1000385084,https://www.unibet.com.au/betting/sports/filter/football/england/national_league_south,National League South,https://www.fotmob.com/leagues/8944,National League South,Exact Match,England
+1000095001,https://www.unibet.com.au/betting/sports/filter/football/italy/serie_a,Serie A,https://www.fotmob.com/leagues/55,Serie A,Exact Match,Italy
+2000054001,https://www.unibet.com.au/betting/sports/filter/football/qatar/qatar_stars_league,Qatar Stars League,https://www.fotmob.com/leagues/535,Qatar Stars League,Exact Match,Qatar
+1000095050,https://www.unibet.com.au/betting/sports/filter/football/spain/copa_del_rey,Copa del Rey,https://www.fotmob.com/leagues/138,Copa del Rey,Exact Match,Spain
