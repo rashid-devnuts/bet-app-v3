@@ -29,3 +29,6 @@ Unibet_ID,Unibet_Name,Fotmob_ID,Fotmob_Name,Match_Type,Country/Region
 1000095001,"Serie A",55,"Serie A",Exact Match,Italy
 2000054001,"Qatar Stars League",535,"Qatar Stars League",Exact Match,Qatar
 1000095050,"Copa del Rey",138,"Copa del Rey",Exact Match,Spain
+1000245807,"Cup",330,"Cup",Exact Match,Cyprus
+1000094273,"Cup",145,"Cup Final Stage",Different Name,Greece
+1000094818,"Segunda RFEF 3",9138,"Segunda Federación",Different Name,Spain
