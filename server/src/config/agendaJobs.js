@@ -521,11 +521,11 @@ agenda.define("updateLeagueMapping", async (job) => {
   console.log(`[Agenda] Job ID: ${job.attrs._id}`);
   console.log(`[Agenda] Scheduled time: ${job.attrs.nextRunAt}`);
   
-  // Add timeout wrapper (10 minutes max)
+  // Add timeout wrapper (40 minutes max)
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => {
-      reject(new Error('League Mapping job timed out after 10 minutes'));
-    }, 10 * 60 * 1000); // 10 minutes
+      reject(new Error('League Mapping job timed out after 40 minutes'));
+    }, 40 * 60 * 1000); // 40 minutes
   });
   
   try {

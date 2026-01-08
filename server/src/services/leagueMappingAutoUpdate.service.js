@@ -892,25 +892,16 @@ If no match found, return:
         ].join(',');
 
         try {
-            // ✅ FIX: Use async file operations
-            const ensureNewline = async (filePath) => {
-                if (fs.existsSync(filePath)) {
-                    const content = await fs.promises.readFile(filePath, 'utf8');
-                    const trimmed = content.replace(/\n+$/, '');
-                    if (trimmed && !trimmed.endsWith('\n')) {
-                        await fs.promises.writeFile(filePath, trimmed + '\n', 'utf8');
-                    } else if (trimmed) {
-                        await fs.promises.writeFile(filePath, trimmed + '\n', 'utf8');
-                    }
-                }
-            };
-
+            // ✅ SAFE: Only append, never overwrite existing content
             // ✅ REMOVED: Client CSV update - Frontend now uses backend API
             // Append to server CSV file only
             if (fs.existsSync(this.serverCsvPath)) {
-                // ✅ Additional check: Parse CSV to verify no duplicate in file
+                // ✅ CRITICAL: Read and verify existing content before any modification
                 const content = await fs.promises.readFile(this.serverCsvPath, 'utf8');
                 const lines = content.split('\n');
+                const existingLineCount = lines.filter(line => line.trim()).length;
+                
+                // ✅ Additional check: Parse CSV to verify no duplicate in file
                 for (const line of lines) {
                     if (!line.trim()) continue;
                     const parts = line.split(',');
@@ -922,9 +913,24 @@ If no match found, return:
                     }
                 }
                 
-                await ensureNewline(this.serverCsvPath);
-                await fs.promises.appendFile(this.serverCsvPath, row + '\n', 'utf8');
-                console.log(`[LeagueMapping] ✅ Added to server CSV: ${mapping.unibetName} → ${mapping.fotmobName}`);
+                // ✅ SAFE: Only append new line, preserve all existing content
+                // Check if file ends with newline, if not add one before appending
+                const needsNewline = !content.endsWith('\n') && content.trim().length > 0;
+                const rowToAppend = (needsNewline ? '\n' : '') + row + '\n';
+                
+                await fs.promises.appendFile(this.serverCsvPath, rowToAppend, 'utf8');
+                
+                // ✅ VERIFY: Read back to ensure existing content is preserved
+                const verifyContent = await fs.promises.readFile(this.serverCsvPath, 'utf8');
+                const verifyLines = verifyContent.split('\n').filter(line => line.trim());
+                const newLineCount = verifyLines.length;
+                
+                if (newLineCount < existingLineCount) {
+                    console.error(`[LeagueMapping] ❌ CRITICAL: Existing entries deleted! Before: ${existingLineCount}, After: ${newLineCount}`);
+                    throw new Error(`CSV file corruption detected - existing entries were deleted`);
+                }
+                
+                console.log(`[LeagueMapping] ✅ Added to server CSV: ${mapping.unibetName} → ${mapping.fotmobName} (Total entries: ${newLineCount}, Preserved: ${existingLineCount})`);
             } else {
                 console.warn(`[LeagueMapping] ⚠️ Server CSV not found: ${this.serverCsvPath}`);
             }
@@ -1094,13 +1100,14 @@ If no match found, return:
                 mapping.country || ''
             ].join(',');
 
-            // ✅ FIX: Use async file operations
+            // ✅ SAFE: Read and verify existing content before any modification
             const content = await fs.promises.readFile(this.urlsCsvPath, 'utf8');
+            const lines = content.split('\n');
+            const existingLineCount = lines.filter(line => line.trim()).length;
             console.log(`[LeagueMapping] 📄 Current file size: ${content.length} bytes`);
-            console.log(`[LeagueMapping] 📄 Current file lines: ${content.split('\n').length}`);
+            console.log(`[LeagueMapping] 📄 Current file lines: ${existingLineCount} (preserving all existing entries)`);
             
             // ✅ Check if entry already exists - parse CSV properly to check first column (Unibet_ID)
-            const lines = content.split('\n');
             const unibetIdStr = String(mapping.unibetId);
             for (const line of lines) {
                 if (!line.trim()) continue;
@@ -1111,19 +1118,26 @@ If no match found, return:
                 }
             }
             
-            // Ensure file ends with newline before appending
-            const trimmed = content.replace(/\n+$/, '');
-            const finalContent = trimmed + (trimmed.endsWith('\n') ? '' : '\n') + row + '\n';
+            // ✅ SAFE: Only append new line, preserve all existing content
+            // Check if file ends with newline, if not add one before appending
+            const needsNewline = !content.endsWith('\n') && content.trim().length > 0;
+            const rowToAppend = (needsNewline ? '\n' : '') + row + '\n';
             
-            // Write to file
-            await fs.promises.writeFile(this.urlsCsvPath, finalContent, 'utf8');
+            await fs.promises.appendFile(this.urlsCsvPath, rowToAppend, 'utf8');
             
-            // Verify write
+            // ✅ VERIFY: Read back to ensure existing content is preserved
             const verifyContent = await fs.promises.readFile(this.urlsCsvPath, 'utf8');
-            const verifyLines = verifyContent.split('\n').length;
-            console.log(`[LeagueMapping] ✅ File written successfully`);
+            const verifyLines = verifyContent.split('\n').filter(line => line.trim());
+            const newLineCount = verifyLines.length;
+            
+            if (newLineCount < existingLineCount) {
+                console.error(`[LeagueMapping] ❌ CRITICAL: Existing entries deleted from URLs CSV! Before: ${existingLineCount}, After: ${newLineCount}`);
+                throw new Error(`URLs CSV file corruption detected - existing entries were deleted`);
+            }
+            
+            console.log(`[LeagueMapping] ✅ File appended successfully`);
             console.log(`[LeagueMapping] ✅ New file size: ${verifyContent.length} bytes`);
-            console.log(`[LeagueMapping] ✅ New file lines: ${verifyLines}`);
+            console.log(`[LeagueMapping] ✅ New file lines: ${newLineCount} (Preserved: ${existingLineCount}, Added: 1)`);
             console.log(`[LeagueMapping] ✅ Added to URLs CSV: ${mapping.unibetName} → ${url}`);
             console.log(`[LeagueMapping] ✅ Row added: ${row}`);
             
@@ -1306,8 +1320,8 @@ If no match found, return:
         console.log('[LeagueMapping] ========================================');
         console.log(`[LeagueMapping] ⏰ Start time: ${new Date().toISOString()}`);
 
-        // Add overall timeout (10 minutes max)
-        const MAX_EXECUTION_TIME = 10 * 60 * 1000; // 10 minutes
+        // Add overall timeout (40 minutes max)
+        const MAX_EXECUTION_TIME = 40 * 60 * 1000; // 40 minutes
         const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => {
                 reject(new Error(`League Mapping update timed out after ${MAX_EXECUTION_TIME / 1000} seconds`));
