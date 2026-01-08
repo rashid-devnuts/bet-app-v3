@@ -4,7 +4,7 @@
  */
 
 let lastGeminiCallTime = 0;
-const MIN_DELAY_MS = 10000; // 10 seconds
+const MIN_DELAY_MS = 60000; // 60 seconds (1 minute)
 
 /**
  * Wait if necessary to ensure minimum delay between Gemini API calls
