@@ -148,16 +148,8 @@ const BetSlip = () => {
         });
     }, [bets, dispatch]);
 
-    // Handle odds change notification timeout
-    useEffect(() => {
-        if (oddsChangeNotification.show) {
-            const timer = setTimeout(() => {
-                dispatch(hideOddsChangeNotification());
-            }, 2000); // Hide notification and re-enable button after 2 seconds
-            
-            return () => clearTimeout(timer);
-        }
-    }, [oddsChangeNotification.show, dispatch]);
+    // Note: Removed auto-hide for odds change notification
+    // User must explicitly accept changes by clicking the button
 
     // Show error toast and clear error
     useEffect(() => {
@@ -415,7 +407,7 @@ const BetSlip = () => {
                         <div className="border-t border-gray-700 px-3 py-2 transition-all duration-300">
                             {/* Odds Change Notification */}
                             {oddsChangeNotification.show && (
-                                <div className="mb-3 p-2 bg-yellow-600 border border-yellow-500 rounded text-xs text-white animate-pulse">
+                                <div className="mb-3 p-2 bg-yellow-600 border border-yellow-500 rounded text-xs text-white">
                                     <div className="flex items-center gap-2">
                                         <span>⚠️</span>
                                         <span>{oddsChangeNotification.message}</span>
@@ -469,11 +461,11 @@ const BetSlip = () => {
                                 <Button
                                     className={`w-full font-bold py-2 transition-all duration-200 ${
                                         (placeBetDisabled && !pendingPlaceBet)
-                                            ? 'bg-gray-500 text-gray-300 cursor-not-allowed' 
+                                            ? 'bg-yellow-500 hover:bg-yellow-600 text-black' 
                                             : 'bg-yellow-500 hover:bg-yellow-600 text-black'
                                     }`}
-                                    disabled={betSlip.totalStake === 0 || isPlacingBet || (placeBetDisabled && !pendingPlaceBet) || pendingPlaceBet}
-                                    onClick={handlePlaceBet}
+                                    disabled={betSlip.totalStake === 0 || isPlacingBet || pendingPlaceBet}
+                                    onClick={placeBetDisabled && !pendingPlaceBet ? () => dispatch(hideOddsChangeNotification()) : handlePlaceBet}
                                 >
                                     {isPlacingBet || pendingPlaceBet ? (
                                         <span className="flex items-center justify-center">
@@ -481,7 +473,7 @@ const BetSlip = () => {
                                             Placing Bet...
                                         </span>
                                     ) : placeBetDisabled ? (
-                                        'Odds Changed - Reviewing...'
+                                        'Accept changes to the odds'
                                     ) : (
                                         'Place Bet'
                                     )}

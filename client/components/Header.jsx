@@ -75,7 +75,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-base text-white sticky top-0 z-50 pt-[env(safe-area-inset-top)] md:relative md:z-auto md:pt-0">
+    <header className="bg-base text-white fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top)] md:sticky md:left-auto md:right-auto md:z-50 md:pt-0">
       {/* Top navigation bar */}
       <div className="bg-base-dark px-4 py-2 hidden md:block">
         <div className="flex justify-end items-center space-x-4 text-sm">

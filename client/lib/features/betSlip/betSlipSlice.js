@@ -365,9 +365,25 @@ const betSlipSlice = createSlice({
           // Add a flag to indicate odds were recently updated (for visual feedback)
           state.bets[betIndex].oddsUpdated = true;
           
+          // Collect all bets with changed odds for notification
+          const changedBets = state.bets.filter(bet => bet.previousOdds && bet.oddsUpdated);
+          
+          // Build notification message
+          let notificationMessage;
+          if (changedBets.length === 1) {
+            // Single bet changed
+            notificationMessage = `Odds are changing from ${oldOdds} to ${newOddsValue}`;
+          } else {
+            // Multiple bets changed - show first change as example
+            notificationMessage = `Odds are changing from ${oldOdds} to ${newOddsValue}${changedBets.length > 1 ? ` (and ${changedBets.length - 1} more)` : ''}`;
+          }
+          
           // Show notification and disable place bet button
           state.oddsChangeNotification = {
-            message: `Odds changed from ${oldOdds} to ${newOddsValue}. Please review your bet.`,
+            message: notificationMessage,
+            oldOdds: oldOdds,
+            newOdds: newOddsValue,
+            changedBetsCount: changedBets.length,
             timestamp: Date.now(),
             show: true
           };

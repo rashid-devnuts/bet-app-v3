@@ -39,6 +39,7 @@ const Sidebar = () => {
         }
     }, [dispatch, user?.role]);
 
+    
     // Add state for search and expanded countries
     const [search, setSearch] = useState('');
     const [expandedCountries, setExpandedCountries] = useState({}); // All collapsed by default

@@ -30,13 +30,13 @@ export default function RootLayout({ children }) {
             <SidebarProvider>
               {/* <LayoutWrapper>{children}</LayoutWrapper> */}
               <div className="bg-gray-100 h-screen flex flex-col">
-                {/* Header - fixed on mobile (no sticky wrapper), normal on desktop */}
-                <div className="flex-shrink-0">
+                {/* Header - fixed on mobile, normal on desktop */}
+                <div className="flex-shrink-0 h-0 md:h-auto">
                   <Header />
                 </div>
 
-                {/* Main Content Area */}
-                <div className="flex flex-1 overflow-hidden">
+                {/* Main Content Area - add padding-top on mobile to account for fixed header */}
+                <div className="flex flex-1 overflow-hidden pt-[calc(env(safe-area-inset-top)+4rem)] md:pt-0">
                   {/* Fixed Sidebar */}
                   <SidebarWrapper />
 
