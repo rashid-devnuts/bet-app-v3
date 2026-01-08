@@ -970,6 +970,9 @@ If no match found, return:
         
         return str
             .toLowerCase()
+            // ✅ FIX: Convert accented characters to ASCII equivalents FIRST
+            .normalize('NFD') // Decompose accented characters (é -> e + ́)
+            .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks (accents)
             .replace(/[''"]/g, '') // Remove apostrophes/quotes
             .replace(/[^a-z0-9\s-]/g, '') // Remove special chars (but keep spaces and hyphens)
             .replace(/\s+/g, '_') // Replace spaces with underscores (preserve hyphens)
@@ -1071,6 +1074,15 @@ If no match found, return:
                 ? `https://www.fotmob.com/leagues/${mapping.fotmobId}`
                 : '';
 
+            // ✅ FIX: Calculate matchType from exactMatch if not present
+            let matchType = mapping.matchType;
+            if (!matchType && mapping.hasOwnProperty('exactMatch')) {
+                matchType = mapping.exactMatch ? 'Exact Match' : 'Different Name';
+            }
+            if (!matchType) {
+                matchType = ''; // Fallback to empty if neither matchType nor exactMatch exists
+            }
+
             // Create row: Unibet_ID,Unibet_URL,Unibet_Name,Fotmob_URL,Fotmob_Name,Match_Type,Country/Region
             const row = [
                 mapping.unibetId,
@@ -1078,7 +1090,7 @@ If no match found, return:
                 mapping.unibetName,
                 fotmobUrl,
                 mapping.fotmobName,
-                mapping.matchType || '',
+                matchType, // ✅ Now properly set
                 mapping.country || ''
             ].join(',');
 
