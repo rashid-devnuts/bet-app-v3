@@ -1955,22 +1955,33 @@
             },
             "away": {
               "id": 8524,
-              "score": 0,
+              "score": 2,
               "name": "Atalanta",
               "longName": "Atalanta"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 3,
             "tournamentStage": "19",
             "status": {
               "utcTime": "2026-01-07T17:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 18:30:00"
+                "firstHalfStarted": "07.01.2026 18:31:21",
+                "secondHalfStarted": "07.01.2026 19:33:28"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "0 - 2",
+              "liveTime": {
+                "short": "61‎’‎",
+                "shortKey": "",
+                "long": "60:03",
+                "longKey": "",
+                "maxTime": 90,
+                "addedTime": 0
+              }
             },
             "timeTS": 1767807000000
           },
@@ -1980,28 +1991,39 @@
             "time": "07.01.2026 18:30",
             "home": {
               "id": 9875,
-              "score": 0,
+              "score": 1,
               "name": "Napoli",
               "longName": "Napoli"
             },
             "away": {
               "id": 9876,
-              "score": 0,
+              "score": 2,
               "name": "Hellas Verona",
               "longName": "Hellas Verona"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 3,
             "tournamentStage": "19",
             "status": {
               "utcTime": "2026-01-07T17:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 18:30:00"
+                "firstHalfStarted": "07.01.2026 18:30:39",
+                "secondHalfStarted": "07.01.2026 19:37:44"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "1 - 2",
+              "liveTime": {
+                "short": "56‎’‎",
+                "shortKey": "",
+                "long": "55:47",
+                "longKey": "",
+                "maxTime": 90,
+                "addedTime": 0
+              }
             },
             "timeTS": 1767807000000
           }
@@ -3203,12 +3225,12 @@
             },
             "away": {
               "id": 102119,
-              "score": 3,
+              "score": 4,
               "name": "Shabab Al-Ahli Dubai FC",
               "longName": "Shabab Al-Ahli Dubai FC"
             },
             "eliminatedTeamId": null,
-            "statusId": 3,
+            "statusId": 6,
             "tournamentStage": "12",
             "status": {
               "utcTime": "2026-01-07T15:45:00.000Z",
@@ -3217,18 +3239,16 @@
                 "secondHalfStarted": "07.01.2026 17:51:46"
               },
               "periodLength": 45,
-              "finished": false,
+              "finished": true,
               "started": true,
               "cancelled": false,
-              "ongoing": true,
-              "scoreStr": "0 - 3",
-              "liveTime": {
-                "short": "55‎’‎",
-                "shortKey": "",
-                "long": "54:05",
-                "longKey": "",
-                "maxTime": 90,
-                "addedTime": 0
+              "awarded": false,
+              "scoreStr": "0 - 4",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
               }
             },
             "timeTS": 1767800700000
@@ -3296,31 +3316,30 @@
             },
             "away": {
               "id": 101899,
-              "score": 0,
+              "score": 1,
               "name": "Al-Arabi",
               "longName": "Al-Arabi"
             },
             "eliminatedTeamId": null,
-            "statusId": 2,
+            "statusId": 6,
             "tournamentStage": "12",
             "status": {
               "utcTime": "2026-01-07T16:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 17:31:09"
+                "firstHalfStarted": "07.01.2026 17:31:09",
+                "secondHalfStarted": "07.01.2026 18:38:21"
               },
               "periodLength": 45,
-              "finished": false,
+              "finished": true,
               "started": true,
               "cancelled": false,
-              "ongoing": true,
-              "scoreStr": "0 - 0",
-              "liveTime": {
-                "short": "30‎’‎",
-                "shortKey": "",
-                "long": "29:42",
-                "longKey": "",
-                "maxTime": 45,
-                "addedTime": 0
+              "awarded": false,
+              "scoreStr": "0 - 1",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
               }
             },
             "timeTS": 1767803400000
@@ -3344,7 +3363,7 @@
             "time": "07.01.2026 17:00",
             "home": {
               "id": 1515440,
-              "score": 0,
+              "score": 1,
               "name": "Torrent CF",
               "longName": "Torrent CF"
             },
@@ -3355,26 +3374,25 @@
               "longName": "Poblense"
             },
             "eliminatedTeamId": null,
-            "statusId": 10,
+            "statusId": 6,
             "tournamentStage": "15",
             "status": {
               "utcTime": "2026-01-07T16:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 17:00:02"
+                "firstHalfStarted": "07.01.2026 17:00:02",
+                "secondHalfStarted": "07.01.2026 18:02:57"
               },
               "periodLength": 45,
-              "finished": false,
+              "finished": true,
               "started": true,
               "cancelled": false,
-              "ongoing": true,
-              "scoreStr": "0 - 1",
-              "liveTime": {
-                "short": "HT",
-                "shortKey": "halftime_short",
-                "long": "Half-Time",
-                "longKey": "pause_match",
-                "maxTime": 45,
-                "addedTime": 0
+              "awarded": false,
+              "scoreStr": "1 - 1",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
               }
             },
             "timeTS": 1767801600000
@@ -3385,28 +3403,39 @@
             "time": "07.01.2026 18:00",
             "home": {
               "id": 161774,
-              "score": 0,
+              "score": 2,
               "name": "Barca Atletic",
               "longName": "Barca Atletic"
             },
             "away": {
               "id": 161777,
-              "score": 0,
+              "score": 1,
               "name": "Valencia B",
               "longName": "Valencia B"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 3,
             "tournamentStage": "15",
             "status": {
               "utcTime": "2026-01-07T17:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 18:00:00"
+                "firstHalfStarted": "07.01.2026 18:01:46",
+                "secondHalfStarted": "07.01.2026 19:03:24"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "2 - 1",
+              "liveTime": {
+                "short": "90",
+                "shortKey": "",
+                "long": "90:00",
+                "longKey": "",
+                "maxTime": 90,
+                "addedTime": 0
+              }
             },
             "timeTS": 1767805200000
           }
@@ -3681,31 +3710,30 @@
             },
             "away": {
               "id": 316113,
-              "score": 1,
+              "score": 2,
               "name": "UAE U23",
               "longName": "UAE U23"
             },
             "eliminatedTeamId": null,
-            "statusId": 2,
+            "statusId": 6,
             "tournamentStage": "1",
             "status": {
               "utcTime": "2026-01-07T16:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 17:30:51"
+                "firstHalfStarted": "07.01.2026 17:30:51",
+                "secondHalfStarted": "07.01.2026 18:37:45"
               },
               "periodLength": 45,
-              "finished": false,
+              "finished": true,
               "started": true,
               "cancelled": false,
-              "ongoing": true,
-              "scoreStr": "0 - 1",
-              "liveTime": {
-                "short": "31‎’‎",
-                "shortKey": "",
-                "long": "30:00",
-                "longKey": "",
-                "maxTime": 45,
-                "addedTime": 0
+              "awarded": false,
+              "scoreStr": "0 - 2",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
               }
             },
             "timeTS": 1767803400000
@@ -13166,6 +13194,49 @@
         "simpleLeague": false
       },
       {
+        "ccode": "TUN",
+        "id": 901568,
+        "primaryId": 544,
+        "name": "Ligue I",
+        "matches": [
+          {
+            "id": 4919224,
+            "leagueId": 901568,
+            "time": "10.01.2026 14:00",
+            "home": {
+              "id": 8153,
+              "score": 0,
+              "name": "Espérance",
+              "longName": "Espérance"
+            },
+            "away": {
+              "id": 316413,
+              "score": 0,
+              "name": "Ben Guerdane",
+              "longName": "Ben Guerdane"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "15",
+            "status": {
+              "utcTime": "2026-01-10T13:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "10.01.2026 14:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768050000000
+          }
+        ],
+        "parentLeagueId": 544,
+        "internalRank": 0,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
         "ccode": "ENG",
         "id": 901315,
         "primaryId": 117,
@@ -15841,6 +15912,253 @@
         "simpleLeague": false
       },
       {
+        "isGroup": true,
+        "groupName": "B",
+        "ccode": "ITA",
+        "id": 901979,
+        "primaryId": 147,
+        "name": "Serie C Grp. B",
+        "matches": [
+          {
+            "id": 4898511,
+            "leagueId": 901979,
+            "time": "09.01.2026 20:30",
+            "home": {
+              "id": 8522,
+              "score": 0,
+              "name": "Ascoli",
+              "longName": "Ascoli"
+            },
+            "away": {
+              "id": 6457,
+              "score": 0,
+              "name": "Ternana",
+              "longName": "Ternana"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-09T19:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "09.01.2026 20:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1767987000000
+          },
+          {
+            "id": 4898519,
+            "leagueId": 901979,
+            "time": "10.01.2026 14:30",
+            "home": {
+              "id": 7856,
+              "score": 0,
+              "name": "Torres",
+              "longName": "Torres"
+            },
+            "away": {
+              "id": 212658,
+              "score": 0,
+              "name": "Campobasso",
+              "longName": "Campobasso"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-10T13:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "10.01.2026 14:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768051800000
+          },
+          {
+            "id": 4898516,
+            "leagueId": 901979,
+            "time": "10.01.2026 17:30",
+            "home": {
+              "id": 8545,
+              "score": 0,
+              "name": "Ravenna",
+              "longName": "Ravenna"
+            },
+            "away": {
+              "id": 6071,
+              "score": 0,
+              "name": "Forlì",
+              "longName": "Forlì"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-10T16:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "10.01.2026 17:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768062600000
+          }
+        ],
+        "parentLeagueId": 147,
+        "parentLeagueName": "Serie C",
+        "internalRank": 6,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
+        "isGroup": true,
+        "groupName": "C",
+        "ccode": "ITA",
+        "id": 901990,
+        "primaryId": 147,
+        "name": "Serie C Grp. C",
+        "matches": [
+          {
+            "id": 4899104,
+            "leagueId": 901990,
+            "time": "09.01.2026 20:30",
+            "home": {
+              "id": 867620,
+              "score": 0,
+              "name": "Audace Cerignola",
+              "longName": "Audace Cerignola"
+            },
+            "away": {
+              "id": 6099,
+              "score": 0,
+              "name": "Potenza",
+              "longName": "Potenza"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-09T19:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "09.01.2026 20:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1767987000000
+          },
+          {
+            "id": 4899110,
+            "leagueId": 901990,
+            "time": "10.01.2026 14:30",
+            "home": {
+              "id": 212660,
+              "score": 0,
+              "name": "Latina",
+              "longName": "Latina"
+            },
+            "away": {
+              "id": 208936,
+              "score": 0,
+              "name": "Trapani",
+              "longName": "Trapani"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-10T13:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "10.01.2026 14:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768051800000
+          },
+          {
+            "id": 4899108,
+            "leagueId": 901990,
+            "time": "10.01.2026 17:30",
+            "home": {
+              "id": 9884,
+              "score": 0,
+              "name": "Crotone",
+              "longName": "Crotone"
+            },
+            "away": {
+              "id": 867623,
+              "score": 0,
+              "name": "Team Altamura",
+              "longName": "Team Altamura"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-10T16:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "10.01.2026 17:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768062600000
+          },
+          {
+            "id": 4899113,
+            "leagueId": 901990,
+            "time": "10.01.2026 17:30",
+            "home": {
+              "id": 88998,
+              "score": 0,
+              "name": "Sorrento",
+              "longName": "Sorrento"
+            },
+            "away": {
+              "id": 6466,
+              "score": 0,
+              "name": "Foggia",
+              "longName": "Foggia"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-10T16:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "10.01.2026 17:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768062600000
+          }
+        ],
+        "parentLeagueId": 147,
+        "parentLeagueName": "Serie C",
+        "internalRank": 6,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
         "ccode": "ENG",
         "id": 901530,
         "primaryId": 8947,
@@ -17078,7 +17396,7 @@
               "longName": "Spakenburg"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 5,
             "tournamentStage": "18",
             "status": {
               "utcTime": "2026-01-10T13:30:00.000Z",
@@ -17086,9 +17404,15 @@
                 "firstHalfStarted": "10.01.2026 14:30:00"
               },
               "periodLength": 45,
+              "cancelled": true,
               "started": false,
-              "cancelled": false,
-              "finished": false
+              "finished": false,
+              "reason": {
+                "short": "PP",
+                "shortKey": "postponed_short",
+                "long": "Postponed",
+                "longKey": "postponed"
+              }
             },
             "timeTS": 1768051800000
           },
@@ -17109,7 +17433,7 @@
               "longName": "Rijnsburgse Boys"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 5,
             "tournamentStage": "18",
             "status": {
               "utcTime": "2026-01-10T13:30:00.000Z",
@@ -17117,9 +17441,15 @@
                 "firstHalfStarted": "10.01.2026 14:30:00"
               },
               "periodLength": 45,
+              "cancelled": true,
               "started": false,
-              "cancelled": false,
-              "finished": false
+              "finished": false,
+              "reason": {
+                "short": "PP",
+                "shortKey": "postponed_short",
+                "long": "Postponed",
+                "longKey": "postponed"
+              }
             },
             "timeTS": 1768051800000
           },
@@ -17140,7 +17470,7 @@
               "longName": "Barendrecht"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 5,
             "tournamentStage": "18",
             "status": {
               "utcTime": "2026-01-10T13:30:00.000Z",
@@ -17148,9 +17478,15 @@
                 "firstHalfStarted": "10.01.2026 14:30:00"
               },
               "periodLength": 45,
+              "cancelled": true,
               "started": false,
-              "cancelled": false,
-              "finished": false
+              "finished": false,
+              "reason": {
+                "short": "PP",
+                "shortKey": "postponed_short",
+                "long": "Postponed",
+                "longKey": "postponed"
+              }
             },
             "timeTS": 1768051800000
           },
@@ -17171,7 +17507,7 @@
               "longName": "Jong Almere City FC"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 5,
             "tournamentStage": "18",
             "status": {
               "utcTime": "2026-01-10T13:30:00.000Z",
@@ -17179,9 +17515,15 @@
                 "firstHalfStarted": "10.01.2026 14:30:00"
               },
               "periodLength": 45,
+              "cancelled": true,
               "started": false,
-              "cancelled": false,
-              "finished": false
+              "finished": false,
+              "reason": {
+                "short": "PP",
+                "shortKey": "postponed_short",
+                "long": "Postponed",
+                "longKey": "postponed"
+              }
             },
             "timeTS": 1768051800000
           },
@@ -17202,7 +17544,7 @@
               "longName": "Katwijk"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 5,
             "tournamentStage": "18",
             "status": {
               "utcTime": "2026-01-10T13:30:00.000Z",
@@ -17210,9 +17552,15 @@
                 "firstHalfStarted": "10.01.2026 14:30:00"
               },
               "periodLength": 45,
+              "cancelled": true,
               "started": false,
-              "cancelled": false,
-              "finished": false
+              "finished": false,
+              "reason": {
+                "short": "PP",
+                "shortKey": "postponed_short",
+                "long": "Postponed",
+                "longKey": "postponed"
+              }
             },
             "timeTS": 1768051800000
           },
@@ -17233,7 +17581,7 @@
               "longName": "De Treffers"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 5,
             "tournamentStage": "18",
             "status": {
               "utcTime": "2026-01-10T13:30:00.000Z",
@@ -17241,9 +17589,15 @@
                 "firstHalfStarted": "10.01.2026 14:30:00"
               },
               "periodLength": 45,
+              "cancelled": true,
               "started": false,
-              "cancelled": false,
-              "finished": false
+              "finished": false,
+              "reason": {
+                "short": "PP",
+                "shortKey": "postponed_short",
+                "long": "Postponed",
+                "longKey": "postponed"
+              }
             },
             "timeTS": 1768051800000
           },
@@ -17264,7 +17618,7 @@
               "longName": "Kozakken Boys"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 5,
             "tournamentStage": "18",
             "status": {
               "utcTime": "2026-01-10T14:00:00.000Z",
@@ -17272,9 +17626,15 @@
                 "firstHalfStarted": "10.01.2026 15:00:00"
               },
               "periodLength": 45,
+              "cancelled": true,
               "started": false,
-              "cancelled": false,
-              "finished": false
+              "finished": false,
+              "reason": {
+                "short": "PP",
+                "shortKey": "postponed_short",
+                "long": "Postponed",
+                "longKey": "postponed"
+              }
             },
             "timeTS": 1768053600000
           },
@@ -17295,7 +17655,7 @@
               "longName": "Koninklijke HFC"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 5,
             "tournamentStage": "18",
             "status": {
               "utcTime": "2026-01-10T14:00:00.000Z",
@@ -17303,9 +17663,15 @@
                 "firstHalfStarted": "10.01.2026 15:00:00"
               },
               "periodLength": 45,
+              "cancelled": true,
               "started": false,
-              "cancelled": false,
-              "finished": false
+              "finished": false,
+              "reason": {
+                "short": "PP",
+                "shortKey": "postponed_short",
+                "long": "Postponed",
+                "longKey": "postponed"
+              }
             },
             "timeTS": 1768053600000
           },
@@ -17326,7 +17692,7 @@
               "longName": "AFC"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 5,
             "tournamentStage": "18",
             "status": {
               "utcTime": "2026-01-10T14:00:00.000Z",
@@ -17334,9 +17700,15 @@
                 "firstHalfStarted": "10.01.2026 15:00:00"
               },
               "periodLength": 45,
+              "cancelled": true,
               "started": false,
-              "cancelled": false,
-              "finished": false
+              "finished": false,
+              "reason": {
+                "short": "PP",
+                "shortKey": "postponed_short",
+                "long": "Postponed",
+                "longKey": "postponed"
+              }
             },
             "timeTS": 1768053600000
           }
@@ -24037,71 +24409,9 @@
         "name": "Serie C Grp. B",
         "matches": [
           {
-            "id": 4898512,
-            "leagueId": 901979,
-            "time": "11.01.2026 18:30",
-            "home": {
-              "id": 208931,
-              "score": 0,
-              "name": "Carpi",
-              "longName": "Carpi"
-            },
-            "away": {
-              "id": 584069,
-              "score": 0,
-              "name": "Pianese",
-              "longName": "Pianese"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1768152600000
-          },
-          {
-            "id": 4898511,
-            "leagueId": 901979,
-            "time": "11.01.2026 18:30",
-            "home": {
-              "id": 8522,
-              "score": 0,
-              "name": "Ascoli",
-              "longName": "Ascoli"
-            },
-            "away": {
-              "id": 6457,
-              "score": 0,
-              "name": "Ternana",
-              "longName": "Ternana"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1768152600000
-          },
-          {
             "id": 4898513,
             "leagueId": 901979,
-            "time": "11.01.2026 18:30",
+            "time": "11.01.2026 12:30",
             "home": {
               "id": 8537,
               "score": 0,
@@ -24118,21 +24428,52 @@
             "statusId": 1,
             "tournamentStage": "21",
             "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
+              "utcTime": "2026-01-11T11:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
+                "firstHalfStarted": "11.01.2026 12:30:00"
               },
               "periodLength": 45,
               "started": false,
               "cancelled": false,
               "finished": false
             },
-            "timeTS": 1768152600000
+            "timeTS": 1768131000000
+          },
+          {
+            "id": 4898512,
+            "leagueId": 901979,
+            "time": "11.01.2026 14:30",
+            "home": {
+              "id": 208931,
+              "score": 0,
+              "name": "Carpi",
+              "longName": "Carpi"
+            },
+            "away": {
+              "id": 584069,
+              "score": 0,
+              "name": "Pianese",
+              "longName": "Pianese"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-11T13:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "11.01.2026 14:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768138200000
           },
           {
             "id": 4898514,
             "leagueId": 901979,
-            "time": "11.01.2026 18:30",
+            "time": "11.01.2026 17:30",
             "home": {
               "id": 8685,
               "score": 0,
@@ -24149,78 +24490,78 @@
             "statusId": 1,
             "tournamentStage": "21",
             "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
+              "utcTime": "2026-01-11T16:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
+                "firstHalfStarted": "11.01.2026 17:30:00"
               },
               "periodLength": 45,
               "started": false,
               "cancelled": false,
               "finished": false
             },
-            "timeTS": 1768152600000
+            "timeTS": 1768149000000
           },
           {
-            "id": 4898515,
+            "id": 4898510,
             "leagueId": 901979,
-            "time": "11.01.2026 18:30",
+            "time": "11.01.2026 17:30",
             "home": {
-              "id": 770928,
+              "id": 9849,
               "score": 0,
-              "name": "Pineto",
-              "longName": "Pineto"
+              "name": "Arezzo",
+              "longName": "Arezzo"
             },
             "away": {
-              "id": 1667898,
+              "id": 145016,
               "score": 0,
-              "name": "Guidonia Montecelio",
-              "longName": "Guidonia Montecelio"
+              "name": "Pontedera",
+              "longName": "Pontedera"
             },
             "eliminatedTeamId": null,
             "statusId": 1,
             "tournamentStage": "21",
             "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
+              "utcTime": "2026-01-11T16:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
+                "firstHalfStarted": "11.01.2026 17:30:00"
               },
               "periodLength": 45,
               "started": false,
               "cancelled": false,
               "finished": false
             },
-            "timeTS": 1768152600000
+            "timeTS": 1768149000000
           },
           {
-            "id": 4898516,
+            "id": 4898518,
             "leagueId": 901979,
-            "time": "11.01.2026 18:30",
+            "time": "11.01.2026 17:30",
             "home": {
-              "id": 8545,
+              "id": 8482,
               "score": 0,
-              "name": "Ravenna",
-              "longName": "Ravenna"
+              "name": "Sambenedettese",
+              "longName": "Sambenedettese"
             },
             "away": {
-              "id": 6071,
+              "id": 6061,
               "score": 0,
-              "name": "Forlì",
-              "longName": "Forlì"
+              "name": "Gubbio",
+              "longName": "Gubbio"
             },
             "eliminatedTeamId": null,
             "statusId": 1,
             "tournamentStage": "21",
             "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
+              "utcTime": "2026-01-11T16:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
+                "firstHalfStarted": "11.01.2026 17:30:00"
               },
               "periodLength": 45,
               "started": false,
               "cancelled": false,
               "finished": false
             },
-            "timeTS": 1768152600000
+            "timeTS": 1768149000000
           },
           {
             "id": 4898517,
@@ -24258,99 +24599,6 @@
               }
             },
             "timeTS": 1768152600000
-          },
-          {
-            "id": 4898510,
-            "leagueId": 901979,
-            "time": "11.01.2026 18:30",
-            "home": {
-              "id": 9849,
-              "score": 0,
-              "name": "Arezzo",
-              "longName": "Arezzo"
-            },
-            "away": {
-              "id": 145016,
-              "score": 0,
-              "name": "Pontedera",
-              "longName": "Pontedera"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1768152600000
-          },
-          {
-            "id": 4898518,
-            "leagueId": 901979,
-            "time": "11.01.2026 18:30",
-            "home": {
-              "id": 8482,
-              "score": 0,
-              "name": "Sambenedettese",
-              "longName": "Sambenedettese"
-            },
-            "away": {
-              "id": 6061,
-              "score": 0,
-              "name": "Gubbio",
-              "longName": "Gubbio"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1768152600000
-          },
-          {
-            "id": 4898519,
-            "leagueId": 901979,
-            "time": "11.01.2026 18:30",
-            "home": {
-              "id": 7856,
-              "score": 0,
-              "name": "Torres",
-              "longName": "Torres"
-            },
-            "away": {
-              "id": 212658,
-              "score": 0,
-              "name": "Campobasso",
-              "longName": "Campobasso"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1768152600000
           }
         ],
         "parentLeagueId": 147,
@@ -24368,40 +24616,9 @@
         "name": "Serie C Grp. C",
         "matches": [
           {
-            "id": 4899104,
-            "leagueId": 901990,
-            "time": "11.01.2026 18:30",
-            "home": {
-              "id": 867620,
-              "score": 0,
-              "name": "Audace Cerignola",
-              "longName": "Audace Cerignola"
-            },
-            "away": {
-              "id": 6099,
-              "score": 0,
-              "name": "Potenza",
-              "longName": "Potenza"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1768152600000
-          },
-          {
             "id": 4899105,
             "leagueId": 901990,
-            "time": "11.01.2026 18:30",
+            "time": "11.01.2026 12:30",
             "home": {
               "id": 6460,
               "score": 0,
@@ -24418,52 +24635,21 @@
             "statusId": 1,
             "tournamentStage": "21",
             "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
+              "utcTime": "2026-01-11T11:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
+                "firstHalfStarted": "11.01.2026 12:30:00"
               },
               "periodLength": 45,
               "started": false,
               "cancelled": false,
               "finished": false
             },
-            "timeTS": 1768152600000
-          },
-          {
-            "id": 4899106,
-            "leagueId": 901990,
-            "time": "11.01.2026 18:30",
-            "home": {
-              "id": 277990,
-              "score": 0,
-              "name": "Casertana",
-              "longName": "Casertana"
-            },
-            "away": {
-              "id": 6266,
-              "score": 0,
-              "name": "Benevento",
-              "longName": "Benevento"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1768152600000
+            "timeTS": 1768131000000
           },
           {
             "id": 4899107,
             "leagueId": 901990,
-            "time": "11.01.2026 18:30",
+            "time": "11.01.2026 14:30",
             "home": {
               "id": 8530,
               "score": 0,
@@ -24480,114 +24666,21 @@
             "statusId": 1,
             "tournamentStage": "21",
             "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
+              "utcTime": "2026-01-11T13:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
+                "firstHalfStarted": "11.01.2026 14:30:00"
               },
               "periodLength": 45,
               "started": false,
               "cancelled": false,
               "finished": false
             },
-            "timeTS": 1768152600000
-          },
-          {
-            "id": 4899108,
-            "leagueId": 901990,
-            "time": "11.01.2026 18:30",
-            "home": {
-              "id": 9884,
-              "score": 0,
-              "name": "Crotone",
-              "longName": "Crotone"
-            },
-            "away": {
-              "id": 867623,
-              "score": 0,
-              "name": "Team Altamura",
-              "longName": "Team Altamura"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1768152600000
-          },
-          {
-            "id": 4899109,
-            "leagueId": 901990,
-            "time": "11.01.2026 18:30",
-            "home": {
-              "id": 6040,
-              "score": 0,
-              "name": "Giugliano",
-              "longName": "Giugliano"
-            },
-            "away": {
-              "id": 674807,
-              "score": 0,
-              "name": "AZ Picerno",
-              "longName": "AZ Picerno"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1768152600000
-          },
-          {
-            "id": 4899110,
-            "leagueId": 901990,
-            "time": "11.01.2026 18:30",
-            "home": {
-              "id": 212660,
-              "score": 0,
-              "name": "Latina",
-              "longName": "Latina"
-            },
-            "away": {
-              "id": 208936,
-              "score": 0,
-              "name": "Trapani",
-              "longName": "Trapani"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1768152600000
+            "timeTS": 1768138200000
           },
           {
             "id": 4899111,
             "leagueId": 901990,
-            "time": "11.01.2026 18:30",
+            "time": "11.01.2026 14:30",
             "home": {
               "id": 189506,
               "score": 0,
@@ -24604,78 +24697,47 @@
             "statusId": 1,
             "tournamentStage": "21",
             "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
+              "utcTime": "2026-01-11T13:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
+                "firstHalfStarted": "11.01.2026 14:30:00"
               },
               "periodLength": 45,
               "started": false,
               "cancelled": false,
               "finished": false
             },
-            "timeTS": 1768152600000
+            "timeTS": 1768138200000
           },
           {
-            "id": 4899112,
+            "id": 4899106,
             "leagueId": 901990,
-            "time": "11.01.2026 18:30",
+            "time": "11.01.2026 17:30",
             "home": {
-              "id": 6480,
+              "id": 277990,
               "score": 0,
-              "name": "Salernitana",
-              "longName": "Salernitana"
+              "name": "Casertana",
+              "longName": "Casertana"
             },
             "away": {
-              "id": 6456,
+              "id": 6266,
               "score": 0,
-              "name": "Cosenza",
-              "longName": "Cosenza"
+              "name": "Benevento",
+              "longName": "Benevento"
             },
             "eliminatedTeamId": null,
             "statusId": 1,
             "tournamentStage": "21",
             "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
+              "utcTime": "2026-01-11T16:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
+                "firstHalfStarted": "11.01.2026 17:30:00"
               },
               "periodLength": 45,
               "started": false,
               "cancelled": false,
               "finished": false
             },
-            "timeTS": 1768152600000
-          },
-          {
-            "id": 4899113,
-            "leagueId": 901990,
-            "time": "11.01.2026 18:30",
-            "home": {
-              "id": 88998,
-              "score": 0,
-              "name": "Sorrento",
-              "longName": "Sorrento"
-            },
-            "away": {
-              "id": 6466,
-              "score": 0,
-              "name": "Foggia",
-              "longName": "Foggia"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-11T17:30:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "11.01.2026 18:30:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1768152600000
+            "timeTS": 1768149000000
           }
         ],
         "parentLeagueId": 147,

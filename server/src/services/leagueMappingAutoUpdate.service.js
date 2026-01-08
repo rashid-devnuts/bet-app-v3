@@ -1211,8 +1211,9 @@ If no match found, return:
                 console.log('[LeagueMapping] 📤 Uploading league_mapping_clean.csv...');
                 const cleanCsvUpload = cloudinary.uploader.upload(this.serverCsvPath, {
                     resource_type: 'raw',
-                    public_id: `league-mapping/league_mapping_clean`,
+                    public_id: `league-mapping/league_mapping_clean.csv`, // ✅ Include .csv extension
                     overwrite: true,
+                    invalidate: true, // ✅ Force CDN cache invalidation
                     format: 'csv'
                 });
                 uploads.push({ name: 'league_mapping_clean.csv', promise: cleanCsvUpload });
@@ -1223,8 +1224,9 @@ If no match found, return:
                 console.log('[LeagueMapping] 📤 Uploading league_mapping_with_urls.csv...');
                 const urlsCsvUpload = cloudinary.uploader.upload(this.urlsCsvPath, {
                     resource_type: 'raw',
-                    public_id: `league-mapping/league_mapping_with_urls`,
+                    public_id: `league-mapping/league_mapping_with_urls.csv`, // ✅ Include .csv extension
                     overwrite: true,
+                    invalidate: true, // ✅ Force CDN cache invalidation
                     format: 'csv'
                 });
                 uploads.push({ name: 'league_mapping_with_urls.csv', promise: urlsCsvUpload });

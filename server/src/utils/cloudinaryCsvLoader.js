@@ -27,12 +27,17 @@ export async function downloadCsvFromCloudinary(fileName) {
             return downloadFromLocalFile(fileName);
         }
 
-        // Build Cloudinary URL
-        const publicId = `league-mapping/${fileName}`;
-        const url = cloudinary.url(publicId, {
+        // Build Cloudinary URL with cache-busting timestamp
+        // ✅ Use correct public_id format: league-mapping/filename.csv
+        const publicId = `league-mapping/${fileName}.csv`;
+        const timestamp = Date.now();
+        let url = cloudinary.url(publicId, {
             resource_type: 'raw',
             format: 'csv'
         });
+        
+        // ✅ Add cache-busting query parameter to force fresh download
+        url = `${url}?_cb=${timestamp}`;
 
         console.log(`[CloudinaryCSV] 📥 Downloading ${fileName} from Cloudinary...`);
         console.log(`[CloudinaryCSV] URL: ${url}`);
