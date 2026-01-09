@@ -1,7 +1,9 @@
 import express from 'express';
 import { loadLeagueMapping } from '../../utils/leagueFilter.js';
 import League from '../../models/League.js';
-import { downloadLeagueMappingClean } from '../../utils/cloudinaryCsvLoader.js';
+// ✅ REMOVED: CSV import - now using DB
+// import { downloadLeagueMappingClean } from '../../utils/cloudinaryCsvLoader.js';
+import LeagueMapping from '../../models/LeagueMapping.js';
 
 const router = express.Router();
 
@@ -40,25 +42,15 @@ function parseCsvLine(line) {
   return fields;
 }
 
-// GET /api/admin/leagues - Get all leagues from Cloudinary CSV
+// GET /api/admin/leagues - Get all leagues from database
 router.get('/', async (req, res) => {
   try {
-    console.log('📋 Fetching leagues from Cloudinary CSV...');
+    console.log('📋 Fetching leagues from database...');
     
-    // Load the CSV data from Cloudinary
-    const csvContent = await downloadLeagueMappingClean();
+    // ✅ CHANGED: Load from database instead of CSV
+    const mappings = await LeagueMapping.find({}).lean();
     
-    // ✅ ADD: Log CSV content size
-    console.log(`📊 CSV content size: ${csvContent.length} bytes`);
-    console.log(`📊 CSV content preview (first 500 chars): ${csvContent.substring(0, 500)}`);
-    
-    const lines = csvContent.split('\n').filter(line => line.trim());
-    console.log(`📊 Total lines (including header): ${lines.length}`);
-    
-    // Skip header line
-    const dataLines = lines.slice(1);
-    
-    console.log(`📊 Total data lines in CSV: ${dataLines.length}`);
+    console.log(`📊 Total mappings in DB: ${mappings.length}`);
     
     // Get popular leagues from database
     const popularLeaguesInDb = await League.find({}).lean();
@@ -72,39 +64,38 @@ router.get('/', async (req, res) => {
     let errorCount = 0;
     let duplicateCount = 0; // ✅ ADD: Track duplicates
     
-    dataLines.forEach((line, index) => {
-      if (!line.trim()) {
-        skippedCount++;
-        return;
-      }
-      
+    mappings.forEach((mapping, index) => {
       try {
-        // ✅ IMPROVED: Better CSV parsing that handles quoted values with commas
-        const fields = parseCsvLine(line);
-        const [unibetId, unibetName, fotmobId, fotmobName, matchType, country] = fields;
+        // ✅ CHANGED: Use DB mapping data directly
+        const unibetId = String(mapping.unibetId);
+        const unibetName = mapping.unibetName || '';
+        const fotmobId = String(mapping.fotmobId);
+        const fotmobName = mapping.fotmobName || '';
+        const matchType = mapping.matchType || '';
+        const country = mapping.country || '';
         
-        // ✅ ADD: Log first few lines for debugging
+        // ✅ ADD: Log first few mappings for debugging
         if (index < 5) {
-          console.log(`📋 Line ${index + 2}: UnibetID=${unibetId}, Name=${unibetName}, FotmobID=${fotmobId}`);
+          console.log(`📋 Mapping ${index + 1}: UnibetID=${unibetId}, Name=${unibetName}, FotmobID=${fotmobId}`);
         }
         
         // Skip if essential fields are missing
         if (!unibetId || !unibetName || !fotmobId) {
-          console.warn(`⚠️ Line ${index + 2}: Skipping - Missing essential fields (Unibet ID: ${unibetId}, Name: ${unibetName}, Fotmob ID: ${fotmobId})`);
+          console.warn(`⚠️ Mapping ${index + 1}: Skipping - Missing essential fields (Unibet ID: ${unibetId}, Name: ${unibetName}, Fotmob ID: ${fotmobId})`);
           skippedCount++;
           return;
         }
         
         const leagueId = parseInt(unibetId);
         if (isNaN(leagueId)) {
-          console.warn(`⚠️ Line ${index + 2}: Skipping - Invalid Unibet ID: ${unibetId}`);
+          console.warn(`⚠️ Mapping ${index + 1}: Skipping - Invalid Unibet ID: ${unibetId}`);
           skippedCount++;
           return;
         }
         
         // ✅ ADD: Check for duplicates
         if (seenIds.has(leagueId)) {
-          console.warn(`⚠️ Line ${index + 2}: Skipping - Duplicate Unibet ID: ${leagueId} (${unibetName})`);
+          console.warn(`⚠️ Mapping ${index + 1}: Skipping - Duplicate Unibet ID: ${leagueId} (${unibetName})`);
           duplicateCount++;
           return;
         }
@@ -118,33 +109,32 @@ router.get('/', async (req, res) => {
         
         leagues.push({
           id: leagueId, // Use Unibet ID as the league ID
-          unibetId: unibetId.trim(),
-          name: unibetName.trim(),
-          fotmobId: fotmobId.trim(),
-          fotmobName: fotmobName.trim(),
-          matchType: matchType?.trim() || '',
+          unibetId: unibetId,
+          name: unibetName,
+          fotmobId: fotmobId,
+          fotmobName: fotmobName,
+          matchType: matchType || '',
           country: {
             name: normalizedCountry,
             official_name: normalizedCountry,
-            image: null // No country images in CSV
+            image: null // No country images in DB
           },
-          image_path: null, // No league images in CSV
+          image_path: null, // No league images in DB
           isPopular: dbLeague ? dbLeague.isPopular : false, // Get from database or default to false
           popularOrder: dbLeague?.order || 0, // Get from database or default to 0
-          short_code: null // No short codes in CSV
+          short_code: null // No short codes in DB
         });
       } catch (error) {
-        console.error(`❌ Line ${index + 2}: Error parsing - ${error.message}`);
-        console.error(`   Line content: ${line.substring(0, 100)}...`);
+        console.error(`❌ Mapping ${index + 1}: Error processing - ${error.message}`);
         errorCount++;
       }
     });
 
-    console.log(`✅ Loaded ${leagues.length} unique leagues from CSV`);
-    console.log(`⚠️ Skipped ${skippedCount} empty/invalid lines`);
+    console.log(`✅ Loaded ${leagues.length} unique leagues from database`);
+    console.log(`⚠️ Skipped ${skippedCount} invalid mappings`);
     console.log(`🔄 Found ${duplicateCount} duplicate league IDs`);
     console.log(`❌ Errors: ${errorCount}`);
-    console.log(`📊 Expected: ${dataLines.length}, Got: ${leagues.length}, Skipped: ${skippedCount + duplicateCount + errorCount}`);
+    console.log(`📊 Expected: ${mappings.length}, Got: ${leagues.length}, Skipped: ${skippedCount + duplicateCount + errorCount}`);
     
     // ✅ ADD: Log unique IDs count
     const uniqueIds = new Set(leagues.map(l => l.id));
@@ -160,14 +150,14 @@ router.get('/', async (req, res) => {
       skipped: skippedCount,
       duplicates: duplicateCount, // ✅ ADD: Include duplicates in response
       errors: errorCount,
-      expected: dataLines.length
+      expected: mappings.length
     });
 
   } catch (error) {
-    console.error('❌ Error fetching leagues from CSV:', error);
+    console.error('❌ Error fetching leagues from database:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch leagues from CSV',
+      error: 'Failed to fetch leagues from database',
       message: error.message
     });
   }
@@ -247,81 +237,50 @@ router.post('/popular', async (req, res) => {
 // GET /api/admin/leagues/mapping - Get league mapping for frontend (Unibet→Fotmob + filtering data)
 router.get('/mapping', async (req, res) => {
   try {
-    console.log('📋 Fetching league mapping for frontend from Cloudinary...');
+    console.log('📋 Fetching league mapping for frontend from database...');
     
-    // Load the CSV data from Cloudinary
-    const csvContent = await downloadLeagueMappingClean();
-    const lines = csvContent.split('\n').filter(line => line.trim());
+    // ✅ CHANGED: Load from database instead of CSV (using static import from top)
+    const mappings = await LeagueMapping.find({}).lean();
     
-    // Skip header line
-    const dataLines = lines.slice(1);
-    
-    console.log(`📊 Total data lines in CSV: ${dataLines.length}`);
+    console.log(`📊 Total mappings in DB: ${mappings.length}`);
     
     // Build mapping objects
     const unibetToFotmobMapping = {};
     const allowedLeagueIds = [];
     const allowedLeagueNames = [];
-    let skippedCount = 0;
-    let errorCount = 0;
     
-    dataLines.forEach((line, index) => {
-      if (!line.trim()) {
-        skippedCount++;
-        return;
+    mappings.forEach(mapping => {
+      const unibetId = String(mapping.unibetId);
+      const fotmobId = String(mapping.fotmobId);
+      const unibetName = mapping.unibetName || '';
+      const fotmobName = mapping.fotmobName || '';
+      
+      // Add to Unibet→Fotmob mapping (for icons)
+      if (unibetId && fotmobId) {
+        unibetToFotmobMapping[unibetId] = fotmobId;
       }
       
-      try {
-        // ✅ IMPROVED: Better CSV parsing that handles quoted values with commas
-        const fields = parseCsvLine(line);
-        const [unibetId, unibetName, fotmobId, fotmobName, matchType, country] = fields;
+      // Add to allowed league IDs (for filtering)
+      if (unibetId) {
+        allowedLeagueIds.push(unibetId);
+      }
+      
+      // Add to allowed league names (for filtering)
+      if (unibetName) {
+        allowedLeagueNames.push(unibetName);
+        allowedLeagueNames.push(unibetName.toLowerCase());
         
-        // Skip if essential fields are missing
-        if (!unibetId || !unibetName || !fotmobId) {
-          console.warn(`⚠️ Line ${index + 2}: Skipping - Missing essential fields (Unibet ID: ${unibetId}, Name: ${unibetName}, Fotmob ID: ${fotmobId})`);
-          skippedCount++;
-          return;
+        // Also add Fotmob name for matching
+        if (fotmobName) {
+          allowedLeagueNames.push(fotmobName);
+          allowedLeagueNames.push(fotmobName.toLowerCase());
         }
-        
-        const trimmedUnibetId = unibetId.trim();
-        const trimmedUnibetName = unibetName.trim();
-        const trimmedFotmobId = fotmobId.trim();
-        const trimmedFotmobName = fotmobName?.trim() || '';
-        
-        // Add to Unibet→Fotmob mapping (for icons)
-        if (trimmedUnibetId && trimmedFotmobId) {
-          unibetToFotmobMapping[trimmedUnibetId] = trimmedFotmobId;
-        }
-        
-        // Add to allowed league IDs (for filtering)
-        if (trimmedUnibetId) {
-          allowedLeagueIds.push(trimmedUnibetId);
-        }
-        
-        // Add to allowed league names (for filtering)
-        if (trimmedUnibetName) {
-          allowedLeagueNames.push(trimmedUnibetName);
-          allowedLeagueNames.push(trimmedUnibetName.toLowerCase());
-          
-          // Also add Fotmob name for matching
-          if (trimmedFotmobName) {
-            allowedLeagueNames.push(trimmedFotmobName);
-            allowedLeagueNames.push(trimmedFotmobName.toLowerCase());
-          }
-        }
-      } catch (error) {
-        console.error(`❌ Line ${index + 2}: Error parsing - ${error.message}`);
-        console.error(`   Line content: ${line.substring(0, 100)}...`);
-        errorCount++;
       }
     });
 
     console.log(`✅ Built mapping: ${Object.keys(unibetToFotmobMapping).length} leagues`);
     console.log(`✅ Allowed league IDs: ${allowedLeagueIds.length}`);
     console.log(`✅ Allowed league names: ${allowedLeagueNames.length}`);
-    console.log(`⚠️ Skipped ${skippedCount} empty/invalid lines`);
-    console.log(`❌ Errors: ${errorCount}`);
-    console.log(`📊 Expected: ${dataLines.length}, Got: ${allowedLeagueIds.length}, Skipped: ${skippedCount + errorCount}`);
 
     res.json({
       success: true,
@@ -336,7 +295,7 @@ router.get('/mapping', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error fetching league mapping:', error);
+    console.error('❌ Error fetching league mapping from database:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch league mapping',

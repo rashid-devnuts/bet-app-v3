@@ -579,12 +579,16 @@ export function getPlayerStats(matchDetails, playerId) {
 }
 
 // Best-effort matcher from odds participant name to FotMob playerId
+/**
+ * Find player ID by name in match details
+ * @returns {Promise<{playerId: number|null, geminiNoMatch: boolean}>} Object with playerId and geminiNoMatch flag
+ */
 export async function findPlayerIdByName(matchDetails, participantName) {
     console.log(`🔍 findPlayerIdByName: Looking for "${participantName}"`);
     
     if (!matchDetails || !participantName) {
         console.log(`   - Missing matchDetails or participantName`);
-        return null;
+        return { playerId: null, geminiNoMatch: false };
     }
     
     const normalize = (s) => String(s || '')
@@ -616,7 +620,7 @@ export async function findPlayerIdByName(matchDetails, participantName) {
             if (nameN === target) {
                 exactMatch = Number(id);
                 console.log(`   ✅ Exact match found: "${playerName}" (ID: ${id})`);
-                return exactMatch;
+                return { playerId: exactMatch, geminiNoMatch: false };
             }
             
             // Similarity-based match
@@ -638,7 +642,7 @@ export async function findPlayerIdByName(matchDetails, participantName) {
         
         if (bestMatch) {
             console.log(`   ✅ Using best match: ID ${bestMatch} (similarity: ${bestSimilarity > 0 ? bestSimilarity.toFixed(3) : 'partial'})`);
-            return bestMatch;
+            return { playerId: bestMatch, geminiNoMatch: false };
         }
     }
     
@@ -664,7 +668,7 @@ export async function findPlayerIdByName(matchDetails, participantName) {
                 const foundId = shot?.playerId || shot?.shotmapEvent?.playerId;
                 if (foundId) {
                     console.log(`   ✅ Exact match in shotmap: "${shotPlayerName}" (ID: ${foundId})`);
-                    return Number(foundId);
+                    return { playerId: Number(foundId), geminiNoMatch: false };
                 }
             }
             
@@ -686,7 +690,7 @@ export async function findPlayerIdByName(matchDetails, participantName) {
         
         if (bestMatch) {
             console.log(`   ✅ Using best shotmap match: "${bestMatch.name}" (ID: ${bestMatch.id}, similarity: ${bestMatch.similarity.toFixed(3)})`);
-            return bestMatch.id;
+            return { playerId: bestMatch.id, geminiNoMatch: false };
         }
     }
     
@@ -709,7 +713,7 @@ export async function findPlayerIdByName(matchDetails, participantName) {
                 const playerId = goals[0]?.playerId || goals[0]?.player?.id || goals[0]?.shotmapEvent?.playerId;
                 if (playerId) {
                     console.log(`   ✅ Exact match in home goals: "${playerName}" (ID: ${playerId})`);
-                    return Number(playerId);
+                    return { playerId: Number(playerId), geminiNoMatch: false };
                 }
             }
         }
@@ -742,7 +746,7 @@ export async function findPlayerIdByName(matchDetails, participantName) {
                 const playerId = goals[0]?.playerId || goals[0]?.player?.id || goals[0]?.shotmapEvent?.playerId;
                 if (playerId) {
                     console.log(`   ✅ Exact match in away goals: "${playerName}" (ID: ${playerId})`);
-                    return Number(playerId);
+                    return { playerId: Number(playerId), geminiNoMatch: false };
                 }
             }
         }
@@ -767,7 +771,7 @@ export async function findPlayerIdByName(matchDetails, participantName) {
     
     if (bestGoalMatch) {
         console.log(`   ✅ Using best goal match: "${bestGoalMatch.name}" (ID: ${bestGoalMatch.id}, similarity: ${bestGoalMatch.similarity.toFixed(3)})`);
-        return bestGoalMatch.id;
+        return { playerId: bestGoalMatch.id, geminiNoMatch: false };
     }
     
     // Method 4: Check assists in goal events (player might have assists but no goals)
@@ -784,7 +788,7 @@ export async function findPlayerIdByName(matchDetails, participantName) {
                 const assistPlayerId = goal?.assistPlayerId || goal?.assist?.id || goal?.assist?.playerId;
                 if (assistPlayerId) {
                     console.log(`   ✅ Found in assists: "${assistName}" (ID: ${assistPlayerId})`);
-                    return Number(assistPlayerId);
+                    return { playerId: Number(assistPlayerId), geminiNoMatch: false };
                 }
             }
         }
@@ -802,15 +806,92 @@ export async function findPlayerIdByName(matchDetails, participantName) {
             // Exact match
             if (nameN === target) {
                 console.log(`   ✅ Exact match found in content.playerStats: "${playerName}" (ID: ${id})`);
-                return Number(id);
+                return { playerId: Number(id), geminiNoMatch: false };
             }
             
             // Partial match
             if (target.includes(nameN) || nameN.includes(target)) {
                 console.log(`   ✅ Partial match found in content.playerStats: "${playerName}" (ID: ${id})`);
-                return Number(id);
+                return { playerId: Number(id), geminiNoMatch: false };
             }
         }
+    }
+    
+    // Method 6: Check unavailable players array (injured/suspended/international duty)
+    // ✅ CORRECT LOCATION: content.lineup.awayTeam.unavailable and content.lineup.homeTeam.unavailable
+    console.log(`   - Checking unavailable players array...`);
+    
+    // Collect unavailable players from both teams
+    const awayUnavailable = matchDetails?.content?.lineup?.awayTeam?.unavailable || [];
+    const homeUnavailable = matchDetails?.content?.lineup?.homeTeam?.unavailable || [];
+    const unavailablePlayers = [...(Array.isArray(awayUnavailable) ? awayUnavailable : []), 
+                                 ...(Array.isArray(homeUnavailable) ? homeUnavailable : [])];
+    
+    console.log(`   - Away team unavailable: ${Array.isArray(awayUnavailable) ? awayUnavailable.length : 0}`);
+    console.log(`   - Home team unavailable: ${Array.isArray(homeUnavailable) ? homeUnavailable.length : 0}`);
+    console.log(`   - Total unavailable players: ${unavailablePlayers.length}`);
+    
+    if (Array.isArray(unavailablePlayers) && unavailablePlayers.length > 0) {
+        console.log(`   - Found ${unavailablePlayers.length} unavailable players`);
+        
+        // Debug: Log first few players for debugging
+        unavailablePlayers.slice(0, 3).forEach((p, idx) => {
+            console.log(`     ${idx + 1}. ${p?.name || p?.fullName || 'Unknown'} (ID: ${p?.id || p?.playerId || 'N/A'}, firstName: ${p?.firstName || 'N/A'}, lastName: ${p?.lastName || 'N/A'})`);
+        });
+        
+        for (const player of unavailablePlayers) {
+            const playerName = player?.name || player?.fullName || '';
+            const playerFirstName = player?.firstName || '';
+            const playerLastName = player?.lastName || '';
+            const playerFullName = playerFirstName && playerLastName ? `${playerFirstName} ${playerLastName}` : playerName;
+            const playerId = player?.id || player?.playerId;
+            
+            // Debug: Log each player being checked
+            console.log(`     - Checking: "${playerName}" (ID: ${playerId}, firstName: "${playerFirstName}", lastName: "${playerLastName}")`);
+            console.log(`       - Normalized: "${normalize(playerName)}" vs target: "${target}"`);
+            if (playerFullName && playerFullName !== playerName) {
+                console.log(`       - Full name: "${playerFullName}" (normalized: "${normalize(playerFullName)}")`);
+            }
+            
+            // Try multiple name formats
+            const namesToCheck = [playerName, playerFullName];
+            if (playerFirstName && playerLastName) {
+                namesToCheck.push(`${playerFirstName} ${playerLastName}`);
+            }
+            
+            for (const nameToCheck of namesToCheck) {
+                if (!nameToCheck) continue;
+                
+                const nameN = normalize(nameToCheck);
+                if (!nameN) continue;
+                
+                // Exact match
+                if (nameN === target) {
+                    if (playerId) {
+                        const unavailabilityType = player?.unavailability?.type || 'unknown';
+                        const reason = player?.unavailability?.expectedReturn || 'N/A';
+                        console.log(`   ✅ Exact match in unavailable players: "${nameToCheck}" (ID: ${playerId}, Type: ${unavailabilityType}, Reason: ${reason})`);
+                        console.log(`   ⚠️ Player is unavailable - bet should be LOST`);
+                        return { playerId: Number(playerId), geminiNoMatch: false };
+                    }
+                }
+                
+                // Similarity-based match
+                const similarity = calculateNameSimilarity(participantName, nameToCheck);
+                if (similarity >= 0.6) {
+                    if (playerId) {
+                        const unavailabilityType = player?.unavailability?.type || 'unknown';
+                        const reason = player?.unavailability?.expectedReturn || 'N/A';
+                        console.log(`   ✅ Similarity match in unavailable players: "${nameToCheck}" (ID: ${playerId}, similarity: ${similarity.toFixed(3)}, Type: ${unavailabilityType})`);
+                        console.log(`   ⚠️ Player is unavailable - bet should be LOST`);
+                        return { playerId: Number(playerId), geminiNoMatch: false };
+                    }
+                }
+            }
+        }
+    } else {
+        console.log(`   - No unavailable players found or array is empty`);
+        console.log(`   - Available paths checked: content.unavailable, content.matchFacts.unavailable, unavailable`);
     }
     
     console.log(`   ❌ Could not find player "${participantName}" in any source`);
@@ -820,17 +901,20 @@ export async function findPlayerIdByName(matchDetails, participantName) {
     console.log(`   🤖 Attempting Gemini AI fallback...`);
     try {
         const { findPlayerWithGemini } = await import('./gemini-player-matcher.js');
-        const geminiPlayerId = await findPlayerWithGemini(matchDetails, participantName);
-        if (geminiPlayerId) {
-            console.log(`   ✅ Gemini found player ID: ${geminiPlayerId}`);
-            return geminiPlayerId;
+        const geminiResult = await findPlayerWithGemini(matchDetails, participantName);
+        if (geminiResult?.playerId) {
+            console.log(`   ✅ Gemini found player ID: ${geminiResult.playerId}`);
+            return { playerId: geminiResult.playerId, geminiNoMatch: false };
+        } else if (geminiResult?.noMatch === true) {
+            console.log(`   ⚠️ Gemini returned NO_MATCH - player not found in match`);
+            return { playerId: null, geminiNoMatch: true };
         }
     } catch (geminiError) {
         console.log(`   ⚠️ Gemini fallback failed: ${geminiError.message}`);
         // Continue to return null
     }
     
-    return null;
+    return { playerId: null, geminiNoMatch: false };
 }
 
 export function getPlayerEvents(matchDetails, playerId) {

@@ -4,6 +4,7 @@ import { waitForRateLimit } from '../../utils/geminiRateLimiter.js';
 /**
  * Use Gemini AI to match player name when normal matching fails
  * This is a fallback when similarity score is too low or player not found
+ * @returns {Promise<{playerId: number|null, noMatch: boolean}>} Object with playerId and noMatch flag
  */
 export async function findPlayerWithGemini(matchDetails, participantName) {
     // Get both API keys
@@ -12,7 +13,7 @@ export async function findPlayerWithGemini(matchDetails, participantName) {
     
     if (!geminiApiKey1 && !geminiApiKey2) {
         console.log(`   ⚠️ No Gemini API keys found (GEMINI_API_KEY_1 or GEMINI_API_KEY_2), skipping Gemini fallback`);
-        return null;
+        return { playerId: null, noMatch: false };
     }
 
     // Helper function to check if error is quota-related
@@ -38,7 +39,7 @@ export async function findPlayerWithGemini(matchDetails, participantName) {
 
     if (apiKeys.length === 0) {
         console.log(`   ⚠️ No valid Gemini API keys found, skipping Gemini fallback`);
-        return null;
+        return { playerId: null, noMatch: false };
     }
 
     let lastError = null;
@@ -109,7 +110,7 @@ export async function findPlayerWithGemini(matchDetails, participantName) {
             
             if (allPlayers.length === 0) {
                 console.log(`   ⚠️ No players found in match data for Gemini matching`);
-                return null;
+                return { playerId: null, noMatch: false };
             }
             
             console.log(`   📋 Found ${allPlayers.length} players in match data for Gemini matching`);
@@ -145,7 +146,7 @@ Example: If player name is "K. Etta" and list has "Karl Etta" with ID 1234567, r
             // Parse response
             if (text === 'NO_MATCH' || text.toLowerCase().includes('no match')) {
                 console.log(`   ❌ Gemini could not find a match`);
-                return null;
+                return { playerId: null, noMatch: true };
             }
             
             // Try to extract player ID from response
@@ -156,15 +157,15 @@ Example: If player name is "K. Etta" and list has "Karl Etta" with ID 1234567, r
                 
                 if (matchedPlayer) {
                     console.log(`   ✅ Gemini matched (${keyName}): "${matchedPlayer.name}" (ID: ${matchedPlayerId})`);
-                    return matchedPlayerId;
+                    return { playerId: matchedPlayerId, noMatch: false };
                 } else {
                     console.log(`   ⚠️ Gemini returned ID ${matchedPlayerId} but player not found in our list`);
-                    return null;
+                    return { playerId: null, noMatch: false };
                 }
             }
             
             console.log(`   ⚠️ Could not parse player ID from Gemini response`);
-            return null;
+            return { playerId: null, noMatch: false };
             
         } catch (error) {
             lastError = error;
@@ -179,7 +180,7 @@ Example: If player name is "K. Etta" and list has "Karl Etta" with ID 1234567, r
             // If it's not a quota error, or it's the last key, return null
             if (!isQuotaError(error)) {
                 // Non-quota error - don't try other keys
-                return null;
+                return { playerId: null, noMatch: false };
             }
         }
     }
@@ -188,6 +189,6 @@ Example: If player name is "K. Etta" and list has "Karl Etta" with ID 1234567, r
     if (lastError && isQuotaError(lastError)) {
         console.error(`   ❌ All Gemini API keys exhausted quota`);
     }
-    return null;
+    return { playerId: null, noMatch: false };
 }
 

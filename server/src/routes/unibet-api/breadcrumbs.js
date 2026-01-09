@@ -1,42 +1,35 @@
 import express from 'express';
-import { downloadLeagueMappingWithUrls } from '../../utils/cloudinaryCsvLoader.js';
+// ✅ CHANGED: Use DB instead of CSV
+import LeagueMapping from '../../models/LeagueMapping.js';
 
 const router = express.Router();
 
-// Load CSV data into memory
+// Load DB data into memory cache
 let leagueMappingWithUrls = new Map();
 
-// Load league_mapping_with_urls.csv from Cloudinary (ID -> URL mapping)
+// Load league mappings from database (ID -> URL mapping)
 async function loadLeagueMappingWithUrls() {
   try {
-    console.log('📥 Loading league_mapping_with_urls.csv from Cloudinary...');
-    const csvContent = await downloadLeagueMappingWithUrls();
-    const lines = csvContent.split('\n').filter(line => line.trim());
+    console.log('📥 Loading league mappings from database...');
     
-    // Skip header line
-    const dataLines = lines.slice(1);
+    const mappings = await LeagueMapping.find({}).lean();
     
     leagueMappingWithUrls.clear();
     
-    dataLines.forEach(line => {
-      if (!line.trim()) return;
-      // ✅ FIX: Handle quoted values in CSV
-      const fields = line.split(',').map(field => field.replace(/^"|"$/g, '').trim());
-      const [unibetId, unibetUrl, unibetName, fotmobUrl, fotmobName, matchType, country] = fields;
-      if (unibetId && unibetUrl) {
+    mappings.forEach(mapping => {
+      if (mapping.unibetId && mapping.unibetUrl) {
         // Store Unibet_ID as key and Unibet_URL as value - Direct mapping!
-        const id = parseInt(unibetId);
-        leagueMappingWithUrls.set(id, unibetUrl.trim());
+        leagueMappingWithUrls.set(mapping.unibetId, mapping.unibetUrl.trim());
       }
     });
     
-    console.log(`✅ Loaded ${leagueMappingWithUrls.size} league URLs from Cloudinary`);
+    console.log(`✅ Loaded ${leagueMappingWithUrls.size} league URLs from database`);
   } catch (error) {
-    console.error('❌ Error loading league_mapping_with_urls.csv from Cloudinary:', error);
+    console.error('❌ Error loading league mappings from database:', error);
   }
 }
 
-// ✅ Get league URL from cache (with Cloudinary reload if needed)
+// ✅ Get league URL from cache (with DB reload if needed)
 async function getLeagueUrl(leagueId) {
   // First check in-memory cache
   let leagueUrl = leagueMappingWithUrls.get(leagueId);
@@ -45,8 +38,8 @@ async function getLeagueUrl(leagueId) {
     return leagueUrl;
   }
   
-  // ✅ FALLBACK: Reload from Cloudinary if not in cache
-  console.log(`⚠️ League ID ${leagueId} not in cache, reloading from Cloudinary...`);
+  // ✅ FALLBACK: Reload from DB if not in cache
+  console.log(`⚠️ League ID ${leagueId} not in cache, reloading from database...`);
   await loadLeagueMappingWithUrls();
   
   // Check cache again after reload
@@ -55,10 +48,21 @@ async function getLeagueUrl(leagueId) {
     return leagueUrl;
   }
   
+  // ✅ FALLBACK: Try direct DB query
+  try {
+    const mapping = await LeagueMapping.findOne({ unibetId: leagueId }).lean();
+    if (mapping && mapping.unibetUrl) {
+      leagueMappingWithUrls.set(leagueId, mapping.unibetUrl);
+      return mapping.unibetUrl;
+    }
+  } catch (error) {
+    console.error(`❌ Error querying DB for league ${leagueId}:`, error);
+  }
+  
   return null;
 }
 
-// Initialize CSV data on startup
+// Initialize DB data on startup
 loadLeagueMappingWithUrls();
 
 // GET /api/unibet-api/breadcrumbs/:leagueId - Get breadcrumbs data for a specific league

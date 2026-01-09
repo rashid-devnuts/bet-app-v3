@@ -1,10 +1,11 @@
-import { downloadLeagueMappingClean } from './cloudinaryCsvLoader.js';
+// ✅ CHANGED: Use DB instead of CSV
+import LeagueMapping from '../models/LeagueMapping.js';
 
 // Cache for league mapping data
 let leagueMappingCache = null;
 
 /**
- * Load and parse the league mapping CSV file from Cloudinary
+ * Load league mapping from MongoDB database
  * @returns {Object} - Object with allowed league names and IDs
  */
 export async function loadLeagueMapping() {
@@ -13,36 +14,29 @@ export async function loadLeagueMapping() {
   }
 
   try {
-    // Download CSV from Cloudinary (with local file fallback)
-    console.log('📥 Loading league mapping from Cloudinary...');
-    const csvContent = await downloadLeagueMappingClean();
-    const lines = csvContent.split('\n').filter(line => line.trim());
+    console.log('📥 Loading league mapping from database...');
     
-    // Skip header line
-    const dataLines = lines.slice(1);
+    // Fetch all league mappings from DB
+    const mappings = await LeagueMapping.find({}).lean();
     
     const allowedLeagueNames = new Set();
     const allowedLeagueIds = new Set();
     
-    dataLines.forEach(line => {
-      if (line.trim()) {
-        const [unibetId, unibetName, fotmobId, fotmobName, matchType, country] = line.split(',');
+    mappings.forEach(mapping => {
+      if (mapping.unibetName && mapping.unibetName.trim()) {
+        // Add both exact name and cleaned name variations
+        allowedLeagueNames.add(mapping.unibetName.trim());
+        allowedLeagueNames.add(mapping.unibetName.trim().toLowerCase());
         
-        if (unibetName && unibetName.trim()) {
-          // Add both exact name and cleaned name variations
-          allowedLeagueNames.add(unibetName.trim());
-          allowedLeagueNames.add(unibetName.trim().toLowerCase());
-          
-          // Also add Fotmob name for matching
-          if (fotmobName && fotmobName.trim()) {
-            allowedLeagueNames.add(fotmobName.trim());
-            allowedLeagueNames.add(fotmobName.trim().toLowerCase());
-          }
+        // Also add Fotmob name for matching
+        if (mapping.fotmobName && mapping.fotmobName.trim()) {
+          allowedLeagueNames.add(mapping.fotmobName.trim());
+          allowedLeagueNames.add(mapping.fotmobName.trim().toLowerCase());
         }
-        
-        if (unibetId && unibetId.trim()) {
-          allowedLeagueIds.add(unibetId.trim());
-        }
+      }
+      
+      if (mapping.unibetId) {
+        allowedLeagueIds.add(String(mapping.unibetId));
       }
     });
 
@@ -53,18 +47,17 @@ export async function loadLeagueMapping() {
       totalLeagues: allowedLeagueIds.size
     };
 
-    // ✅ FIX: Add debugging logs for CSV parsing
-    console.log(`📊 CSV Parsing Stats:`);
-    console.log(`   - Total data lines: ${dataLines.length}`);
+    console.log(`📊 Database Stats:`);
+    console.log(`   - Total mappings in DB: ${mappings.length}`);
     console.log(`   - Unique league IDs found: ${allowedLeagueIds.size}`);
     console.log(`   - Unique league name variations: ${allowedLeagueNames.size}`);
     console.log(`   - Sample IDs:`, Array.from(allowedLeagueIds).slice(0, 10));
-    console.log(`✅ Loaded ${leagueMappingCache.totalLeagues} allowed leagues from CSV`);
+    console.log(`✅ Loaded ${leagueMappingCache.totalLeagues} allowed leagues from database`);
     console.log(`📋 Sample leagues:`, Array.from(allowedLeagueNames).slice(0, 10));
     
     return leagueMappingCache;
   } catch (error) {
-    console.error('❌ Error loading league mapping CSV:', error.message);
+    console.error('❌ Error loading league mapping from database:', error.message);
     return { allowedLeagueNames: new Set(), allowedLeagueIds: new Set() };
   }
 }

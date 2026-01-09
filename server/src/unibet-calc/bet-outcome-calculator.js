@@ -321,37 +321,34 @@ class BetOutcomeCalculator {
     }
 
     /**
-     * Load league mapping from Cloudinary CSV
+     * Load league mapping from MongoDB database
      */
     async loadLeagueMapping() {
         try {
             // Import dynamically to avoid circular dependency
-            const { downloadLeagueMappingClean } = await import('../utils/cloudinaryCsvLoader.js');
+            const LeagueMapping = (await import('../models/LeagueMapping.js')).default;
             
-            console.log('📥 Loading league mapping from Cloudinary...');
-            const csvContent = await downloadLeagueMappingClean();
-            const lines = csvContent.split('\n').slice(1); // Skip header
+            console.log('📥 Loading league mapping from database...');
+            
+            // Fetch all league mappings from DB
+            const mappings = await LeagueMapping.find({}).lean();
 
             this.leagueMapping.clear();
 
-            for (const line of lines) {
-                if (line.trim()) {
-                    const [unibetId, unibetName, fotmobId, fotmobName] = line.split(',').map(s => s.trim().replace(/"/g, ''));
-
-                    if (unibetId && fotmobId) {
-                        this.leagueMapping.set(unibetId, {
-                            unibetId: unibetId,
-                            unibetName: unibetName,
-                            fotmobId: fotmobId,
-                            fotmobName: fotmobName
-                        });
-                    }
+            for (const mapping of mappings) {
+                if (mapping.unibetId && mapping.fotmobId) {
+                    this.leagueMapping.set(String(mapping.unibetId), {
+                        unibetId: String(mapping.unibetId),
+                        unibetName: mapping.unibetName,
+                        fotmobId: String(mapping.fotmobId),
+                        fotmobName: mapping.fotmobName
+                    });
                 }
             }
 
-            console.log(`✅ Loaded ${this.leagueMapping.size} league mappings`);
+            console.log(`✅ Loaded ${this.leagueMapping.size} league mappings from database`);
         } catch (error) {
-            console.error('Error loading league mapping:', error.message);
+            console.error('Error loading league mapping from database:', error.message);
         }
     }
 
@@ -857,7 +854,7 @@ class BetOutcomeCalculator {
     /**
      * Find matching Fotmob match for a bet
      */
-    findMatchingFotmobMatch(bet, fotmobData) {
+    async findMatchingFotmobMatch(bet, fotmobData) {
         const MINIMUM_SIMILARITY = 0.6;
         const matchingResult = {
             match: null,
@@ -1184,6 +1181,36 @@ class BetOutcomeCalculator {
 
         if (!bestMatch || bestScore < MINIMUM_SIMILARITY) {
             console.log(`   ❌ FAILED: ${bestMatch ? 'Score too low' : 'No match found'}`);
+            
+            // ✅ NEW: Try Gemini AI fallback if we have matches but score is too low
+            if (allMatchesToSearch.length > 0 && bestMatch) {
+                console.log(`   🤖 Attempting Gemini AI fallback for match finding...`);
+                try {
+                    const { findMatchWithGemini } = await import('./utils/gemini-match-matcher.js');
+                    const geminiMatch = await findMatchWithGemini(
+                        bet.homeName,
+                        bet.awayName,
+                        betDate,
+                        bet.leagueName || leagueMapping.fotmobName,
+                        allMatchesToSearch
+                    );
+                    
+                    if (geminiMatch) {
+                        console.log(`   ✅ Gemini found match: ${geminiMatch.home?.name || 'Unknown'} vs ${geminiMatch.away?.name || 'Unknown'}`);
+                        matchingResult.match = geminiMatch;
+                        matchingResult.score = 0.7; // Set a reasonable score for Gemini matches
+                        matchingResult.leagueMapping = leagueMapping;
+                        matchingResult.debugInfo.searchSteps.push(`✅ Gemini fallback: Match found via AI`);
+                        return matchingResult;
+                    } else {
+                        console.log(`   ❌ Gemini could not find a match either`);
+                    }
+                } catch (geminiError) {
+                    console.error(`   ❌ Gemini fallback failed:`, geminiError.message || geminiError);
+                    // Continue to original error handling
+                }
+            }
+            
             matchingResult.error = `No suitable match found. Best similarity: ${bestScore.toFixed(3)}`;
             matchingResult.cancellationReason = 'NO_SUITABLE_MATCH_FOUND';
             return matchingResult;
@@ -1228,6 +1255,19 @@ class BetOutcomeCalculator {
                     const homeScore = matchDetails.header.teams[0]?.score;
                     const awayScore = matchDetails.header.teams[1]?.score;
                     console.log(`   - Score: ${homeScore} - ${awayScore}`);
+                }
+                
+                // Debug: Check for unavailable array in matchDetails (correct location: content.lineup.awayTeam/homeTeam.unavailable)
+                const awayUnavailable = matchDetails?.content?.lineup?.awayTeam?.unavailable || [];
+                const homeUnavailable = matchDetails?.content?.lineup?.homeTeam?.unavailable || [];
+                const unavailableCheck = [...(Array.isArray(awayUnavailable) ? awayUnavailable : []), 
+                                          ...(Array.isArray(homeUnavailable) ? homeUnavailable : [])];
+                console.log(`   - Unavailable players check: ${unavailableCheck.length} total (Away: ${Array.isArray(awayUnavailable) ? awayUnavailable.length : 0}, Home: ${Array.isArray(homeUnavailable) ? homeUnavailable.length : 0})`);
+                if (unavailableCheck.length > 0) {
+                    console.log(`   - Unavailable players found: ${unavailableCheck.length}`);
+                    unavailableCheck.slice(0, 3).forEach((p, idx) => {
+                        console.log(`     ${idx + 1}. ${p?.name || 'Unknown'} (ID: ${p?.id || 'N/A'}, Type: ${p?.unavailability?.type || 'N/A'})`);
+                    });
                 }
                 
                 // Check for player stats data (it's in content.playerStats)
@@ -5087,10 +5127,13 @@ class BetOutcomeCalculator {
             // ALWAYS try to find player by name first (more reliable than bet.participantId)
             // This ensures we get the correct Fotmob player ID
             let playerId = null;
+            let geminiNoMatch = false;
             if (participantName) {
                 console.log(`   - Looking up player ID by name: "${participantName}"`);
-                playerId = await findPlayerIdByName(matchDetails, participantName);
-                console.log(`   - Found Player ID by name: ${playerId}`);
+                const result = await findPlayerIdByName(matchDetails, participantName);
+                playerId = result?.playerId || null;
+                geminiNoMatch = result?.geminiNoMatch || false;
+                console.log(`   - Found Player ID by name: ${playerId}${geminiNoMatch ? ' (Gemini NO_MATCH)' : ''}`);
             }
             
             // Fallback to bet.participantId only if name lookup failed
@@ -5300,6 +5343,61 @@ class BetOutcomeCalculator {
                 }
             }
             
+            // ✅ NEW: Check if player is unavailable (injured/suspended/international duty)
+            // If player is unavailable, bet should be LOST (not cancelled)
+            // ✅ CORRECT LOCATION: content.lineup.awayTeam.unavailable and content.lineup.homeTeam.unavailable
+            if (playerId) {
+                const awayUnavailable = matchDetails?.content?.lineup?.awayTeam?.unavailable || [];
+                const homeUnavailable = matchDetails?.content?.lineup?.homeTeam?.unavailable || [];
+                const unavailablePlayers = [...(Array.isArray(awayUnavailable) ? awayUnavailable : []), 
+                                             ...(Array.isArray(homeUnavailable) ? homeUnavailable : [])];
+                
+                if (unavailablePlayers.length > 0) {
+                    const unavailablePlayer = unavailablePlayers.find(p => 
+                        Number(p?.id || p?.playerId) === Number(playerId)
+                    );
+                    
+                    if (unavailablePlayer) {
+                        const unavailabilityType = unavailablePlayer?.unavailability?.type || 'unknown';
+                        const reason = unavailablePlayer?.unavailability?.expectedReturn || 'N/A';
+                        const playerName = unavailablePlayer?.name || unavailablePlayer?.fullName || participantName || 'Unknown';
+                        
+                        console.log(`   ⚠️ Player "${playerName}" (ID: ${playerId}) is UNAVAILABLE`);
+                        console.log(`   - Unavailability Type: ${unavailabilityType}`);
+                        console.log(`   - Expected Return: ${reason}`);
+                        console.log(`   - Bet will be marked as LOST (player did not play)`);
+                        
+                        // Get line for proper reason message
+                        let line = null;
+                        if (bet.betDetails?.total) {
+                            line = parseFloat(bet.betDetails.total);
+                        } else if (typeof bet.handicapLine === 'number') {
+                            line = bet.handicapLine / 1000;
+                        } else if (typeof bet.line === 'number') {
+                            line = normalizeLine(bet.line);
+                        } else if (typeof bet.handicapRaw === 'number') {
+                            line = bet.handicapRaw / 1000000;
+                        }
+                        
+                        const sel = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '').toLowerCase();
+                        const lineStr = line !== null ? ` ${line}` : '';
+                        
+                        return {
+                            status: 'lost',
+                            actualOutcome: `Player unavailable (${unavailabilityType})`,
+                            debugInfo: { 
+                                playerId: Number(playerId), 
+                                participantName, 
+                                unavailabilityType,
+                                expectedReturn: reason,
+                                source: 'unavailable_check'
+                            },
+                            reason: `Player Shots on Target${lineStr}: Player "${playerName}" is unavailable (${unavailabilityType}) - did not play → LOST`
+                        };
+                    }
+                }
+            }
+            
             // Final fallback: If still no player ID, try to get stats directly from shotmap by name
             if (!playerId && participantName) {
                 console.log(`   - Final fallback: Searching shotmap by player name "${participantName}"...`);
@@ -5383,6 +5481,18 @@ class BetOutcomeCalculator {
             if (!Number.isFinite(value)) {
                 console.log(`❌ Shots on target value is not a valid number`);
                 console.log(`   - Stats object:`, JSON.stringify(stats, null, 2));
+                
+                // ✅ If Gemini returned NO_MATCH, mark bet as LOST instead of cancelled
+                if (geminiNoMatch) {
+                    console.log(`   ⚠️ Gemini returned NO_MATCH - player not found in match, marking bet as LOST`);
+                    return {
+                        status: 'lost',
+                        reason: 'Player not found in match (Gemini AI confirmed NO_MATCH)',
+                        actualOutcome: 'Player not found',
+                        debugInfo: { playerId, participantName, stats, geminiNoMatch: true }
+                    };
+                }
+                
                 return { 
                     status: 'cancelled', 
                     reason: 'Player shots on target stats unavailable', 
@@ -5466,10 +5576,13 @@ class BetOutcomeCalculator {
             
             // ALWAYS try to find player by name first, even if we have a playerId
             let foundPlayerId = null;
+            let geminiNoMatch = false;
             if (participantName) {
                 console.log(`   - Looking up player ID by name: "${participantName}"`);
-                foundPlayerId = await findPlayerIdByName(matchDetails, participantName);
-                console.log(`   - Found Player ID by name: ${foundPlayerId}`);
+                const result = await findPlayerIdByName(matchDetails, participantName);
+                foundPlayerId = result?.playerId || null;
+                geminiNoMatch = result?.geminiNoMatch || false;
+                console.log(`   - Found Player ID by name: ${foundPlayerId}${geminiNoMatch ? ' (Gemini NO_MATCH)' : ''}`);
                 
                 if (foundPlayerId) {
                     playerId = foundPlayerId;
@@ -5554,6 +5667,17 @@ class BetOutcomeCalculator {
             }
             
             if (value === null) {
+                // ✅ If Gemini returned NO_MATCH, mark bet as LOST instead of cancelled
+                if (geminiNoMatch) {
+                    console.log(`   ⚠️ Gemini returned NO_MATCH - player not found in match, marking bet as LOST`);
+                    return {
+                        status: 'lost',
+                        reason: 'Player not found in match (Gemini AI confirmed NO_MATCH)',
+                        actualOutcome: 'Player not found',
+                        debugInfo: { missing: 'shots', playerId: Number(playerId), participantName, geminiNoMatch: true }
+                    };
+                }
+                
                 return {
                     status: 'cancelled',
                     reason: 'Player shots statistics unavailable',
@@ -8001,7 +8125,7 @@ class BetOutcomeCalculator {
 
             // Step 3: Find matching Fotmob match
             console.log(`\n🔍 STEP 3: Finding matching Fotmob match...`);
-            const matchResult = this.findMatchingFotmobMatch(bet, fotmobData);
+            const matchResult = await this.findMatchingFotmobMatch(bet, fotmobData);
 
             console.log(`📊 Match finding result:`);
             console.log(`   - Match found: ${!!matchResult.match}`);

@@ -3,10 +3,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import axios from 'axios';
 import { GoogleGenAI } from '@google/genai';
-import { v2 as cloudinary } from 'cloudinary';
-import { downloadLeagueMappingClean } from '../utils/cloudinaryCsvLoader.js';
+// ✅ REMOVED: Cloudinary - using local files only for testing
+// import { v2 as cloudinary } from 'cloudinary';
+// import { downloadLeagueMappingClean } from '../utils/cloudinaryCsvLoader.js';
 import { normalizeTeamName, calculateNameSimilarity } from '../unibet-calc/utils/fotmob-helpers.js';
 import { waitForRateLimit } from '../utils/geminiRateLimiter.js';
+import LeagueMapping from '../models/LeagueMapping.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,14 +33,19 @@ class LeagueMappingAutoUpdate {
     }
 
     /**
-     * Load existing mappings from Cloudinary CSV
+     * Load existing mappings from local CSV file
      */
     async loadExistingMappings() {
-        console.log('[LeagueMapping] Loading existing mappings from Cloudinary...');
+        console.log('[LeagueMapping] Loading existing mappings from local CSV file...');
         
         try {
-            // Download from Cloudinary (with local file fallback)
-            const csvContent = await downloadLeagueMappingClean();
+            // ✅ CHANGED: Read directly from local file (no Cloudinary)
+            if (!fs.existsSync(this.serverCsvPath)) {
+                console.warn(`[LeagueMapping] ⚠️ CSV file not found: ${this.serverCsvPath}`);
+                return;
+            }
+            
+            const csvContent = fs.readFileSync(this.serverCsvPath, 'utf-8');
             const lines = csvContent.split('\n').slice(1); // Skip header
 
             this.existingMappings.clear();
@@ -961,6 +968,56 @@ If no match found, return:
     }
 
     /**
+     * Save league mapping to MongoDB database
+     * @param {Object} mapping - Mapping object with all league data
+     * @returns {Promise<boolean>} - True if successful
+     */
+    async saveMappingToDatabase(mapping) {
+        try {
+            const unibetId = parseInt(mapping.unibetId);
+            const fotmobId = parseInt(mapping.fotmobId);
+            const matchType = mapping.exactMatch ? 'Exact Match' : 'Different Name';
+            
+            // Check if mapping already exists
+            const existing = await LeagueMapping.findOne({
+                $or: [
+                    { unibetId: unibetId },
+                    { fotmobId: fotmobId }
+                ]
+            });
+            
+            if (existing) {
+                console.log(`[LeagueMapping] ⚠️ Mapping already exists in DB - Unibet ID: ${unibetId}, Fotmob ID: ${fotmobId}`);
+                return false;
+            }
+            
+            // Create new mapping
+            const leagueMapping = new LeagueMapping({
+                unibetId: unibetId,
+                unibetName: mapping.unibetName,
+                fotmobId: fotmobId,
+                fotmobName: mapping.fotmobName,
+                matchType: matchType,
+                country: mapping.country || '',
+                unibetUrl: mapping.unibetUrl || '',
+                fotmobUrl: mapping.fotmobUrl || `https://www.fotmob.com/leagues/${fotmobId}`
+            });
+            
+            await leagueMapping.save();
+            console.log(`[LeagueMapping] ✅ Saved to DB: ${mapping.unibetName} (Unibet: ${unibetId}, Fotmob: ${fotmobId})`);
+            return true;
+        } catch (error) {
+            // Handle duplicate key error (E11000)
+            if (error.code === 11000) {
+                console.log(`[LeagueMapping] ⚠️ Duplicate key error in DB - mapping already exists`);
+                return false;
+            }
+            console.error(`[LeagueMapping] ❌ Error saving to database:`, error.message);
+            throw error;
+        }
+    }
+
+    /**
      * Normalize a string to URL slug format
      * @param {string} str - String to normalize
      * @returns {string} - Normalized slug
@@ -1409,6 +1466,14 @@ If no match found, return:
                     const fotmobId = String(fotmobLeague.id);
                     const unibetIdStr = String(unibetLeague.id);
                     
+                    // ✅ VALIDATION: Only save properly mapped leagues (must have valid Fotmob ID)
+                    const fotmobIdNum = parseInt(fotmobId);
+                    if (isNaN(fotmobIdNum) || fotmobIdNum <= 0) {
+                        console.log(`[LeagueMapping] ⚠️ Skipping ${unibetLeague.name} - Invalid Fotmob ID: ${fotmobId}`);
+                        notFoundCount++;
+                        continue;
+                    }
+                    
                     // ✅ Check if this Fotmob ID is already mapped to any Unibet league
                     // Normalize to string for comparison
                     if (this.existingFotmobIds.has(fotmobId)) {
@@ -1433,6 +1498,19 @@ If no match found, return:
                         continue;
                     }
                     
+                    // ✅ VALIDATION: Must have valid Fotmob name
+                    if (!fotmobLeague.name || !fotmobLeague.name.trim()) {
+                        console.log(`[LeagueMapping] ⚠️ Skipping ${unibetLeague.name} - Missing Fotmob name`);
+                        notFoundCount++;
+                        continue;
+                    }
+                    
+                    // ✅ Construct Unibet URL before saving
+                    const constructedUrl = this.constructUnibetUrl({
+                        unibetName: unibetLeague.englishName || unibetLeague.name,
+                        country: unibetLeague.country || ''
+                    });
+                    
                     // Add to CSV
                     const mappingData = {
                         unibetId: unibetIdStr,
@@ -1440,7 +1518,8 @@ If no match found, return:
                         fotmobId: fotmobId,
                         fotmobName: fotmobLeague.name, // Already using parentLeagueName for groups
                         exactMatch: fotmobLeague.exactMatch,
-                        country: unibetLeague.country || ''
+                        country: unibetLeague.country || '',
+                        unibetUrl: constructedUrl // ✅ Add Unibet URL
                     };
 
                     const success = await this.addMappingToCsv(mappingData);
@@ -1449,6 +1528,15 @@ If no match found, return:
                         newMappingsCount++;
                         // Track the new Fotmob ID (normalize to string)
                         this.existingFotmobIds.add(String(fotmobId));
+                        
+                        // ✅ NEW: Save to Database (only properly mapped leagues)
+                        try {
+                            await this.saveMappingToDatabase(mappingData);
+                            console.log(`[LeagueMapping] ✅ Saved ${mappingData.unibetName} to database`);
+                        } catch (error) {
+                            console.warn(`[LeagueMapping] ⚠️ Failed to save ${mappingData.unibetName} to database:`, error.message);
+                            // Don't fail the whole job if DB save fails
+                        }
                         
                         // ✅ NEW: Sync to URLs CSV
                         try {
@@ -1496,19 +1584,20 @@ If no match found, return:
             console.log(`[LeagueMapping] ⏰ Total execution time: ${duration} seconds`);
             console.log(`[LeagueMapping] ⏰ End time: ${new Date().toISOString()}`);
             
+            // ✅ REMOVED: Cloudinary upload - using local files only for testing
             // Upload CSV files to Cloudinary after job completes
-            try {
-                const uploadResult = await this.uploadCsvToCloudinary();
-                if (uploadResult.success) {
-                    console.log('[LeagueMapping] ☁️ CSV files uploaded to Cloudinary successfully');
-                    result.cloudinaryUpload = uploadResult;
-                } else {
-                    console.log('[LeagueMapping] ⚠️ Cloudinary upload skipped or failed:', uploadResult.reason || uploadResult.error);
-                }
-            } catch (uploadError) {
-                console.error('[LeagueMapping] ⚠️ Cloudinary upload error (non-blocking):', uploadError.message);
-                // Don't fail the job if upload fails
-            }
+            // try {
+            //     const uploadResult = await this.uploadCsvToCloudinary();
+            //     if (uploadResult.success) {
+            //         console.log('[LeagueMapping] ☁️ CSV files uploaded to Cloudinary successfully');
+            //         result.cloudinaryUpload = uploadResult;
+            //     } else {
+            //         console.log('[LeagueMapping] ⚠️ Cloudinary upload skipped or failed:', uploadResult.reason || uploadResult.error);
+            //     }
+            // } catch (uploadError) {
+            //     console.error('[LeagueMapping] ⚠️ Cloudinary upload error (non-blocking):', uploadError.message);
+            //     // Don't fail the job if upload fails
+            // }
             
             // Ensure we return immediately without any blocking operations
             return result;
