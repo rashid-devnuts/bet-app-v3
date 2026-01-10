@@ -327,9 +327,9 @@ class BetOutcomeCalculator {
         try {
             // Import dynamically to avoid circular dependency
             const LeagueMapping = (await import('../models/LeagueMapping.js')).default;
-            
+
             console.log('📥 Loading league mapping from database...');
-            
+
             // Fetch all league mappings from DB
             const mappings = await LeagueMapping.find({}).lean();
 

@@ -1118,10 +1118,12 @@ If no match found, return:
             .normalize('NFD') // Decompose accented characters (é -> e + ́)
             .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks (accents)
             .replace(/[''"]/g, '') // Remove apostrophes/quotes
-            .replace(/[^a-z0-9\s-]/g, '') // Remove special chars (but keep spaces and hyphens)
-            .replace(/\s+/g, '_') // Replace spaces with underscores (preserve hyphens)
-            .replace(/_+/g, '_') // Replace multiple underscores with single
-            .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
+            .replace(/[^a-z0-9\s()-]/g, '') // Keep parentheses, spaces, hyphens
+            .replace(/\s+/g, '_') // Replace spaces with underscore
+            .replace(/\(/g, '_') // ✅ ONE-LINER: Replace ( with _ (creates __ when after space)
+            .replace(/\)/g, '_') // ✅ ONE-LINER: Replace ) with _
+            .replace(/([^_])_{3,}([^_])/g, '$1_$2') // Collapse 3+ underscores to single
+            .replace(/^_+/, '') // Remove only leading underscores, keep trailing ones
             .trim();
     }
 
@@ -1537,6 +1539,13 @@ If no match found, return:
                 const leagueNameLower = (unibetLeague.name || '').toLowerCase();
                 if (leagueNameLower.includes('esports') || leagueNameLower.includes('esport')) {
                     console.log(`[LeagueMapping] ⏭️ Skipping Esports league: ${unibetLeague.name}`);
+                    skippedCount++;
+                    continue;
+                }
+                
+                // ✅ ADD: Skip Club Friendly Matches
+                if (leagueNameLower.includes('club friendly') || leagueNameLower.includes('club friendly matches')) {
+                    console.log(`[LeagueMapping] ⏭️ Skipping Club Friendly Matches league: ${unibetLeague.name}`);
                     skippedCount++;
                     continue;
                 }

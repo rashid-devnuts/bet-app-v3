@@ -1,64 +1,179 @@
-Unibet_ID,Unibet_Name,Fotmob_ID,Fotmob_Name,Match_Type,Country/Region
-1000123032,Africa Cup of Nations,289,Africa Cup of Nations,Exact Match,International
-2000056761,Premier League,524,Stars League,Different Name,Iraq
-1000257492,Ligat Ha'Al,127,Ligat Ha'al,Exact Match,Israel
-1000254606,Premier League,529,Premier League,Exact Match,Kuwait
-1000250591,Professional League,536,Saudi Pro League,Different Name,Saudi Arabia
-2000050125,Premier League,116,Premier League,Exact Match,Wales
-2010133830,League Cup,10270,League Cup,Exact Match,Egypt
-1000094985,Premier League,47,Premier League,Exact Match,England
-1000094981,The Championship,48,Championship,Different Name,England
-1000094982,League One,108,League One,Exact Match,England
-1000094987,League Two,109,League Two,Exact Match,England
-2000054030,Northern League Premier Division,8947,Northern Premier Division,Different Name,England
-1000182606,A-League,113,A-League Men,Different Name,Australia
-1000251950,1st Division,136,Cyprus League,Different Name,Cyprus
-1000253277,Arabian Gulf League,538,Pro League,Different Name,United Arab Emirates
-2000063156,Premier League,10443,Bangladesh Football League,Different Name,Bangladesh
-2000051179,Super League,8985,Liga Super,Different Name,Malaysia
-1000095042,Primeira Liga,61,Liga Portugal,Different Name,Portugal
-1000093393,Club Friendly Matches,489,Club Friendlies,Different Name,International
-2000050279,Ligue 1,516,Ligue 1,Exact Match,Algeria
-2000095699,Liga 1,8983,Super League,Different Name,Indonesia
-2000050214,Liga Leumit,128,Leumit League,Different Name,Israel
-2000079607,Serie C Girone A,147,Serie C,Different Name,Italy
-2000109034,Liga MX Femenil (W),9906,Liga MX Femenil Clausura,Different Name,Mexico
-1000265213,Liga 2,185,Liga Portugal 2,Different Name,Portugal
-1000095677,Süper Kupa,166,Super Cup,Different Name,Turkey
-1000385084,National League South,8944,National League South,Exact Match,England
-1000095001,Serie A,55,Serie A,Exact Match,Italy
-2000054001,Qatar Stars League,535,Qatar Stars League,Exact Match,Qatar
-1000095050,Copa del Rey,138,Copa del Rey,Exact Match,Spain
-1000245807,Cup,330,Cup,Exact Match,Cyprus
-1000094273,Cup,145,Cup Final Stage,Different Name,Greece
-1000094818,Segunda RFEF 3,9138,Segunda Federación,Different Name,Spain
-2000051282,"A-League (W)",9495,"A-League Women",Different Name,Australia
-2000096351,"Premier League 2 U21 (Division 1)",9084,"Premier League 2",Different Name,England
-2000131375,"Primera RFEF 2",8968,"Primera Federación",Different Name,Spain
-1000374584,"Thai League 1",8984,"Thai League",Different Name,Thailand
-2000076226,"Thai League 2",9498,"Thai League 2",Exact Match,Thailand
-1000305993,"1. Lig",165,"1. Lig",Exact Match,Turkey
-1000095233,Supercopa,139,Super Cup,Different Name,Spain
-1000094633,"Trophée des Champions",207,"Super Cup",Different Name,France
-1000094970,"Paulista A1",10244,"Paulista A1",Exact Match,Brazil
-2000052731,"2nd Division",9100,"2. Division",Different Name,Cyprus
-1000094984,"FA Cup",132,"FA Cup",Exact Match,England
-2000050345,"FA Trophy",9253,"FA Trophy",Exact Match,England
-1000095485,"National League",117,"National League",Exact Match,England
-2000055849,"Super League (W)",9227,"WSL",Different Name,England
-2000080468,"The Championship (W)",9294,"WSL 2",Different Name,England
-1000094990,"Coupe de France",134,"Coupe de France",Exact Match,France
-1000094994,"Bundesliga",54,"Bundesliga",Exact Match,Germany
-1000094996,"Super League",135,"Super League",Exact Match,Greece
-2000122597,"Super League 2",8815,"Super League 2 Grp. B",Different Name,Greece
-1000095002,"Serie B",86,"Serie B",Exact Match,Italy
-1000451251,"Liga de Expansion MX",8976,"Liga de Expansion MX Clausura",Different Name,Mexico
-1000094112,"Liga MX",230,"Liga MX Clausura",Different Name,Mexico
-1000094980,"Eredivisie",57,"Eredivisie",Exact Match,Netherlands
-2000095410,"Tweede Divisie",9195,"Tweede Divisie",Exact Match,Netherlands
-2000050064,"Irish Cup",9389,"Irish Cup",Different Name,Northern Ireland
-1000095045,"Championship",123,"Championship",Exact Match,Scotland
-1000095047,"Scottish Premiership",64,"Premiership",Different Name,Scotland
-1000095049,"La Liga",87,"LaLiga",Different Name,Spain
-1000094708,"La Liga 2",140,"LaLiga2",Different Name,Spain
-2000051626,"Primera División (W)",9907,"Liga F",Different Name,Spain
+Unibet_ID,Unibet_Name,Fotmob_ID,Fotmob_Name,Match_Type,Country/Region,Is_Verified
+1000093381,Champions League,42,Champions League,Exact Match,International,false
+1000093399,Copa Libertadores,45,Copa Libertadores,Exact Match,International,false
+1000093570,International Friendly Matches,114,Friendlies,Different Name,International,false
+1000093998,Copa do Brasil,9067,Copa do Brasil,Exact Match,Brazil,false
+1000094112,Liga MX,230,Liga MX Clausura,Different Name,Mexico,true
+1000094254,Scottish Cup,137,Scottish Cup,Exact Match,Scotland,false
+1000094273,Cup,145,Cup Final Stage,Different Name,Greece,true
+1000094431,Brasileirao Serie B,8814,Serie B,Different Name,Brazil,false
+1000094568,Ligue 2,110,Ligue 2,Exact Match,France,false
+1000094569,Brasileirao Serie A,268,Serie A,Different Name,Brazil,false
+1000094633,Trophée des Champions,207,Super Cup,Different Name,France,true
+1000094708,La Liga 2,140,LaLiga2,Different Name,Spain,true
+1000094744,Ettan Norra,169,Ettan,Different Name,Sweden,false
+1000094745,Ettan Södra,8,Ettan,Different Name,Sweden,false
+1000094796,Ykkönen,251,Ykkosliiga,Different Name,Finland,false
+1000094818,Segunda RFEF 3,9138,Segunda Federación,Different Name,Spain,true
+1000094825,Championnat National,8970,National,Different Name,France,false
+1000094961,Beker van Belgie,149,Belgian Cup,Different Name,Belgium,false
+1000094965,Jupiler Pro League,40,First Division A,Different Name,Belgium,false
+1000094970,Paulista A1,10244,Paulista A1,Exact Match,Brazil,true
+1000094975,First League,122,1. Liga,Different Name,Czech Republic,false
+1000094976,1st Division,85,1. Division,Different Name,Denmark,false
+1000094978,Superligaen,46,Superligaen,Exact Match,Denmark,false
+1000094979,KNVB Beker,235,KNVB Cup,Different Name,Netherlands,false
+1000094980,Eredivisie,57,Eredivisie,Exact Match,Netherlands,true
+1000094981,The Championship,48,Championship,Different Name,England,true
+1000094982,League One,108,League One,Exact Match,England,true
+1000094984,FA Cup,132,FA Cup,Exact Match,England,true
+1000094985,Premier League,47,Premier League,Exact Match,England,true
+1000094986,EFL Cup,133,EFL Cup,Exact Match,England,false
+1000094987,League Two,109,League Two,Exact Match,England,true
+1000094989,Veikkausliiga,51,Veikkausliiga,Exact Match,Finland,false
+1000094990,Coupe de France,134,Coupe de France,Exact Match,France,true
+1000094991,Ligue 1,53,Ligue 1,Exact Match,France,false
+1000094993,2. Bundesliga,146,2. Bundesliga,Exact Match,Germany,false
+1000094994,Bundesliga,54,Bundesliga,Exact Match,Germany,true
+1000094995,DFB Pokal,209,DFB Pokal,Exact Match,Germany,false
+1000094996,Super League,135,Super League,Exact Match,Greece,true
+1000094998,Coppa Italia,141,Coppa Italia,Exact Match,Italy,false
+1000095001,Serie A,55,Serie A,Exact Match,Italy,true
+1000095002,Serie B,86,Serie B,Exact Match,Italy,true
+1000095003,OBOS-ligaen,203,OBOS-ligaen,Exact Match,Norway,false
+1000095010,Eliteserien,59,Eliteserien,Exact Match,Norway,false
+1000095016,Puchar Polski,198,Puchar Polski,Exact Match,Poland,false
+1000095020,Super League,69,Super League,Exact Match,Switzerland,false
+1000095021,Challenge League,163,Challenge League,Exact Match,Switzerland,false
+1000095042,Primeira Liga,61,Liga Portugal,Different Name,Portugal,true
+1000095045,Championship,123,Championship,Exact Match,Scotland,true
+1000095046,League Cup,180,League Cup,Exact Match,Scotland,false
+1000095047,Scottish Premiership,64,Premiership,Different Name,Scotland,true
+1000095049,La Liga,87,LaLiga,Different Name,Spain,true
+1000095050,Copa del Rey,138,Copa del Rey,Exact Match,Spain,true
+1000095052,Superettan,168,Superettan,Exact Match,Sweden,false
+1000095057,Allsvenskan,67,Allsvenskan,Exact Match,Sweden,false
+1000095062,Süper Lig,71,Süper Lig,Exact Match,Turkey,false
+1000095063,MLS,130,MLS,Exact Match,USA,false
+1000095127,Eerste Divisie,111,Eerste Divisie,Exact Match,Netherlands,false
+1000095137,EFL Trophy,142,EFL Trophy,Exact Match,England,false
+1000095155,Primera Chile,273,Primera Division,Different Name,Chile,false
+1000095233,Supercopa,139,Super Cup,Different Name,Spain,true
+1000095346,Premium Liiga,248,Premium liiga,Different Name,Estonia,false
+1000095485,National League,117,National League,Exact Match,England,true
+1000095499,Liga I,189,Liga I,Exact Match,Romania,false
+1000095601,Premier Division,126,Premier Division,Exact Match,Ireland,false
+1000095645,J1-League,223,J. League,Different Name,Japan,false
+1000095677,Süper Kupa,166,Super Cup,Different Name,Turkey,true
+1000095713,Liga Pro,246,Serie A,Different Name,Ecuador,false
+1000095736,1. HNL League,252,HNL,Different Name,Croatia,false
+1000123032,Africa Cup of Nations,289,Africa Cup of Nations,Exact Match,International,true
+1000152623,J2-League,8974,J. League 2,Different Name,Japan,false
+1000152705,K-League 1,9080,K League 1,Different Name,South Korea,false
+1000154221,National Football League,253,FNL,Different Name,Czech Republic,false
+1000157714,A Lyga,228,A Lyga,Exact Match,Lithuania,false
+1000158930,Virsliga,226,Virsliga,Exact Match,Latvia,false
+1000171537,Premier League,441,Premier League,Exact Match,Ukraine,false
+1000176396,OBOS Damallsvenskan (W),9089,Damallsvenskan (W),Different Name,Sweden,false
+1000176403,Toppserien (W),331,Toppserien,Different Name,Norway,false
+1000179126,Copa Sudamericana,299,Copa Sudamericana,Exact Match,International,false
+1000182606,A-League,113,A-League Men,Different Name,Australia,true
+1000237680,Liga 1,131,Liga 1,Exact Match,Peru,false
+1000245807,Cup,330,Cup,Exact Match,Cyprus,true
+1000250591,Professional League,536,Saudi Pro League,Different Name,Saudi Arabia,true
+1000250636,SA Premier Soccer League,537,Premier Soccer League,Different Name,South Africa,false
+1000251645,Premier League,519,Premier League,Exact Match,Egypt,false
+1000251950,1st Division,136,Cyprus League,Different Name,Cyprus,true
+1000253277,Arabian Gulf League,538,Pro League,Different Name,United Arab Emirates,true
+1000254606,Premier League,529,Premier League,Exact Match,Kuwait,true
+1000257492,Ligat Ha'Al,127,Ligat Ha'al,Exact Match,Israel,true
+1000258091,NIFL Premiership,129,Premiership,Different Name,Northern Ireland,false
+1000265213,Liga 2,185,Liga Portugal 2,Different Name,Portugal,true
+1000280417,League One,124,League One,Exact Match,Scotland,false
+1000280418,League Two,125,League Two,Exact Match,Scotland,false
+1000297434,Prva Liga,173,Prva Liga,Exact Match,Slovenia,false
+1000305993,1. Lig,165,1. Lig,Exact Match,Turkey,true
+1000315962,Singapore Premier League,461,Singapore Premier League,Exact Match,Singapore,false
+1000338400,Super League,120,Super League,Exact Match,China,false
+1000345237,Bundesliga,38,Bundesliga,Exact Match,Austria,false
+1000348167,I Liga,197,1 Liga,Different Name,Poland,false
+1000353685,DFL-Supercup,8924,Super Cup,Different Name,Germany,false
+1000355562,3. Liga,208,3. Liga,Exact Match,Germany,false
+1000358593,Challenger Pro League,264,First Division B,Different Name,Belgium,false
+1000374584,Thai League 1,8984,Thai League,Different Name,Thailand,true
+1000383729,Elitedivisionen (W),256,Kvindeligaen,Different Name,Denmark,false
+1000385084,National League South,8944,National League South,Exact Match,England,true
+1000385219,Ekstraklasa,196,Ekstraklasa,Exact Match,Poland,false
+1000435401,Bundesliga (W),9676,Frauen Bundesliga,Different Name,Germany,false
+1000439335,Primera B,9126,Primera B,Exact Match,Chile,false
+1000442572,Primera B Nacional,8965,Primera B Nacional,Exact Match,Argentina,false
+1000443738,DBU Pokalen,242,DBU Pokalen,Exact Match,Denmark,false
+1000449742,Liga Dimayor,274,Primera A,Different Name,Colombia,false
+1000450453,Campeonato Uruguayo,161,Primera Division,Different Name,Uruguay,false
+1000451251,Liga de Expansion MX,8976,Liga de Expansion MX Clausura,Different Name,Mexico,true
+2000050064,Irish Cup,9389,Irish Cup,Different Name,Northern Ireland,true
+2000050115,Primera Paraguay,199,Division Profesional,Different Name,Paraguay,false
+2000050125,Premier League,116,Premier League,Exact Match,Wales,true
+2000050211,Copa Dimayor,9490,Copa Colombia,Different Name,Colombia,false
+2000050214,Liga Leumit,128,Leumit League,Different Name,Israel,true
+2000050271,Botola,530,Botola Pro,Different Name,Morocco,false
+2000050279,Ligue 1,516,Ligue 1,Exact Match,Algeria,true
+2000050345,FA Trophy,9253,FA Trophy,Exact Match,England,true
+2000050561,Liga Profesional Argentina,112,Liga Profesional,Different Name,Argentina,false
+2000050599,Super Liga,182,Super Liga,Exact Match,Serbia,false
+2000050783,Kansallinen Liiga (W),10174,Kansallinen (Women),Different Name,Finland,false
+2000051123,Copa de la Reina (W),10651,Copa de la Reina,Different Name,Spain,false
+2000051179,Super League,8985,Liga Super,Different Name,Malaysia,true
+2000051195,Europa League,73,Europa League,Exact Match,International,false
+2000051282,A-League (W),9495,A-League Women,Different Name,Australia,true
+2000051288,K-3 League,9537,K League 3,Different Name,South Korea,false
+2000051365,2. Liga,176,2. Liga,Different Name,Slovakia,false
+2000051466,Champions League (W),9375,Women's Champions League,Different Name,International,false
+2000051626,Primera División (W),9907,Liga F,Different Name,Spain,true
+2000052302,Azadegan League,9372,Azadegan League,Exact Match,Iran,false
+2000052405,Erovnuli Liga,439,Erovnuli Liga,Exact Match,Georgia,false
+2000052731,2nd Division,9100,2. Division,Different Name,Cyprus,true
+2000053119,Ligue 1,544,Ligue I,Different Name,Tunisia,false
+2000054001,Qatar Stars League,535,Qatar Stars League,Exact Match,Qatar,true
+2000054030,Northern League Premier Division,8947,Northern Premier Division,Different Name,England,true
+2000055068,Premier League,250,Premier League,Exact Match,Faroe Islands,false
+2000055538,Brasileirao Serie C,8971,Serie C,Different Name,Brazil,false
+2000055612,USL Championship,8972,USL Championship,Exact Match,USA,false
+2000055849,Super League (W),9227,WSL,Different Name,England,true
+2000056748,Copa Argentina,9305,Copa Argentina,Exact Match,Argentina,false
+2000056761,Premier League,524,Stars League,Different Name,Iraq,true
+2000056865,Segunda Division,9122,Segunda Division,Exact Match,Uruguay,false
+2000057364,African Championship of Nations,9428,African Nations Championship,Different Name,International,false
+2000059106,Brasileirao Serie D,9464,Serie D,Different Name,Brazil,false
+2000063156,Premier League,10443,Bangladesh Football League,Different Name,Bangladesh,true
+2000064655,K-League 2,9116,K League 2,Different Name,South Korea,false
+2000065880,UEFA Championship Qualification U21,10437,EURO U-21 Qualification,Different Name,International,false
+2000066138,AFC Asian Cup Qualification,10609,Asian Cup  Qualification Playoff,Different Name,International,false
+2000067441,J3-League,9136,J. League 3,Different Name,Japan,false
+2000069140,Champions League Qualification,10611,Champions League Qualification,Exact Match,International,false
+2000074865,NWSL (W),9134,NWSL,Different Name,USA,false
+2000075204,Elitettan (W),10308,Eliteettan (W),Different Name,Sweden,false
+2000076226,Thai League 2,9498,Thai League 2,Exact Match,Thailand,true
+2000077426,Europa League Qualification,10613,Europa League Qualification,Exact Match,International,false
+2000077607,II Liga,8935,2. Division,Different Name,Poland,false
+2000079607,Serie C Girone A,147,Serie C,Different Name,Italy,true
+2000080468,The Championship (W),9294,WSL 2,Different Name,England,true
+2000086372,World Cup Qualifying - Europe,10195,World Cup Qualification UEFA,Different Name,International,false
+2000087788,Torneo Federal A,9213,Primera B Metropolitana & Torneo Federal A,Different Name,Argentina,false
+2000095410,Tweede Divisie,9195,Tweede Divisie,Exact Match,Netherlands,true
+2000095699,Liga 1,8983,Super League,Different Name,Indonesia,true
+2000095935,Liga II,9113,Liga II,Exact Match,Romania,false
+2000096351,Premier League 2 U21 (Division 1),9084,Premier League 2,Different Name,England,true
+2000109034,Liga MX Femenil (W),9906,Liga MX Femenil Clausura,Different Name,Mexico,true
+2000116433,Copa Paraguay,10230,Copa Paraguay,Exact Match,Paraguay,false
+2000117732,Copa Ecuador,10046,Copa Ecuador,Exact Match,Ecuador,false
+2000120032,Leagues Cup,10043,Leagues Cup,Exact Match,International,false
+2000121299,CAF Champions League Qualification,10619,CAF Champions League Qualification,Exact Match,International,false
+2000122597,Super League 2,8815,Super League 2 Grp. B,Different Name,Greece,true
+2000130521,Conference League Qualification,10615,Conference League Qualification,Exact Match,International,false
+2000130522,Conference League,10216,Conference League,Exact Match,International,false
+2000131375,Primera RFEF 2,8968,Primera Federación,Different Name,Spain,true
+2010133830,League Cup,10270,League Cup,Exact Match,Egypt,true
+2010133908,World Cup 2026,77,World Cup,Different Name,International,false
+2010203832,AFC Champions League 2,9469,AFC Champions League Two,Exact Match,International,false
+2010205606,Europa Cup (W),11129,UEFA Women's Europa Cup,Different Name,International,false

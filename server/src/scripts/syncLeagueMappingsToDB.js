@@ -105,10 +105,12 @@ async function syncLeagueMappingsToDB() {
                             .normalize('NFD')
                             .replace(/[\u0300-\u036f]/g, '')
                             .replace(/[''"]/g, '')
-                            .replace(/[^a-z0-9\s-]/g, '')
-                            .replace(/\s+/g, '_')
-                            .replace(/_+/g, '_')
-                            .replace(/^_+|_+$/g, '')
+                            .replace(/[^a-z0-9\s()-]/g, '') // Keep parentheses, spaces, hyphens
+                            .replace(/\s+/g, '_') // Replace spaces with underscore
+                            .replace(/\(/g, '_') // ✅ ONE-LINER: Replace ( with _ (creates __ when after space)
+                            .replace(/\)/g, '_') // ✅ ONE-LINER: Replace ) with _
+                            .replace(/([^_])_{3,}([^_])/g, '$1_$2') // Collapse 3+ underscores to single
+                            .replace(/^_+/, '') // Remove only leading underscores, keep trailing ones
                             .trim();
                     };
                     

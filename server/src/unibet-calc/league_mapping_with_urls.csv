@@ -1,64 +1,179 @@
-Unibet_ID,Unibet_URL,Unibet_Name,Fotmob_URL,Fotmob_Name,Match_Type,Country/Region
-1000123032,https://www.unibet.com.au/betting/sports/filter/football/africa_cup_of_nations,Africa Cup of Nations,https://www.fotmob.com/leagues/289,Africa Cup of Nations,Exact Match,International
-2000056761,https://www.unibet.com.au/betting/sports/filter/football/iraq/premier_league,Premier League,https://www.fotmob.com/leagues/524,Stars League,Different Name,Iraq
-1000257492,https://www.unibet.com.au/betting/sports/filter/football/israel/ligat_ha_al,Ligat Ha'Al,https://www.fotmob.com/leagues/127,Ligat Ha'al,Exact Match,Israel
-1000254606,https://www.unibet.com.au/betting/sports/filter/football/kuwait/premier_league,Premier League,https://www.fotmob.com/leagues/529,Premier League,Exact Match,Kuwait
-1000250591,https://www.unibet.com.au/betting/sports/filter/football/saudi_arabia/professional_league,Professional League,https://www.fotmob.com/leagues/536,Saudi Pro League,Different Name,Saudi Arabia
-2000050125,https://www.unibet.com.au/betting/sports/filter/football/wales/premier_league,Premier League,https://www.fotmob.com/leagues/116,Premier League,Exact Match,Wales
-2010133830,https://www.unibet.com.au/betting/sports/filter/football/egypt/league_cup,League Cup,https://www.fotmob.com/leagues/10270,League Cup,Exact Match,Egypt
-1000094985,https://www.unibet.com.au/betting/sports/filter/football/england/premier_league,Premier League,https://www.fotmob.com/leagues/47,Premier League,Exact Match,England
-1000094981,https://www.unibet.com.au/betting/sports/filter/football/england/the_championship,The Championship,https://www.fotmob.com/leagues/48,Championship,Different Name,England
-1000094982,https://www.unibet.com.au/betting/sports/filter/football/england/league_one,League One,https://www.fotmob.com/leagues/108,League One,Exact Match,England
-1000094987,https://www.unibet.com.au/betting/sports/filter/football/england/league_two,League Two,https://www.fotmob.com/leagues/109,League Two,Exact Match,England
-2000054030,https://www.unibet.com.au/betting/sports/filter/football/england/northern_league_premier_division,Northern League Premier Division,https://www.fotmob.com/leagues/8947,Northern Premier Division,Different Name,England
-1000182606,https://www.unibet.com.au/betting/sports/filter/football/australia/a-league,A-League,https://www.fotmob.com/leagues/113,A-League Men,Different Name,Australia
-2000063156,https://www.unibet.com.au/betting/sports/filter/football/bangladesh/premier_league,Premier League,https://www.fotmob.com/leagues/10443,Bangladesh Football League,Different Name,Bangladesh
-1000251950,https://www.unibet.com.au/betting/sports/filter/football/cyprus/1st_division,1st Division,https://www.fotmob.com/leagues/136,Cyprus League,Different Name,Cyprus
-1000253277,https://www.unibet.com.au/betting/sports/filter/football/united_arab_emirates/arabian_gulf_league,Arabian Gulf League,https://www.fotmob.com/leagues/538,Pro League,Different Name,United Arab Emirates
-2000051179,https://www.unibet.com.au/betting/sports/filter/football/malaysia/super_league,Super League,https://www.fotmob.com/leagues/8985,Liga Super,Different Name,Malaysia
-1000095042,https://www.unibet.com.au/betting/sports/filter/football/portugal/primeira_liga,Primeira Liga,https://www.fotmob.com/leagues/61,Liga Portugal,Different Name,Portugal
-1000093393,https://www.unibet.com.au/betting/sports/filter/football/club_friendly_matches,Club Friendly Matches,https://www.fotmob.com/leagues/489,Club Friendlies,Different Name,International
-2000050279,https://www.unibet.com.au/betting/sports/filter/football/algeria/ligue_1,Ligue 1,https://www.fotmob.com/leagues/516,Ligue 1,Exact Match,Algeria
-2000095699,https://www.unibet.com.au/betting/sports/filter/football/indonesia/liga_1,Liga 1,https://www.fotmob.com/leagues/8983,Super League,Different Name,Indonesia
-2000050214,https://www.unibet.com.au/betting/sports/filter/football/israel/liga_leumit,Liga Leumit,https://www.fotmob.com/leagues/128,Leumit League,Different Name,Israel
-2000079607,https://www.unibet.com.au/betting/sports/filter/football/italy/serie_c_girone_a,Serie C Girone A,https://www.fotmob.com/leagues/147,Serie C,Different Name,Italy
-"2000109034","https://www.unibet.com.au/betting/sports/filter/football/mexico/liga_mx_femenil_parenplaceholder0","Liga MX Femenil (W)","https://www.fotmob.com/leagues/9906","Liga MX Femenil Clausura","Different Name","Mexico"
-1000265213,https://www.unibet.com.au/betting/sports/filter/football/portugal/liga_2,Liga 2,https://www.fotmob.com/leagues/185,Liga Portugal 2,Different Name,Portugal
-1000095677,https://www.unibet.com.au/betting/sports/filter/football/turkey/sper_kupa,Süper Kupa,https://www.fotmob.com/leagues/166,Super Cup,Different Name,Turkey
-1000385084,https://www.unibet.com.au/betting/sports/filter/football/england/national_league_south,National League South,https://www.fotmob.com/leagues/8944,National League South,Exact Match,England
-1000095001,https://www.unibet.com.au/betting/sports/filter/football/italy/serie_a,Serie A,https://www.fotmob.com/leagues/55,Serie A,Exact Match,Italy
-2000054001,https://www.unibet.com.au/betting/sports/filter/football/qatar/qatar_stars_league,Qatar Stars League,https://www.fotmob.com/leagues/535,Qatar Stars League,Exact Match,Qatar
-1000095050,https://www.unibet.com.au/betting/sports/filter/football/spain/copa_del_rey,Copa del Rey,https://www.fotmob.com/leagues/138,Copa del Rey,Exact Match,Spain
-1000245807,https://www.unibet.com.au/betting/sports/filter/football/cyprus/cup,Cup,https://www.fotmob.com/leagues/330,Cup,Exact Match,Cyprus
-1000094273,https://www.unibet.com.au/betting/sports/filter/football/greece/cup,Cup,https://www.fotmob.com/leagues/145,Cup Final Stage,Different Name,Greece
-1000094818,https://www.unibet.com.au/betting/sports/filter/football/spain/segunda_rfef_3,Segunda RFEF 3,https://www.fotmob.com/leagues/9138,Segunda Federación,Different Name,Spain
-1000095233,https://www.unibet.com.au/betting/sports/filter/football/spain/supercopa,Supercopa,https://www.fotmob.com/leagues/139,Super Cup,Different Name,Spain
-"2000051282","https://www.unibet.com.au/betting/sports/filter/football/australia/a-league_parenplaceholder0","A-League (W)","https://www.fotmob.com/leagues/9495","A-League Women","Different Name","Australia"
-"2000096351","https://www.unibet.com.au/betting/sports/filter/football/england/premier_league_2_u21_parenplaceholder0","Premier League 2 U21 (Division 1)","https://www.fotmob.com/leagues/9084","Premier League 2","Different Name","England"
-2000131375,https://www.unibet.com.au/betting/sports/filter/football/spain/primera_rfef_2,Primera RFEF 2,https://www.fotmob.com/leagues/8968,Primera Federación,Different Name,Spain
-1000374584,https://www.unibet.com.au/betting/sports/filter/football/thailand/thai_league_1,Thai League 1,https://www.fotmob.com/leagues/8984,Thai League,Different Name,Thailand
-2000076226,https://www.unibet.com.au/betting/sports/filter/football/thailand/thai_league_2,Thai League 2,https://www.fotmob.com/leagues/9498,Thai League 2,Exact Match,Thailand
-1000305993,https://www.unibet.com.au/betting/sports/filter/football/turkey/1_lig,1. Lig,https://www.fotmob.com/leagues/165,1. Lig,Exact Match,Turkey
-1000094633,https://www.unibet.com.au/betting/sports/filter/football/france/trophee_des_champions,"Trophée des Champions",https://www.fotmob.com/leagues/207,"Super Cup",Different Name,France
-1000094970,https://www.unibet.com.au/betting/sports/filter/football/brazil/paulista_a1,Paulista A1,https://www.fotmob.com/leagues/10244,Paulista A1,Exact Match,Brazil
-2000052731,https://www.unibet.com.au/betting/sports/filter/football/cyprus/2nd_division,2nd Division,https://www.fotmob.com/leagues/9100,2. Division,Different Name,Cyprus
-1000094984,https://www.unibet.com.au/betting/sports/filter/football/england/fa_cup,FA Cup,https://www.fotmob.com/leagues/132,FA Cup,Exact Match,England
-2000050345,https://www.unibet.com.au/betting/sports/filter/football/england/fa_trophy,FA Trophy,https://www.fotmob.com/leagues/9253,FA Trophy,Exact Match,England
-1000095485,https://www.unibet.com.au/betting/sports/filter/football/england/national_league,National League,https://www.fotmob.com/leagues/117,National League,Exact Match,England
-"2000055849","https://www.unibet.com.au/betting/sports/filter/football/england/super_league_parenplaceholder0","Super League (W)","https://www.fotmob.com/leagues/9227","WSL","Different Name","England"
-"2000080468","https://www.unibet.com.au/betting/sports/filter/football/england/the_championship_parenplaceholder0","The Championship (W)","https://www.fotmob.com/leagues/9294","WSL 2","Different Name","England"
-1000094990,https://www.unibet.com.au/betting/sports/filter/football/france/coupe_de_france,Coupe de France,https://www.fotmob.com/leagues/134,Coupe de France,Exact Match,France
-1000094994,https://www.unibet.com.au/betting/sports/filter/football/germany/bundesliga,Bundesliga,https://www.fotmob.com/leagues/54,Bundesliga,Exact Match,Germany
-1000094996,https://www.unibet.com.au/betting/sports/filter/football/greece/super_league,Super League,https://www.fotmob.com/leagues/135,Super League,Exact Match,Greece
-2000122597,https://www.unibet.com.au/betting/sports/filter/football/greece/super_league_2,Super League 2,https://www.fotmob.com/leagues/8815,Super League 2 Grp. B,Different Name,Greece
-1000095002,https://www.unibet.com.au/betting/sports/filter/football/italy/serie_b,Serie B,https://www.fotmob.com/leagues/86,Serie B,Exact Match,Italy
-1000451251,https://www.unibet.com.au/betting/sports/filter/football/mexico/liga_de_expansion_mx,Liga de Expansion MX,https://www.fotmob.com/leagues/8976,Liga de Expansion MX Clausura,Different Name,Mexico
-1000094112,https://www.unibet.com.au/betting/sports/filter/football/mexico/liga_mx,Liga MX,https://www.fotmob.com/leagues/230,Liga MX Clausura,Different Name,Mexico
-1000094980,https://www.unibet.com.au/betting/sports/filter/football/netherlands/eredivisie,Eredivisie,https://www.fotmob.com/leagues/57,Eredivisie,Exact Match,Netherlands
-2000095410,https://www.unibet.com.au/betting/sports/filter/football/netherlands/tweede_divisie,Tweede Divisie,https://www.fotmob.com/leagues/9195,Tweede Divisie,Exact Match,Netherlands
-2000050064,https://www.unibet.com.au/betting/sports/filter/football/northern_ireland/irish_cup,Irish Cup,https://www.fotmob.com/leagues/9389,Irish Cup,Different Name,Northern Ireland
-1000095045,https://www.unibet.com.au/betting/sports/filter/football/scotland/championship,Championship,https://www.fotmob.com/leagues/123,Championship,Exact Match,Scotland
-1000095047,https://www.unibet.com.au/betting/sports/filter/football/scotland/scottish_premiership,Scottish Premiership,https://www.fotmob.com/leagues/64,Premiership,Different Name,Scotland
-1000095049,https://www.unibet.com.au/betting/sports/filter/football/spain/la_liga,La Liga,https://www.fotmob.com/leagues/87,LaLiga,Different Name,Spain
-1000094708,https://www.unibet.com.au/betting/sports/filter/football/spain/la_liga_2,La Liga 2,https://www.fotmob.com/leagues/140,LaLiga2,Different Name,Spain
-"2000051626","https://www.unibet.com.au/betting/sports/filter/football/spain/primera_division_parenplaceholder0","Primera División (W)","https://www.fotmob.com/leagues/9907","Liga F","Different Name","Spain"
+Unibet_ID,Unibet_URL,Unibet_Name,Fotmob_URL,Fotmob_Name,Match_Type,Country/Region,Is_Verified
+1000093381,https://www.unibet.com.au/betting/sports/filter/football/champions_league,Champions League,https://www.fotmob.com/leagues/42,Champions League,Exact Match,International,false
+1000093399,https://www.unibet.com.au/betting/sports/filter/football/copa_libertadores,Copa Libertadores,https://www.fotmob.com/leagues/45,Copa Libertadores,Exact Match,International,false
+1000093570,https://www.unibet.com.au/betting/sports/filter/football/international_friendly_matches,International Friendly Matches,https://www.fotmob.com/leagues/114,Friendlies,Different Name,International,false
+1000093998,https://www.unibet.com.au/betting/sports/filter/football/brazil/copa_do_brasil,Copa do Brasil,https://www.fotmob.com/leagues/9067,Copa do Brasil,Exact Match,Brazil,false
+1000094112,https://www.unibet.com.au/betting/sports/filter/football/mexico/liga_mx,Liga MX,https://www.fotmob.com/leagues/230,Liga MX Clausura,Different Name,Mexico,true
+1000094254,https://www.unibet.com.au/betting/sports/filter/football/scotland/scottish_cup,Scottish Cup,https://www.fotmob.com/leagues/137,Scottish Cup,Exact Match,Scotland,false
+1000094273,https://www.unibet.com.au/betting/sports/filter/football/greece/cup,Cup,https://www.fotmob.com/leagues/145,Cup Final Stage,Different Name,Greece,true
+1000094431,https://www.unibet.com.au/betting/sports/filter/football/brazil/brasileirao_serie_b,Brasileirao Serie B,https://www.fotmob.com/leagues/8814,Serie B,Different Name,Brazil,false
+1000094568,https://www.unibet.com.au/betting/sports/filter/football/france/ligue_2,Ligue 2,https://www.fotmob.com/leagues/110,Ligue 2,Exact Match,France,false
+1000094569,https://www.unibet.com.au/betting/sports/filter/football/brazil/brasileirao_serie_a,Brasileirao Serie A,https://www.fotmob.com/leagues/268,Serie A,Different Name,Brazil,false
+1000094633,https://www.unibet.com.au/betting/sports/filter/football/france/trophee_des_champions,Trophée des Champions,https://www.fotmob.com/leagues/207,Super Cup,Different Name,France,true
+1000094708,https://www.unibet.com.au/betting/sports/filter/football/spain/la_liga_2,La Liga 2,https://www.fotmob.com/leagues/140,LaLiga2,Different Name,Spain,false
+1000094744,https://www.unibet.com.au/betting/sports/filter/football/sweden/ettan_norra,Ettan Norra,https://www.fotmob.com/leagues/169,Ettan,Different Name,Sweden,false
+1000094745,https://www.unibet.com.au/betting/sports/filter/football/sweden/ettan_sodra,Ettan Södra,https://www.fotmob.com/leagues/8,Ettan,Different Name,Sweden,false
+1000094796,https://www.unibet.com.au/betting/sports/filter/football/finland/ykkonen,Ykkönen,https://www.fotmob.com/leagues/251,Ykkosliiga,Different Name,Finland,false
+1000094818,https://www.unibet.com.au/betting/sports/filter/football/spain/segunda_rfef_3,Segunda RFEF 3,https://www.fotmob.com/leagues/9138,Segunda Federación,Different Name,Spain,true
+1000094825,https://www.unibet.com.au/betting/sports/filter/football/france/championnat_national,Championnat National,https://www.fotmob.com/leagues/8970,National,Different Name,France,false
+1000094961,https://www.unibet.com.au/betting/sports/filter/football/belgium/beker_van_belgie,Beker van Belgie,https://www.fotmob.com/leagues/149,Belgian Cup,Different Name,Belgium,false
+1000094965,https://www.unibet.com.au/betting/sports/filter/football/belgium/jupiler_pro_league,Jupiler Pro League,https://www.fotmob.com/leagues/40,First Division A,Different Name,Belgium,false
+1000094970,https://www.unibet.com.au/betting/sports/filter/football/brazil/paulista_a1,Paulista A1,https://www.fotmob.com/leagues/10244,Paulista A1,Exact Match,Brazil,true
+1000094975,https://www.unibet.com.au/betting/sports/filter/football/czech_republic/first_league,First League,https://www.fotmob.com/leagues/122,1. Liga,Different Name,Czech Republic,false
+1000094976,https://www.unibet.com.au/betting/sports/filter/football/denmark/1st_division,1st Division,https://www.fotmob.com/leagues/85,1. Division,Different Name,Denmark,false
+1000094978,https://www.unibet.com.au/betting/sports/filter/football/denmark/superligaen,Superligaen,https://www.fotmob.com/leagues/46,Superligaen,Exact Match,Denmark,false
+1000094979,https://www.unibet.com.au/betting/sports/filter/football/netherlands/knvb_beker,KNVB Beker,https://www.fotmob.com/leagues/235,KNVB Cup,Different Name,Netherlands,false
+1000094980,https://www.unibet.com.au/betting/sports/filter/football/netherlands/eredivisie,Eredivisie,https://www.fotmob.com/leagues/57,Eredivisie,Exact Match,Netherlands,false
+1000094981,https://www.unibet.com.au/betting/sports/filter/football/england/the_championship,The Championship,https://www.fotmob.com/leagues/48,Championship,Different Name,England,false
+1000094982,https://www.unibet.com.au/betting/sports/filter/football/england/league_one,League One,https://www.fotmob.com/leagues/108,League One,Exact Match,England,true
+1000094984,https://www.unibet.com.au/betting/sports/filter/football/england/fa_cup,FA Cup,https://www.fotmob.com/leagues/132,FA Cup,Exact Match,England,false
+1000094985,https://www.unibet.com.au/betting/sports/filter/football/england/premier_league,Premier League,https://www.fotmob.com/leagues/47,Premier League,Exact Match,England,true
+1000094986,https://www.unibet.com.au/betting/sports/filter/football/england/efl_cup,EFL Cup,https://www.fotmob.com/leagues/133,EFL Cup,Exact Match,England,false
+1000094987,https://www.unibet.com.au/betting/sports/filter/football/england/league_two,League Two,https://www.fotmob.com/leagues/109,League Two,Exact Match,England,false
+1000094989,https://www.unibet.com.au/betting/sports/filter/football/finland/veikkausliiga,Veikkausliiga,https://www.fotmob.com/leagues/51,Veikkausliiga,Exact Match,Finland,false
+1000094990,https://www.unibet.com.au/betting/sports/filter/football/france/coupe_de_france,Coupe de France,https://www.fotmob.com/leagues/134,Coupe de France,Exact Match,France,true
+1000094991,https://www.unibet.com.au/betting/sports/filter/football/france/ligue_1,Ligue 1,https://www.fotmob.com/leagues/53,Ligue 1,Exact Match,France,false
+1000094993,https://www.unibet.com.au/betting/sports/filter/football/germany/2_bundesliga,2. Bundesliga,https://www.fotmob.com/leagues/146,2. Bundesliga,Exact Match,Germany,false
+1000094994,https://www.unibet.com.au/betting/sports/filter/football/germany/bundesliga,Bundesliga,https://www.fotmob.com/leagues/54,Bundesliga,Exact Match,Germany,false
+1000094995,https://www.unibet.com.au/betting/sports/filter/football/germany/dfb_pokal,DFB Pokal,https://www.fotmob.com/leagues/209,DFB Pokal,Exact Match,Germany,false
+1000094996,https://www.unibet.com.au/betting/sports/filter/football/greece/super_league,Super League,https://www.fotmob.com/leagues/135,Super League,Exact Match,Greece,true
+1000094998,https://www.unibet.com.au/betting/sports/filter/football/italy/coppa_italia,Coppa Italia,https://www.fotmob.com/leagues/141,Coppa Italia,Exact Match,Italy,false
+1000095001,https://www.unibet.com.au/betting/sports/filter/football/italy/serie_a,Serie A,https://www.fotmob.com/leagues/55,Serie A,Exact Match,Italy,false
+1000095002,https://www.unibet.com.au/betting/sports/filter/football/italy/serie_b,Serie B,https://www.fotmob.com/leagues/86,Serie B,Exact Match,Italy,true
+1000095003,https://www.unibet.com.au/betting/sports/filter/football/norway/obos-ligaen,OBOS-ligaen,https://www.fotmob.com/leagues/203,OBOS-ligaen,Exact Match,Norway,false
+1000095010,https://www.unibet.com.au/betting/sports/filter/football/norway/eliteserien,Eliteserien,https://www.fotmob.com/leagues/59,Eliteserien,Exact Match,Norway,false
+1000095016,https://www.unibet.com.au/betting/sports/filter/football/poland/puchar_polski,Puchar Polski,https://www.fotmob.com/leagues/198,Puchar Polski,Exact Match,Poland,false
+1000095020,https://www.unibet.com.au/betting/sports/filter/football/switzerland/super_league,Super League,https://www.fotmob.com/leagues/69,Super League,Exact Match,Switzerland,false
+1000095021,https://www.unibet.com.au/betting/sports/filter/football/switzerland/challenge_league,Challenge League,https://www.fotmob.com/leagues/163,Challenge League,Exact Match,Switzerland,false
+1000095042,https://www.unibet.com.au/betting/sports/filter/football/portugal/primeira_liga,Primeira Liga,https://www.fotmob.com/leagues/61,Liga Portugal,Different Name,Portugal,true
+1000095045,https://www.unibet.com.au/betting/sports/filter/football/scotland/championship,Championship,https://www.fotmob.com/leagues/123,Championship,Exact Match,Scotland,true
+1000095046,https://www.unibet.com.au/betting/sports/filter/football/scotland/league_cup,League Cup,https://www.fotmob.com/leagues/180,League Cup,Exact Match,Scotland,false
+1000095047,https://www.unibet.com.au/betting/sports/filter/football/scotland/scottish_premiership,Scottish Premiership,https://www.fotmob.com/leagues/64,Premiership,Different Name,Scotland,false
+1000095049,https://www.unibet.com.au/betting/sports/filter/football/spain/la_liga,La Liga,https://www.fotmob.com/leagues/87,LaLiga,Different Name,Spain,true
+1000095050,https://www.unibet.com.au/betting/sports/filter/football/spain/copa_del_rey,Copa del Rey,https://www.fotmob.com/leagues/138,Copa del Rey,Exact Match,Spain,false
+1000095052,https://www.unibet.com.au/betting/sports/filter/football/sweden/superettan,Superettan,https://www.fotmob.com/leagues/168,Superettan,Exact Match,Sweden,false
+1000095057,https://www.unibet.com.au/betting/sports/filter/football/sweden/allsvenskan,Allsvenskan,https://www.fotmob.com/leagues/67,Allsvenskan,Exact Match,Sweden,false
+1000095062,https://www.unibet.com.au/betting/sports/filter/football/turkey/super_lig,Süper Lig,https://www.fotmob.com/leagues/71,Süper Lig,Exact Match,Turkey,false
+1000095063,https://www.unibet.com.au/betting/sports/filter/football/usa/mls,MLS,https://www.fotmob.com/leagues/130,MLS,Exact Match,USA,false
+1000095127,https://www.unibet.com.au/betting/sports/filter/football/netherlands/eerste_divisie,Eerste Divisie,https://www.fotmob.com/leagues/111,Eerste Divisie,Exact Match,Netherlands,false
+1000095137,https://www.unibet.com.au/betting/sports/filter/football/england/efl_trophy,EFL Trophy,https://www.fotmob.com/leagues/142,EFL Trophy,Exact Match,England,false
+1000095155,https://www.unibet.com.au/betting/sports/filter/football/chile/primera_chile,Primera Chile,https://www.fotmob.com/leagues/273,Primera Division,Different Name,Chile,false
+1000095233,https://www.unibet.com.au/betting/sports/filter/football/spain/supercopa,Supercopa,https://www.fotmob.com/leagues/139,Super Cup,Different Name,Spain,true
+1000095346,https://www.unibet.com.au/betting/sports/filter/football/estonia/premium_liiga,Premium Liiga,https://www.fotmob.com/leagues/248,Premium liiga,Different Name,Estonia,false
+1000095485,https://www.unibet.com.au/betting/sports/filter/football/england/national_league,National League,https://www.fotmob.com/leagues/117,National League,Exact Match,England,false
+1000095499,https://www.unibet.com.au/betting/sports/filter/football/romania/liga_i,Liga I,https://www.fotmob.com/leagues/189,Liga I,Exact Match,Romania,false
+1000095601,https://www.unibet.com.au/betting/sports/filter/football/ireland/premier_division,Premier Division,https://www.fotmob.com/leagues/126,Premier Division,Exact Match,Ireland,false
+1000095645,https://www.unibet.com.au/betting/sports/filter/football/japan/j1-league,J1-League,https://www.fotmob.com/leagues/223,J. League,Different Name,Japan,false
+1000095677,https://www.unibet.com.au/betting/sports/filter/football/turkey/sper_kupa,Süper Kupa,https://www.fotmob.com/leagues/166,Super Cup,Different Name,Turkey,true
+1000095713,https://www.unibet.com.au/betting/sports/filter/football/ecuador/liga_pro,Liga Pro,https://www.fotmob.com/leagues/246,Serie A,Different Name,Ecuador,false
+1000095736,https://www.unibet.com.au/betting/sports/filter/football/croatia/1_hnl_league,1. HNL League,https://www.fotmob.com/leagues/252,HNL,Different Name,Croatia,false
+1000123032,https://www.unibet.com.au/betting/sports/filter/football/african_nations_cup,African Nations Cup,https://www.fotmob.com/leagues/289,Africa Cup of Nations,Different Name,International,false
+1000152623,https://www.unibet.com.au/betting/sports/filter/football/japan/j2-league,J2-League,https://www.fotmob.com/leagues/8974,J. League 2,Different Name,Japan,false
+1000152705,https://www.unibet.com.au/betting/sports/filter/football/south_korea/k-league_1,K-League 1,https://www.fotmob.com/leagues/9080,K League 1,Different Name,South Korea,false
+1000154221,https://www.unibet.com.au/betting/sports/filter/football/czech_republic/national_football_league,National Football League,https://www.fotmob.com/leagues/253,FNL,Different Name,Czech Republic,false
+1000157714,https://www.unibet.com.au/betting/sports/filter/football/lithuania/a_lyga,A Lyga,https://www.fotmob.com/leagues/228,A Lyga,Exact Match,Lithuania,false
+1000158930,https://www.unibet.com.au/betting/sports/filter/football/latvia/virsliga,Virsliga,https://www.fotmob.com/leagues/226,Virsliga,Exact Match,Latvia,false
+1000171537,https://www.unibet.com.au/betting/sports/filter/football/ukraine/premier_league,Premier League,https://www.fotmob.com/leagues/441,Premier League,Exact Match,Ukraine,false
+1000176396,https://www.unibet.com.au/betting/sports/filter/football/sweden/obos_damallsvenskan__w_,OBOS Damallsvenskan (W),https://www.fotmob.com/leagues/9089,Damallsvenskan (W),Different Name,Sweden,false
+1000176403,https://www.unibet.com.au/betting/sports/filter/football/norway/toppserien__w_,Toppserien (W),https://www.fotmob.com/leagues/331,Toppserien,Different Name,Norway,false
+1000179126,https://www.unibet.com.au/betting/sports/filter/football/copa_sudamericana,Copa Sudamericana,https://www.fotmob.com/leagues/299,Copa Sudamericana,Exact Match,International,false
+1000182606,https://www.unibet.com.au/betting/sports/filter/football/australia/a-league,A-League,https://www.fotmob.com/leagues/113,A-League Men,Different Name,Australia,true
+1000237680,https://www.unibet.com.au/betting/sports/filter/football/peru/liga_1,Liga 1,https://www.fotmob.com/leagues/131,Liga 1,Exact Match,Peru,false
+1000245807,https://www.unibet.com.au/betting/sports/filter/football/cyprus/cup,Cup,https://www.fotmob.com/leagues/330,Cup,Exact Match,Cyprus,true
+1000250591,https://www.unibet.com.au/betting/sports/filter/football/saudi_arabia/professional_league,Professional League,https://www.fotmob.com/leagues/536,Saudi Pro League,Different Name,Saudi Arabia,false
+1000250636,https://www.unibet.com.au/betting/sports/filter/football/south_africa/sa_premier_soccer_league,SA Premier Soccer League,https://www.fotmob.com/leagues/537,Premier Soccer League,Different Name,South Africa,false
+1000251645,https://www.unibet.com.au/betting/sports/filter/football/egypt/premier_league,Premier League,https://www.fotmob.com/leagues/519,Premier League,Exact Match,Egypt,false
+1000251950,https://www.unibet.com.au/betting/sports/filter/football/cyprus/1st_division,1st Division,https://www.fotmob.com/leagues/136,Cyprus League,Different Name,Cyprus,true
+1000253277,https://www.unibet.com.au/betting/sports/filter/football/united_arab_emirates/arabian_gulf_league,Arabian Gulf League,https://www.fotmob.com/leagues/538,Pro League,Different Name,United Arab Emirates,true
+1000254606,https://www.unibet.com.au/betting/sports/filter/football/kuwait/premier_league,Premier League,https://www.fotmob.com/leagues/529,Premier League,Exact Match,Kuwait,true
+1000257492,https://www.unibet.com.au/betting/sports/filter/football/israel/ligat_ha_al,Ligat Ha'Al,https://www.fotmob.com/leagues/127,Ligat Ha'al,Exact Match,Israel,true
+1000258091,https://www.unibet.com.au/betting/sports/filter/football/northern_ireland/nifl_premiership,NIFL Premiership,https://www.fotmob.com/leagues/129,Premiership,Different Name,Northern Ireland,false
+1000265213,https://www.unibet.com.au/betting/sports/filter/football/portugal/liga_2,Liga 2,https://www.fotmob.com/leagues/185,Liga Portugal 2,Different Name,Portugal,true
+1000280417,https://www.unibet.com.au/betting/sports/filter/football/scotland/league_one,League One,https://www.fotmob.com/leagues/124,League One,Exact Match,Scotland,false
+1000280418,https://www.unibet.com.au/betting/sports/filter/football/scotland/league_two,League Two,https://www.fotmob.com/leagues/125,League Two,Exact Match,Scotland,false
+1000297434,https://www.unibet.com.au/betting/sports/filter/football/slovenia/prva_liga,Prva Liga,https://www.fotmob.com/leagues/173,Prva Liga,Exact Match,Slovenia,false
+1000305993,https://www.unibet.com.au/betting/sports/filter/football/turkey/1_lig,1. Lig,https://www.fotmob.com/leagues/165,1. Lig,Exact Match,Turkey,false
+1000315962,https://www.unibet.com.au/betting/sports/filter/football/singapore/singapore_premier_league,Singapore Premier League,https://www.fotmob.com/leagues/461,Singapore Premier League,Exact Match,Singapore,false
+1000338400,https://www.unibet.com.au/betting/sports/filter/football/china/super_league,Super League,https://www.fotmob.com/leagues/120,Super League,Exact Match,China,false
+1000345237,https://www.unibet.com.au/betting/sports/filter/football/austria/bundesliga,Bundesliga,https://www.fotmob.com/leagues/38,Bundesliga,Exact Match,Austria,false
+1000348167,https://www.unibet.com.au/betting/sports/filter/football/poland/i_liga,I Liga,https://www.fotmob.com/leagues/197,1 Liga,Different Name,Poland,false
+1000353685,https://www.unibet.com.au/betting/sports/filter/football/germany/dfl-supercup,DFL-Supercup,https://www.fotmob.com/leagues/8924,Super Cup,Different Name,Germany,false
+1000355562,https://www.unibet.com.au/betting/sports/filter/football/germany/3_liga,3. Liga,https://www.fotmob.com/leagues/208,3. Liga,Exact Match,Germany,false
+1000358593,https://www.unibet.com.au/betting/sports/filter/football/belgium/challenger_pro_league,Challenger Pro League,https://www.fotmob.com/leagues/264,First Division B,Different Name,Belgium,false
+1000374584,https://www.unibet.com.au/betting/sports/filter/football/thailand/thai_league_1,Thai League 1,https://www.fotmob.com/leagues/8984,Thai League,Different Name,Thailand,true
+1000383729,https://www.unibet.com.au/betting/sports/filter/football/denmark/elitedivisionen__w_,Elitedivisionen (W),https://www.fotmob.com/leagues/256,Kvindeligaen,Different Name,Denmark,false
+1000385084,https://www.unibet.com.au/betting/sports/filter/football/england/national_league_south,National League South,https://www.fotmob.com/leagues/8944,National League South,Exact Match,England,true
+1000385219,https://www.unibet.com.au/betting/sports/filter/football/poland/ekstraklasa,Ekstraklasa,https://www.fotmob.com/leagues/196,Ekstraklasa,Exact Match,Poland,false
+1000435401,https://www.unibet.com.au/betting/sports/filter/football/germany/bundesliga__w_,Bundesliga (W),https://www.fotmob.com/leagues/9676,Frauen Bundesliga,Different Name,Germany,false
+1000439335,https://www.unibet.com.au/betting/sports/filter/football/chile/primera_b,Primera B,https://www.fotmob.com/leagues/9126,Primera B,Exact Match,Chile,false
+1000442572,https://www.unibet.com.au/betting/sports/filter/football/argentina/primera_b_nacional,Primera B Nacional,https://www.fotmob.com/leagues/8965,Primera B Nacional,Exact Match,Argentina,false
+1000443738,https://www.unibet.com.au/betting/sports/filter/football/denmark/dbu_pokalen,DBU Pokalen,https://www.fotmob.com/leagues/242,DBU Pokalen,Exact Match,Denmark,false
+1000449742,https://www.unibet.com.au/betting/sports/filter/football/colombia/liga_dimayor,Liga Dimayor,https://www.fotmob.com/leagues/274,Primera A,Different Name,Colombia,false
+1000450453,https://www.unibet.com.au/betting/sports/filter/football/uruguay/campeonato_uruguayo,Campeonato Uruguayo,https://www.fotmob.com/leagues/161,Primera Division,Different Name,Uruguay,false
+1000451251,https://www.unibet.com.au/betting/sports/filter/football/mexico/liga_de_expansion_mx,Liga de Expansion MX,https://www.fotmob.com/leagues/8976,Liga de Expansión MX,Different Name,Mexico,false
+2000050064,https://www.unibet.com.au/betting/sports/filter/football/northern_ireland/irish_cup,Irish Cup,https://www.fotmob.com/leagues/9389,Irish Cup,Different Name,Northern Ireland,true
+2000050115,https://www.unibet.com.au/betting/sports/filter/football/paraguay/primera_paraguay,Primera Paraguay,https://www.fotmob.com/leagues/199,Division Profesional,Different Name,Paraguay,false
+2000050125,https://www.unibet.com.au/betting/sports/filter/football/wales/premier_league,Premier League,https://www.fotmob.com/leagues/116,Premier League,Exact Match,Wales,true
+2000050211,https://www.unibet.com.au/betting/sports/filter/football/colombia/copa_dimayor,Copa Dimayor,https://www.fotmob.com/leagues/9490,Copa Colombia,Different Name,Colombia,false
+2000050214,https://www.unibet.com.au/betting/sports/filter/football/israel/liga_leumit,Liga Leumit,https://www.fotmob.com/leagues/128,Leumit League,Different Name,Israel,true
+2000050271,https://www.unibet.com.au/betting/sports/filter/football/morocco/botola,Botola,https://www.fotmob.com/leagues/530,Botola Pro,Different Name,Morocco,false
+2000050279,https://www.unibet.com.au/betting/sports/filter/football/algeria/ligue_1,Ligue 1,https://www.fotmob.com/leagues/516,Ligue 1,Exact Match,Algeria,true
+2000050345,https://www.unibet.com.au/betting/sports/filter/football/england/fa_trophy,FA Trophy,https://www.fotmob.com/leagues/9253,FA Trophy,Exact Match,England,true
+2000050561,https://www.unibet.com.au/betting/sports/filter/football/argentina/liga_profesional_argentina,Liga Profesional Argentina,https://www.fotmob.com/leagues/112,Liga Profesional,Different Name,Argentina,false
+2000050599,https://www.unibet.com.au/betting/sports/filter/football/serbia/super_liga,Super Liga,https://www.fotmob.com/leagues/182,Super Liga,Exact Match,Serbia,false
+2000050783,https://www.unibet.com.au/betting/sports/filter/football/finland/kansallinen_liiga__w_,Kansallinen Liiga (W),https://www.fotmob.com/leagues/10174,Kansallinen (Women),Different Name,Finland,false
+2000051123,https://www.unibet.com.au/betting/sports/filter/football/spain/copa_de_la_reina__w_,Copa de la Reina (W),https://www.fotmob.com/leagues/10651,Copa de la Reina,Different Name,Spain,false
+2000051179,https://www.unibet.com.au/betting/sports/filter/football/malaysia/super_league,Super League,https://www.fotmob.com/leagues/8985,Liga Super,Different Name,Malaysia,true
+2000051195,https://www.unibet.com.au/betting/sports/filter/football/europa_league,Europa League,https://www.fotmob.com/leagues/73,Europa League,Exact Match,International,false
+2000051282,https://www.unibet.com.au/betting/sports/filter/football/australia/a-league_parenplaceholder0,A-League (W),https://www.fotmob.com/leagues/9495,A-League Women,Different Name,Australia,true
+2000051288,https://www.unibet.com.au/betting/sports/filter/football/south_korea/k-3_league,K-3 League,https://www.fotmob.com/leagues/9537,K League 3,Different Name,South Korea,false
+2000051365,https://www.unibet.com.au/betting/sports/filter/football/slovakia/2_liga,2. Liga,https://www.fotmob.com/leagues/176,2. Liga,Different Name,Slovakia,false
+2000051466,https://www.unibet.com.au/betting/sports/filter/football/champions_league__w_,Champions League (W),https://www.fotmob.com/leagues/9375,Women's Champions League,Different Name,International,false
+2000051626,https://www.unibet.com.au/betting/sports/filter/football/spain/primera_division_parenplaceholder0,Primera División (W),https://www.fotmob.com/leagues/9907,Liga F,Different Name,Spain,true
+2000052302,https://www.unibet.com.au/betting/sports/filter/football/iran/azadegan_league,Azadegan League,https://www.fotmob.com/leagues/9372,Azadegan League,Exact Match,Iran,false
+2000052405,https://www.unibet.com.au/betting/sports/filter/football/georgia/erovnuli_liga,Erovnuli Liga,https://www.fotmob.com/leagues/439,Erovnuli Liga,Exact Match,Georgia,false
+2000052731,https://www.unibet.com.au/betting/sports/filter/football/cyprus/2nd_division,2nd Division,https://www.fotmob.com/leagues/9100,2. Division,Different Name,Cyprus,true
+2000053119,https://www.unibet.com.au/betting/sports/filter/football/tunisia/ligue_1,Ligue 1,https://www.fotmob.com/leagues/544,Ligue I,Different Name,Tunisia,false
+2000054001,https://www.unibet.com.au/betting/sports/filter/football/qatar/qatar_stars_league,Qatar Stars League,https://www.fotmob.com/leagues/535,Qatar Stars League,Exact Match,Qatar,true
+2000054030,https://www.unibet.com.au/betting/sports/filter/football/england/northern_league_premier_division,Northern League Premier Division,https://www.fotmob.com/leagues/8947,Northern Premier Division,Different Name,England,true
+2000055068,https://www.unibet.com.au/betting/sports/filter/football/faroe_islands/premier_league,Premier League,https://www.fotmob.com/leagues/250,Premier League,Exact Match,Faroe Islands,false
+2000055538,https://www.unibet.com.au/betting/sports/filter/football/brazil/brasileirao_serie_c,Brasileirao Serie C,https://www.fotmob.com/leagues/8971,Serie C,Different Name,Brazil,false
+2000055612,https://www.unibet.com.au/betting/sports/filter/football/usa/usl_championship,USL Championship,https://www.fotmob.com/leagues/8972,USL Championship,Exact Match,USA,false
+2000055849,https://www.unibet.com.au/betting/sports/filter/football/england/super_league_parenplaceholder0,Super League (W),https://www.fotmob.com/leagues/9227,WSL,Different Name,England,true
+2000056748,https://www.unibet.com.au/betting/sports/filter/football/argentina/copa_argentina,Copa Argentina,https://www.fotmob.com/leagues/9305,Copa Argentina,Exact Match,Argentina,false
+2000056761,https://www.unibet.com.au/betting/sports/filter/football/iraq/premier_league,Premier League,https://www.fotmob.com/leagues/524,Stars League,Different Name,Iraq,true
+2000056865,https://www.unibet.com.au/betting/sports/filter/football/uruguay/segunda_division,Segunda Division,https://www.fotmob.com/leagues/9122,Segunda Division,Exact Match,Uruguay,false
+2000057364,https://www.unibet.com.au/betting/sports/filter/football/african_championship_of_nations,African Championship of Nations,https://www.fotmob.com/leagues/9428,African Nations Championship,Different Name,International,false
+2000059106,https://www.unibet.com.au/betting/sports/filter/football/brazil/brasileirao_serie_d,Brasileirao Serie D,https://www.fotmob.com/leagues/9464,Serie D,Different Name,Brazil,false
+2000063156,https://www.unibet.com.au/betting/sports/filter/football/bangladesh/premier_league,Premier League,https://www.fotmob.com/leagues/10443,Bangladesh Football League,Different Name,Bangladesh,true
+2000064655,https://www.unibet.com.au/betting/sports/filter/football/south_korea/k-league_2,K-League 2,https://www.fotmob.com/leagues/9116,K League 2,Different Name,South Korea,false
+2000065880,https://www.unibet.com.au/betting/sports/filter/football/uefa_championship_qualification_u21,UEFA Championship Qualification U21,https://www.fotmob.com/leagues/10437,EURO U-21 Qualification,Different Name,International,false
+2000066138,https://www.unibet.com.au/betting/sports/filter/football/afc_asian_cup_qualification,AFC Asian Cup Qualification,https://www.fotmob.com/leagues/10609,Asian Cup  Qualification Playoff,Different Name,International,false
+2000067441,https://www.unibet.com.au/betting/sports/filter/football/japan/j3-league,J3-League,https://www.fotmob.com/leagues/9136,J. League 3,Different Name,Japan,false
+2000069140,https://www.unibet.com.au/betting/sports/filter/football/champions_league_qualification,Champions League Qualification,https://www.fotmob.com/leagues/10611,Champions League Qualification,Exact Match,International,false
+2000074865,https://www.unibet.com.au/betting/sports/filter/football/usa/nwsl__w_,NWSL (W),https://www.fotmob.com/leagues/9134,NWSL,Different Name,USA,false
+2000075204,https://www.unibet.com.au/betting/sports/filter/football/sweden/elitettan__w_,Elitettan (W),https://www.fotmob.com/leagues/10308,Eliteettan (W),Different Name,Sweden,false
+2000076226,https://www.unibet.com.au/betting/sports/filter/football/thailand/thai_league_2,Thai League 2,https://www.fotmob.com/leagues/9498,Thai League 2,Exact Match,Thailand,true
+2000077426,https://www.unibet.com.au/betting/sports/filter/football/europa_league_qualification,Europa League Qualification,https://www.fotmob.com/leagues/10613,Europa League Qualification,Exact Match,International,false
+2000077607,https://www.unibet.com.au/betting/sports/filter/football/poland/ii_liga,II Liga,https://www.fotmob.com/leagues/8935,2. Division,Different Name,Poland,false
+2000079607,https://www.unibet.com.au/betting/sports/filter/football/italy/serie_c_girone_a,Serie C Girone A,https://www.fotmob.com/leagues/147,Serie C,Different Name,Italy,true
+2000080468,https://www.unibet.com.au/betting/sports/filter/football/england/the_championship_parenplaceholder0,The Championship (W),https://www.fotmob.com/leagues/9294,WSL 2,Different Name,England,true
+2000086372,https://www.unibet.com.au/betting/sports/filter/football/world_cup_qualifying_-_europe,World Cup Qualifying - Europe,https://www.fotmob.com/leagues/10195,World Cup Qualification UEFA,Different Name,International,false
+2000087788,https://www.unibet.com.au/betting/sports/filter/football/argentina/torneo_federal_a,Torneo Federal A,https://www.fotmob.com/leagues/9213,Primera B Metropolitana & Torneo Federal A,Different Name,Argentina,false
+2000095410,https://www.unibet.com.au/betting/sports/filter/football/netherlands/tweede_divisie,Tweede Divisie,https://www.fotmob.com/leagues/9195,Tweede Divisie,Exact Match,Netherlands,true
+2000095699,https://www.unibet.com.au/betting/sports/filter/football/indonesia/liga_1,Liga 1,https://www.fotmob.com/leagues/8983,Super League,Different Name,Indonesia,true
+2000095935,https://www.unibet.com.au/betting/sports/filter/football/romania/liga_ii,Liga II,https://www.fotmob.com/leagues/9113,Liga II,Exact Match,Romania,false
+2000096351,https://www.unibet.com.au/betting/sports/filter/football/england/premier_league_2_u21_parenplaceholder0,Premier League 2 U21 (Division 1),https://www.fotmob.com/leagues/9084,Premier League 2,Different Name,England,true
+2000109034,https://www.unibet.com.au/betting/sports/filter/football/mexico/liga_mx_femenil__w_,Liga MX Femenil (W),https://www.fotmob.com/leagues/9906,Liga MX Femenil,Different Name,Mexico,false
+2000116433,https://www.unibet.com.au/betting/sports/filter/football/paraguay/copa_paraguay,Copa Paraguay,https://www.fotmob.com/leagues/10230,Copa Paraguay,Exact Match,Paraguay,false
+2000117732,https://www.unibet.com.au/betting/sports/filter/football/ecuador/copa_ecuador,Copa Ecuador,https://www.fotmob.com/leagues/10046,Copa Ecuador,Exact Match,Ecuador,false
+2000120032,https://www.unibet.com.au/betting/sports/filter/football/leagues_cup,Leagues Cup,https://www.fotmob.com/leagues/10043,Leagues Cup,Exact Match,International,false
+2000121299,https://www.unibet.com.au/betting/sports/filter/football/caf_champions_league_qualification,CAF Champions League Qualification,https://www.fotmob.com/leagues/10619,CAF Champions League Qualification,Exact Match,International,false
+2000122597,https://www.unibet.com.au/betting/sports/filter/football/greece/super_league_2,Super League 2,https://www.fotmob.com/leagues/8815,Super League 2 Grp. B,Different Name,Greece,true
+2000130521,https://www.unibet.com.au/betting/sports/filter/football/conference_league_qualification,Conference League Qualification,https://www.fotmob.com/leagues/10615,Conference League Qualification,Exact Match,International,false
+2000130522,https://www.unibet.com.au/betting/sports/filter/football/conference_league,Conference League,https://www.fotmob.com/leagues/10216,Conference League,Exact Match,International,false
+2000131375,https://www.unibet.com.au/betting/sports/filter/football/spain/primera_rfef_2,Primera RFEF 2,https://www.fotmob.com/leagues/8968,Primera Federación,Different Name,Spain,true
+2010133830,https://www.unibet.com.au/betting/sports/filter/football/egypt/league_cup,League Cup,https://www.fotmob.com/leagues/10270,League Cup,Exact Match,Egypt,true
+2010133908,https://www.unibet.com.au/betting/sports/filter/football/world_cup_2026,World Cup 2026,https://www.fotmob.com/leagues/77,World Cup,Different Name,International,false
+2010203832,https://www.unibet.com.au/betting/sports/filter/football/afc_champions_league_2,AFC Champions League 2,https://www.fotmob.com/leagues/9469,AFC Champions League Two,Exact Match,International,false
+2010205606,https://www.unibet.com.au/betting/sports/filter/football/europa_cup__w_,Europa Cup (W),https://www.fotmob.com/leagues/11129,UEFA Women's Europa Cup,Different Name,International,false

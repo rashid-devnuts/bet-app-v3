@@ -2770,9 +2770,13 @@ class BetService {
       }
     }
 
-    // If not all legs are finished, reschedule the check
-    if (!allLegsFinished) {
-      console.log(`[processCombinationBetOutcome] Not all legs finished, rescheduling check`);
+    // ✅ FIX: Check if ANY leg is still pending (not just if matches are finished)
+    const hasPendingLegs = updatedCombination.some(leg => leg.status === 'pending');
+    
+    // If not all legs are finished OR any leg is still pending, reschedule the check
+    if (!allLegsFinished || hasPendingLegs) {
+      console.log(`[processCombinationBetOutcome] Not all legs finished or some legs still pending, rescheduling check`);
+      console.log(`[processCombinationBetOutcome] allLegsFinished: ${allLegsFinished}, hasPendingLegs: ${hasPendingLegs}`);
       
       // Update each leg individually using array index updates
       const updateOperations = [];
@@ -2805,6 +2809,15 @@ class BetService {
         }
       }
       
+      // ✅ FIX: Make sure bet status stays pending if any leg is pending
+      if (hasPendingLegs) {
+        await Bet.updateOne(
+          { _id: betId },
+          { $set: { status: 'pending' } }
+        );
+        console.log(`[processCombinationBetOutcome] Bet status kept as pending because some legs are still pending`);
+      }
+      
       // Reschedule for 10 minutes from now
       const runAt = new Date(Date.now() + 10 * 60 * 1000);
       agenda.schedule(runAt, "checkBetOutcome", {
@@ -2814,8 +2827,39 @@ class BetService {
 
       return {
         betId: bet._id,
-        status: bet.status,
+        status: 'pending', // ✅ FIX: Return pending status if any leg is pending
         message: "Not all legs finished, rescheduled",
+      };
+    }
+
+    // ✅ FIX: Double-check that all legs have final status before finalizing
+    const allLegsHaveFinalStatus = updatedCombination.every(leg => 
+      leg.status === 'won' || leg.status === 'lost' || leg.status === 'canceled'
+    );
+    
+    if (!allLegsHaveFinalStatus) {
+      console.log(`[processCombinationBetOutcome] Not all legs have final status, rescheduling`);
+      console.log(`[processCombinationBetOutcome] Leg statuses:`, 
+        updatedCombination.map((leg, index) => `Leg ${index + 1}: ${leg.status}`)
+      );
+      
+      // Keep bet as pending
+      await Bet.updateOne(
+        { _id: betId },
+        { $set: { status: 'pending' } }
+      );
+      
+      // Reschedule
+      const runAt = new Date(Date.now() + 10 * 60 * 1000);
+      agenda.schedule(runAt, "checkBetOutcome", {
+        betId,
+        matchId: bet.matchId,
+      });
+      
+      return {
+        betId: bet._id,
+        status: 'pending',
+        message: "Not all legs have final status, rescheduled",
       };
     }
 
