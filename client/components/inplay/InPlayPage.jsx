@@ -20,16 +20,16 @@ const InPlayPage = () => {
     // Initial data fetch
     useEffect(() => {
         dispatch(fetchLiveMatches()).then((result) => {
-            // After live matches update, fetch betoffers ONLY for visible matches (first 8)
-            // Don't fetch all matches - too expensive and causes 6-7 second delay
+            // ✅ FIX: Fetch betoffers for ALL matches (not just first 8)
+            // In-play page should show all matches from all leagues
             if (result.payload && result.payload.matches) {
-                const visibleMatchIds = result.payload.matches
-                    .slice(0, 8)
+                const allMatchIds = result.payload.matches
                     .map(m => m.id)
                     .filter(id => !matchBetOffers[id]); // Deduplication
                 
-                if (visibleMatchIds.length > 0) {
-                    dispatch(fetchBetOffersForLiveMatches(visibleMatchIds));
+                if (allMatchIds.length > 0) {
+                    console.log(`🔍 [BETOFFERS] Fetching betoffers for ${allMatchIds.length} matches (In-Play page - ALL matches)...`);
+                    dispatch(fetchBetOffersForLiveMatches(allMatchIds));
                 }
             }
         });
