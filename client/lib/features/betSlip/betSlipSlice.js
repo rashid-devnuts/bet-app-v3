@@ -184,6 +184,7 @@ const betSlipSlice = createSlice({
         marketId, // Store marketId in bet object
         marketName: marketDescription, // Store for combination bet payload
         inplay, // ✅ Add inplay flag for combination bets
+        suspended: false, // Track if bet odds are suspended
         ...rest
       };
 
@@ -455,7 +456,31 @@ const betSlipSlice = createSlice({
         timestamp: null,
         show: false
       };
-      state.placeBetDisabled = false;
+      // Only re-enable if no bets are suspended
+      const hasSuspendedBets = state.bets.some(bet => bet.suspended);
+      if (!hasSuspendedBets) {
+        state.placeBetDisabled = false;
+      }
+    },
+
+    // Action to mark/unmark a bet as suspended
+    setBetSuspended: (state, action) => {
+      const { betId, suspended } = action.payload;
+      const betIndex = state.bets.findIndex(bet => bet.id === betId);
+      if (betIndex !== -1) {
+        state.bets[betIndex].suspended = suspended;
+        
+        // If any bet is suspended, disable place bet button
+        const hasSuspendedBets = state.bets.some(bet => bet.suspended);
+        if (hasSuspendedBets) {
+          state.placeBetDisabled = true;
+        } else {
+          // Only re-enable if no suspended bets AND no odds changes
+          if (!state.oddsChangeNotification.show) {
+            state.placeBetDisabled = false;
+          }
+        }
+      }
     },
   },
 });
@@ -479,6 +504,7 @@ export const {
   clearOddsUpdatedFlag,
   showOddsChangeNotification,
   hideOddsChangeNotification,
+  setBetSuspended,
 } = betSlipSlice.actions;
 
 // Selectors

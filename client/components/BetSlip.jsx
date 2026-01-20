@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { X, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
+import { X, ChevronUp, ChevronDown, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -58,6 +58,9 @@ const BetSlip = () => {
     const isAuthenticated = useSelector(selectIsAuthenticated);
     const user = useSelector(selectUser);
     const liveMatchesRaw = useSelector(selectLiveMatchesRaw);
+    
+    // Check if any bet is suspended
+    const hasSuspendedBets = bets.some(bet => bet.suspended);
     const betSlipRef = useRef(null);
     const [isPlacingBet, setIsPlacingBet] = React.useState(false);
     const isMobile = useIsMobile();
@@ -609,18 +612,20 @@ const BetSlip = () => {
                             ) : (
                                 <Button
                                     className={`w-full font-bold py-2 transition-all duration-200 ${
-                                        (placeBetDisabled && !pendingPlaceBet)
+                                        (placeBetDisabled && !pendingPlaceBet) || hasSuspendedBets
                                             ? 'bg-yellow-500 hover:bg-yellow-600 text-black' 
                                             : 'bg-yellow-500 hover:bg-yellow-600 text-black'
                                     }`}
-                                    disabled={betSlip.totalStake === 0 || isPlacingBet || pendingPlaceBet}
-                                    onClick={placeBetDisabled && !pendingPlaceBet ? () => dispatch(hideOddsChangeNotification()) : handlePlaceBet}
+                                    disabled={betSlip.totalStake === 0 || isPlacingBet || pendingPlaceBet || hasSuspendedBets}
+                                    onClick={placeBetDisabled && !pendingPlaceBet && !hasSuspendedBets ? () => dispatch(hideOddsChangeNotification()) : handlePlaceBet}
                                 >
                                     {isPlacingBet || pendingPlaceBet ? (
                                         <span className="flex items-center justify-center">
                                             <Loader2 className="animate-spin h-5 w-5 mr-2 text-black" />
                                             Placing Bet...
                                         </span>
+                                    ) : hasSuspendedBets ? (
+                                        'Odds temporarily suspended'
                                     ) : placeBetDisabled ? (
                                         'Accept changes to the odds'
                                     ) : (
@@ -665,7 +670,7 @@ const SinglesBets = ({ bets, stakes, onStakeChange, onRemoveBet }) => {
                         <div className="flex items-center space-x-2 flex-1">
                             <div className={`bg-yellow-500 text-black px-2 py-1 rounded text-xs font-bold transition-all duration-500 hover:bg-yellow-400 ${
                                 bet.oddsUpdated ? 'animate-pulse bg-green-500' : ''
-                            }`}>
+                            } ${bet.suspended ? 'opacity-50' : ''}`}>
                                 {bet.odds}
                                 {bet.oddsUpdated && <span className="ml-1 text-[8px]">🔄</span>}
                             </div>
@@ -679,10 +684,17 @@ const SinglesBets = ({ bets, stakes, onStakeChange, onRemoveBet }) => {
                                 className="flex-1 h-6 p-0 px-1 !text-[16px] md:!text-[11px] bg-gray-700 border-gray-600 text-white transition-colors duration-200 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
                                 step="0.01"
                                 min="0"
+                                disabled={bet.suspended}
                             />
                         </div>
                     </div>
-                    {stakes[bet.id] > 0 && (
+                    {bet.suspended && (
+                        <div className="text-xs text-yellow-400 mt-1 flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            Temporarily suspended
+                        </div>
+                    )}
+                    {stakes[bet.id] > 0 && !bet.suspended && (
                         <div className="text-xs text-gray-400 mt-1 transition-opacity duration-300">
                             Potential: €{(stakes[bet.id] * bet.odds).toFixed(2)}
                         </div>
@@ -719,11 +731,17 @@ const CombinationBet = ({ bets, stake, onStakeChange, onRemoveBet }) => {
                                 <span className="text-xs text-gray-400">{bet.type}</span>
                                 <div className={`bg-yellow-500 text-black px-1.5 py-0.5 rounded text-xs font-bold transition-all duration-500 hover:bg-yellow-400 hover:scale-105 ${
                                     bet.oddsUpdated ? 'animate-pulse bg-green-500' : ''
-                                }`}>
+                                } ${bet.suspended ? 'opacity-50' : ''}`}>
                                     {bet.odds}
                                     {bet.oddsUpdated && <span className="ml-1 text-[8px]">🔄</span>}
                                 </div>
                             </div>
+                            {bet.suspended && (
+                                <div className="text-xs text-yellow-400 mt-1 flex items-center gap-1">
+                                    <AlertCircle className="h-3 w-3" />
+                                    Temporarily suspended
+                                </div>
+                            )}
                         </div>
                         <button
                             onClick={() => onRemoveBet(bet.id)}

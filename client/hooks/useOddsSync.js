@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateBetOdds, removeBet } from '@/lib/features/betSlip/betSlipSlice';
+import { updateBetOdds, removeBet, setBetSuspended } from '@/lib/features/betSlip/betSlipSlice';
 import { selectMatchDetailV2 } from '@/lib/features/matches/matchesSlice';
 
 /**
@@ -54,10 +54,18 @@ export const useOddsSync = (matchId) => {
         }
         
         if (outcomeData.suspended) {
-          // Outcome is suspended, remove the bet
-          console.log(`⏸️ Removing bet ${bet.id} - outcome is suspended`);
-          dispatch(removeBet(bet.id));
-          return;
+          // Outcome is suspended, mark the bet as suspended (don't remove)
+          if (!bet.suspended) {
+            console.log(`⏸️ Marking bet ${bet.id} as suspended`);
+            dispatch(setBetSuspended({ betId: bet.id, suspended: true }));
+          }
+          return; // Don't update odds while suspended
+        }
+        
+        // If bet was suspended but now outcome is open again, clear suspension
+        if (bet.suspended && !outcomeData.suspended) {
+          console.log(`✅ Bet ${bet.id} is no longer suspended`);
+          dispatch(setBetSuspended({ betId: bet.id, suspended: false }));
         }
         
         // Update odds if they've changed
