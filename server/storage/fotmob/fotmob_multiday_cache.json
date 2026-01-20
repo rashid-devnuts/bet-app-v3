@@ -3805,7 +3805,7 @@
             "time": "20.01.2026 18:45",
             "home": {
               "id": 8402,
-              "score": 0,
+              "score": 2,
               "name": "Bodø/Glimt",
               "longName": "Bodø/Glimt"
             },
@@ -3828,11 +3828,11 @@
               "started": true,
               "cancelled": false,
               "ongoing": true,
-              "scoreStr": "0 - 0",
+              "scoreStr": "2 - 0",
               "liveTime": {
-                "short": "11‎’‎",
+                "short": "41‎’‎",
                 "shortKey": "",
-                "long": "10:43",
+                "long": "40:44",
                 "longKey": "",
                 "maxTime": 45,
                 "addedTime": 0
@@ -4645,9 +4645,9 @@
               "ongoing": true,
               "scoreStr": "0 - 1",
               "liveTime": {
-                "short": "9‎’‎",
+                "short": "39‎’‎",
                 "shortKey": "",
-                "long": "8:17",
+                "long": "38:18",
                 "longKey": "",
                 "maxTime": 45,
                 "addedTime": 0
@@ -5025,7 +5025,7 @@
             "time": "20.01.2026 18:30",
             "home": {
               "id": 6279,
-              "score": 0,
+              "score": 1,
               "name": "Kaizer Chiefs",
               "longName": "Kaizer Chiefs"
             },
@@ -5036,7 +5036,7 @@
               "longName": "Lamontville Golden Arrows"
             },
             "eliminatedTeamId": null,
-            "statusId": 2,
+            "statusId": 10,
             "tournamentStage": "14",
             "status": {
               "utcTime": "2026-01-20T17:30:00.000Z",
@@ -5048,12 +5048,12 @@
               "started": true,
               "cancelled": false,
               "ongoing": true,
-              "scoreStr": "0 - 0",
+              "scoreStr": "1 - 0",
               "liveTime": {
-                "short": "26‎’‎",
-                "shortKey": "",
-                "long": "25:04",
-                "longKey": "",
+                "short": "HT",
+                "shortKey": "halftime_short",
+                "long": "Half-Time",
+                "longKey": "pause_match",
                 "maxTime": 45,
                 "addedTime": 0
               }
@@ -5072,12 +5072,12 @@
             },
             "away": {
               "id": 207873,
-              "score": 0,
+              "score": 1,
               "name": "Stellenbosch FC",
               "longName": "Stellenbosch FC"
             },
             "eliminatedTeamId": null,
-            "statusId": 2,
+            "statusId": 10,
             "tournamentStage": "14",
             "status": {
               "utcTime": "2026-01-20T17:30:00.000Z",
@@ -5089,12 +5089,12 @@
               "started": true,
               "cancelled": false,
               "ongoing": true,
-              "scoreStr": "0 - 0",
+              "scoreStr": "0 - 1",
               "liveTime": {
-                "short": "26‎’‎",
-                "shortKey": "",
-                "long": "25:35",
-                "longKey": "",
+                "short": "HT",
+                "shortKey": "halftime_short",
+                "long": "Half-Time",
+                "longKey": "pause_match",
                 "maxTime": 45,
                 "addedTime": 0
               }
@@ -5224,7 +5224,7 @@
               "longName": "Al Khaleej"
             },
             "eliminatedTeamId": null,
-            "statusId": 2,
+            "statusId": 10,
             "tournamentStage": "17",
             "status": {
               "utcTime": "2026-01-20T17:30:00.000Z",
@@ -5238,10 +5238,10 @@
               "ongoing": true,
               "scoreStr": "0 - 1",
               "liveTime": {
-                "short": "24‎’‎",
-                "shortKey": "",
-                "long": "23:40",
-                "longKey": "",
+                "short": "HT",
+                "shortKey": "halftime_short",
+                "long": "Half-Time",
+                "longKey": "pause_match",
                 "maxTime": 45,
                 "addedTime": 0
               }
@@ -5254,7 +5254,7 @@
             "time": "20.01.2026 18:30",
             "home": {
               "id": 177356,
-              "score": 0,
+              "score": 1,
               "name": "Al Fateh FC",
               "longName": "Al Fateh FC"
             },
@@ -5265,24 +5265,24 @@
               "longName": "Al Kholood"
             },
             "eliminatedTeamId": null,
-            "statusId": 2,
+            "statusId": 10,
             "tournamentStage": "17",
             "status": {
               "utcTime": "2026-01-20T17:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "20.01.2026 18:30:36"
+                "firstHalfStarted": "20.01.2026 19:21:25"
               },
               "periodLength": 45,
               "finished": false,
               "started": true,
               "cancelled": false,
               "ongoing": true,
-              "scoreStr": "0 - 2",
+              "scoreStr": "1 - 2",
               "liveTime": {
-                "short": "26‎’‎",
-                "shortKey": "",
-                "long": "25:26",
-                "longKey": "",
+                "short": "HT",
+                "shortKey": "halftime_short",
+                "long": "Half-Time",
+                "longKey": "pause_match",
                 "maxTime": 45,
                 "addedTime": 0
               }
@@ -5358,10 +5358,10 @@
           {
             "id": 5141093,
             "leagueId": 10776,
-            "time": "20.01.2026 19:00",
+            "time": "20.01.2026 19:15",
             "home": {
               "id": 1077486,
-              "score": 0,
+              "score": 1,
               "name": "Real Madrid (W)",
               "longName": "Real Madrid (W)"
             },
@@ -5372,19 +5372,29 @@
               "longName": "Atletico Madrid (W)"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 2,
             "tournamentStage": "1/2",
             "status": {
-              "utcTime": "2026-01-20T18:00:00.000Z",
+              "utcTime": "2026-01-20T18:15:00.000Z",
               "halfs": {
-                "firstHalfStarted": "20.01.2026 19:00:00"
+                "firstHalfStarted": "20.01.2026 19:16:12"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "1 - 0",
+              "liveTime": {
+                "short": "10‎’‎",
+                "shortKey": "",
+                "long": "9:51",
+                "longKey": "",
+                "maxTime": 45,
+                "addedTime": 0
+              }
             },
-            "timeTS": 1768932000000
+            "timeTS": 1768932900000
           }
         ],
         "internalRank": 0,
@@ -5558,12 +5568,13 @@
               "longName": "Fiorentina"
             },
             "eliminatedTeamId": null,
-            "statusId": 10,
+            "statusId": 3,
             "tournamentStage": "Quarter-finals",
             "status": {
               "utcTime": "2026-01-20T17:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "20.01.2026 18:02:01"
+                "firstHalfStarted": "20.01.2026 18:02:01",
+                "secondHalfStarted": "20.01.2026 19:02:45"
               },
               "periodLength": 45,
               "finished": false,
@@ -5572,11 +5583,11 @@
               "ongoing": true,
               "scoreStr": "0 - 1",
               "liveTime": {
-                "short": "HT",
-                "shortKey": "halftime_short",
-                "long": "Half-Time",
-                "longKey": "pause_match",
-                "maxTime": 45,
+                "short": "69‎’‎",
+                "shortKey": "",
+                "long": "68:18",
+                "longKey": "",
+                "maxTime": 90,
                 "addedTime": 0
               },
               "aggregatedStr": "0 - 1"
@@ -5783,18 +5794,18 @@
             "time": "20.01.2026 14:30",
             "home": {
               "id": 582508,
-              "score": 0,
+              "score": 1,
               "name": "Al Markhiya",
               "longName": "Al Markhiya"
             },
             "away": {
               "id": 101901,
-              "score": 0,
+              "score": 1,
               "name": "Al-Wakrah",
               "longName": "Al-Wakrah"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 6,
             "tournamentStage": "10",
             "status": {
               "utcTime": "2026-01-20T13:30:00.000Z",
@@ -5802,9 +5813,17 @@
                 "firstHalfStarted": "20.01.2026 14:30:00"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": true,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "awarded": false,
+              "scoreStr": "1 - 1",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
+              }
             },
             "timeTS": 1768915800000
           },
@@ -5814,18 +5833,18 @@
             "time": "20.01.2026 16:30",
             "home": {
               "id": 1345067,
-              "score": 0,
+              "score": 1,
               "name": "Al-Kharaitiyat SC",
               "longName": "Al-Kharaitiyat SC"
             },
             "away": {
               "id": 101904,
-              "score": 0,
+              "score": 4,
               "name": "Al-Shamal",
               "longName": "Al-Shamal"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 6,
             "tournamentStage": "10",
             "status": {
               "utcTime": "2026-01-20T15:30:00.000Z",
@@ -5833,9 +5852,17 @@
                 "firstHalfStarted": "20.01.2026 16:30:00"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": true,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "awarded": false,
+              "scoreStr": "1 - 4",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
+              }
             },
             "timeTS": 1768923000000
           },
@@ -5845,18 +5872,18 @@
             "time": "20.01.2026 16:30",
             "home": {
               "id": 1803046,
-              "score": 0,
+              "score": 2,
               "name": "Al-Waab SC",
               "longName": "Al-Waab SC"
             },
             "away": {
               "id": 568590,
-              "score": 0,
+              "score": 1,
               "name": "Al-Shahaniya",
               "longName": "Al-Shahaniya"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 6,
             "tournamentStage": "10",
             "status": {
               "utcTime": "2026-01-20T15:30:00.000Z",
@@ -5864,9 +5891,17 @@
                 "firstHalfStarted": "20.01.2026 16:30:00"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": true,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "awarded": false,
+              "scoreStr": "2 - 1",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
+              }
             },
             "timeTS": 1768923000000
           }
@@ -7795,7 +7830,7 @@
               "longName": "Aldershot Town"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 5,
             "tournamentStage": "28",
             "status": {
               "utcTime": "2026-01-20T19:45:00.000Z",
@@ -7803,9 +7838,15 @@
                 "firstHalfStarted": "20.01.2026 20:45:00"
               },
               "periodLength": 45,
+              "cancelled": true,
               "started": false,
-              "cancelled": false,
-              "finished": false
+              "finished": false,
+              "reason": {
+                "short": "PP",
+                "shortKey": "postponed_short",
+                "long": "Postponed",
+                "longKey": "postponed"
+              }
             },
             "timeTS": 1768938300000
           }

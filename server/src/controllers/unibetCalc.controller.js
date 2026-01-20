@@ -36,15 +36,19 @@ export class UnibetCalcController {
                 // For combination bets: status is 'pending' OR any leg has status 'pending'
                 const query = {
                     $or: [
-                        // Single bets: status is pending
+                        // Single bets: status is pending AND (combination doesn't exist OR is empty array)
                         { 
                             status: 'pending',
-                            combination: { $exists: false } // No combination array = single bet
+                            $or: [
+                                { combination: { $exists: false } },
+                                { combination: [] },
+                                { combination: { $size: 0 } }
+                            ]
                         },
-                        // Combination bets: status is pending
+                        // Combination bets: status is pending (has non-empty combination)
                         { 
                             status: 'pending',
-                            combination: { $exists: true, $ne: [] }
+                            combination: { $exists: true, $ne: [], $not: { $size: 0 } }
                         },
                         // Combination bets: any leg has status 'pending' (even if overall status is won/lost)
                         {
@@ -59,8 +63,8 @@ export class UnibetCalcController {
                 
                 console.log(`📊 [processAll] 🔍 Querying database for pending bets and combination bets with pending legs...`);
                 console.log(`📊 [processAll]    - Query includes:`);
-                console.log(`📊 [processAll]      1. Single bets with status='pending'`);
-                console.log(`📊 [processAll]      2. Combination bets with status='pending'`);
+                console.log(`📊 [processAll]      1. Single bets with status='pending' (combination doesn't exist OR is empty array)`);
+                console.log(`📊 [processAll]      2. Combination bets with status='pending' (has non-empty combination)`);
                 console.log(`📊 [processAll]      3. Combination bets with any leg status='pending' (even if overall status is won/lost)`);
                 console.log(`📊 [processAll]    - Sort: { matchDate: 1 }`);
                 console.log(`📊 [processAll]    - Limit: ${parseInt(limit)}`);
