@@ -1891,12 +1891,15 @@ class BetOutcomeCalculator {
             console.log(`      - Away: ${ftAway} (type: ${typeof ftAway})`);
             
             // Get handicap line with proper conversion
-            // Priority: hints.line (already normalized) > betDetails.total > handicapLine (check if needs conversion) > handicapRaw
+            // Priority: hints.line (already normalized) > unibetMeta.handicapLine > betDetails.total > handicapLine (check if needs conversion) > handicapRaw > parse from market name
             let h = null;
             if (bet.hints?.line !== undefined) {
                 // hints.line is already in correct format (e.g., -1, -0.5, 2.75)
                 h = Number(bet.hints.line);
                 console.log(`   - Handicap from hints.line: ${h}`);
+            } else if (bet.unibetMeta?.handicapLine !== undefined && bet.unibetMeta.handicapLine !== null) {
+                h = Number(bet.unibetMeta.handicapLine);
+                console.log(`   - Handicap from unibetMeta.handicapLine: ${h}`);
             } else if (bet.betDetails?.total) {
                 h = parseFloat(bet.betDetails.total);
                 console.log(`   - Handicap from betDetails.total: ${h}`);
@@ -1954,6 +1957,54 @@ class BetOutcomeCalculator {
                         betAwayName: bet.awayName
                     } 
                 };
+            }
+
+            // If handicap is still null, try to parse it from market name or criterionLabel
+            // Format: "Asian Line (1 - 0)" or "Asian Handicap (1 - 0)" means home gets +1, away gets -1
+            if (h === null || Number.isNaN(h)) {
+                const marketName = bet.marketName || bet.unibetMeta?.marketName || '';
+                const criterionLabel = bet.criterionLabel || bet.unibetMeta?.criterionLabel || '';
+                const criterionEnglishLabel = bet.criterionEnglishLabel || bet.unibetMeta?.criterionEnglishLabel || '';
+                
+                // Try to match patterns like "(1 - 0)", "(0.5 - 0)", "(0 - 1)", "(1.5 - 0.5)", etc.
+                const handicapPattern = /\(([\d.]+)\s*[-–—]\s*([\d.]+)\)/;
+                const marketText = marketName + ' ' + criterionLabel + ' ' + criterionEnglishLabel;
+                const match = marketText.match(handicapPattern);
+                
+                if (match) {
+                    const homeHandicap = parseFloat(match[1]);
+                    const awayHandicap = parseFloat(match[2]);
+                    
+                    // For format "(X - Y)": home team gets +X, away team gets -X (or equivalently, home gets +X, away gets -X)
+                    // The difference (X - Y) is the handicap value
+                    // If homePicked, handicap is +X (or +(X-Y) if Y is not 0)
+                    // If awayPicked, handicap is -X (or -(X-Y) if Y is not 0)
+                    
+                    if (homePicked) {
+                        // Home team selected: handicap is positive (home gets the advantage)
+                        h = homeHandicap - awayHandicap; // e.g., (1 - 0) = +1, (0.5 - 0) = +0.5
+                        console.log(`   - Handicap parsed from market name "${marketText}": (${homeHandicap} - ${awayHandicap}) = ${h} for HOME team`);
+                    } else if (awayPicked) {
+                        // Away team selected: handicap is negative (away gets the disadvantage, or home gets advantage)
+                        h = -(homeHandicap - awayHandicap); // e.g., (1 - 0) = -1, (0.5 - 0) = -0.5
+                        console.log(`   - Handicap parsed from market name "${marketText}": (${homeHandicap} - ${awayHandicap}) = ${h} for AWAY team`);
+                    }
+                } else {
+                    // Try alternative pattern: just a number in parentheses like "(1)", "(0.5)", "(-1)"
+                    const simplePattern = /\(([-+]?[\d.]+)\)/;
+                    const simpleMatch = marketText.match(simplePattern);
+                    if (simpleMatch) {
+                        const parsedHandicap = parseFloat(simpleMatch[1]);
+                        if (!isNaN(parsedHandicap)) {
+                            if (homePicked) {
+                                h = Math.abs(parsedHandicap); // Home gets positive handicap
+                            } else if (awayPicked) {
+                                h = -Math.abs(parsedHandicap); // Away gets negative handicap
+                            }
+                            console.log(`   - Handicap parsed from market name "${marketText}": ${parsedHandicap} → ${h} for ${homePicked ? 'HOME' : 'AWAY'} team`);
+                        }
+                    }
+                }
             }
 
             if (h === null || Number.isNaN(h) || (!homePicked && !awayPicked)) {
