@@ -201,3 +201,5 @@ Unibet_ID,Unibet_URL,Unibet_Name,Fotmob_URL,Fotmob_Name,Match_Type,Country/Regio
 1000094997,https://www.unibet.com.au/betting/sports/filter/football/hungary/nb_1,NB 1,https://www.fotmob.com/leagues/212,NB I,Different Name,Hungary
 2000050420,https://www.unibet.com.au/betting/sports/filter/football/saudi_arabia/division_1,Division 1,https://www.fotmob.com/leagues/10721,Saudi First Division,Different Name,Saudi Arabia
 2010203473,https://www.unibet.com.au/betting/sports/filter/football/asean_club_championship,ASEAN Club Championship,https://www.fotmob.com/leagues/11012,ASEAN Club Championship,Exact Match,International
+2000050276,https://www.unibet.com.au/betting/sports/filter/football/costa_rica/primera_division_costa_rica,Primera Division Costa Rica,https://www.fotmob.com/leagues/121,Primera Division Clausura,Different Name,Costa Rica
+2000050539,https://www.unibet.com.au/betting/sports/filter/football/guatemala/liga_nacional_guatemala,Liga Nacional Guatemala,https://www.fotmob.com/leagues/336,Liga Nacional Clausura,Different Name,Guatemala

@@ -149,6 +149,7 @@ async function removeLeagueAndCancelledBets() {
         // Step 1: Move league to FailedLeagueMappingAttempt
         console.log('📦 Moving league to FailedLeagueMappingAttempt...');
         try {
+            const manualReason = 'Manually removed';
             if (existingFailed) {
                 // Update existing record
                 existingFailed.unibetName = league.unibetName;
@@ -158,6 +159,7 @@ async function removeLeagueAndCancelledBets() {
                 existingFailed.mappingFailed = true;
                 existingFailed.lastMappingAttempt = new Date();
                 existingFailed.attemptCount = (existingFailed.attemptCount || 0) + 1;
+                existingFailed.reason = manualReason;
                 existingFailed.updatedAt = new Date();
                 await existingFailed.save();
                 console.log(`✅ Updated existing record in FailedLeagueMappingAttempt (unibetId: ${league.unibetId})`);
@@ -171,7 +173,8 @@ async function removeLeagueAndCancelledBets() {
                     mappingAttempted: true,
                     mappingFailed: true,
                     lastMappingAttempt: new Date(),
-                    attemptCount: 1
+                    attemptCount: 1,
+                    reason: manualReason
                 });
                 await failedAttempt.save();
                 console.log(`✅ Created new record in FailedLeagueMappingAttempt (unibetId: ${league.unibetId})`);

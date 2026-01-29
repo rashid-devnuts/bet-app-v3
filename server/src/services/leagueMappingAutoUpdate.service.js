@@ -1168,7 +1168,7 @@ class LeagueMappingAutoUpdate {
      * Use Gemini AI to find matching FotMob league when all other methods fail
      * @param {Object} unibetLeague - Unibet league object with name, country, matches
      * @param {Array} fotmobLeagues - Array of FotMob league objects
-     * @returns {Object|null} - { id, name } if match found, null otherwise
+     * @returns {{ match: Object|null, reason: string }} - match if found, reason when no match (for failed mapping)
      */
     async findMatchingFotmobLeagueWithGemini(unibetLeague, fotmobLeagues) {
         // Get both API keys
@@ -1177,7 +1177,7 @@ class LeagueMappingAutoUpdate {
         
         if (!geminiApiKey1 && !geminiApiKey2) {
             console.log(`[LeagueMapping] ⚠️ No Gemini API keys found (GEMINI_API_KEY_1 or GEMINI_API_KEY_2), skipping Gemini fallback`);
-            return null;
+            return { match: null, reason: 'No Gemini API keys' };
         }
 
         // Helper function to check if error is quota-related
@@ -1203,7 +1203,7 @@ class LeagueMappingAutoUpdate {
 
         if (apiKeys.length === 0) {
             console.log(`[LeagueMapping] ⚠️ No valid Gemini API keys found, skipping Gemini fallback`);
-            return null;
+            return { match: null, reason: 'No valid Gemini API keys' };
         }
 
         let lastError = null;
@@ -1543,7 +1543,7 @@ class LeagueMappingAutoUpdate {
                     } catch (saveError) {
                         // Ignore save error
                     }
-                    return null;
+                    return { match: null, reason: `Gemini parse error: ${parseError.message}` };
                 }
 
                 if (geminiResult.matched && geminiResult.fotmobLeagueId) {
@@ -1571,7 +1571,7 @@ class LeagueMappingAutoUpdate {
                                 
                                 if (unibetGroupNum !== fotmobGroupNum) {
                                     console.log(`[LeagueMapping] ⚠️ Gemini matched wrong group - Unibet group ${unibetGroupNum} vs Fotmob group ${fotmobGroupNum}`);
-                                    return null; // Reject Gemini match if group numbers don't match
+                                    return { match: null, reason: 'Gemini matched wrong group number' };
                                 }
                             }
                         }
@@ -1585,22 +1585,25 @@ class LeagueMappingAutoUpdate {
                             : (matchedLeague.isGroup ? matchedLeague.id : null);
                         
                         return {
-                            id: parseInt(geminiResult.fotmobLeagueId), // ✅ Primary ID from Gemini
-                            groupId: groupId, // ✅ Group ID from response or extracted
-                            name: geminiResult.fotmobLeagueName || matchedLeague.name,
-                            exactMatch: false,
-                            geminiMatch: true,
-                            isGroup: matchedLeague.isGroup || false
+                            match: {
+                                id: parseInt(geminiResult.fotmobLeagueId), // ✅ Primary ID from Gemini
+                                groupId: groupId, // ✅ Group ID from response or extracted
+                                name: geminiResult.fotmobLeagueName || matchedLeague.name,
+                                exactMatch: false,
+                                geminiMatch: true,
+                                isGroup: matchedLeague.isGroup || false
+                            },
+                            reason: ''
                         };
                     } else {
                         console.log(`[LeagueMapping] ⚠️ Gemini returned ID ${geminiResult.fotmobLeagueId} but league not found in FotMob data`);
+                        return { match: null, reason: 'Gemini returned ID not in FotMob data' };
                     }
                 } else {
-                    console.log(`[LeagueMapping] ❌ Gemini could not find a match: ${geminiResult.reason || 'No match found'}`);
+                    const noMatchReason = geminiResult.reason || 'No match found';
+                    console.log(`[LeagueMapping] ❌ Gemini could not find a match: ${noMatchReason}`);
+                    return { match: null, reason: noMatchReason };
                 }
-
-                // If we got here, the request succeeded but no match was found
-                return null;
 
             } catch (error) {
                 lastError = error;
@@ -1615,7 +1618,7 @@ class LeagueMappingAutoUpdate {
                 // If it's not a quota error, or it's the last key, return null
                 if (!isQuotaError(error)) {
                     // Non-quota error - don't try other keys
-                    return null;
+                    return { match: null, reason: `Gemini API error: ${error.message}` };
                 }
             }
         }
@@ -1624,7 +1627,7 @@ class LeagueMappingAutoUpdate {
         if (lastError && isQuotaError(lastError)) {
             console.error(`[LeagueMapping] ❌ All Gemini API keys exhausted quota`);
         }
-        return null;
+        return { match: null, reason: lastError ? `Gemini: ${lastError.message}` : 'All Gemini keys failed' };
     }
 
     /**
@@ -2114,8 +2117,10 @@ class LeagueMappingAutoUpdate {
         console.log('[LeagueMapping] ========================================');
         console.log(`[LeagueMapping] ⏰ Start time: ${new Date().toISOString()}`);
 
-        // Add overall timeout (10 minutes max)
-        const MAX_EXECUTION_TIME = 10 * 60 * 1000; // 10 minutes
+        // Add overall timeout (default 30 min; override with LEAGUE_MAPPING_TIMEOUT_MS env)
+        const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+        const MAX_EXECUTION_TIME = parseInt(process.env.LEAGUE_MAPPING_TIMEOUT_MS, 10) || DEFAULT_TIMEOUT_MS;
+        console.log(`[LeagueMapping] ⏱️ Job timeout: ${MAX_EXECUTION_TIME / 1000}s`);
         const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => {
                 reject(new Error(`League Mapping update timed out after ${MAX_EXECUTION_TIME / 1000} seconds`));
@@ -2316,11 +2321,14 @@ class LeagueMappingAutoUpdate {
 
                 // Find matching Fotmob league (Priority 1 & 2: Exact match and team+time)
                 let fotmobLeague = this.findMatchingFotmobLeague(unibetLeague, fotmobLeagues);
+                let geminiFailReason = '';
 
                 // ✅ PRIORITY 3: If no match found, try Gemini AI fallback
                 if (!fotmobLeague) {
                     console.log(`[LeagueMapping] 🔄 Trying Gemini AI fallback for: ${unibetLeague.name}...`);
-                    fotmobLeague = await this.findMatchingFotmobLeagueWithGemini(unibetLeague, fotmobLeagues);
+                    const geminiResult = await this.findMatchingFotmobLeagueWithGemini(unibetLeague, fotmobLeagues);
+                    fotmobLeague = geminiResult.match;
+                    geminiFailReason = geminiResult.reason || '';
                 }
 
                 if (fotmobLeague) {
@@ -2414,8 +2422,22 @@ class LeagueMappingAutoUpdate {
                     }
                 } else {
                     notFoundCount++;
-                    
-                    // ✅ NEW: Save unsuccessful mapping attempt to separate collection
+                    // Reason: API (exact/team+time) failed; include Gemini response when we tried it
+                    const failReason = 'API: No exact or team+time match' + (geminiFailReason ? '. Gemini: ' + geminiFailReason : '');
+
+                    // ✅ Save both Unibet and Fotmob responses to temp folder for debugging
+                    try {
+                        const ts = Date.now();
+                        const unibetPath = path.join(this.tempDir, `failed_unibet_${unibetLeague.id}_${ts}.json`);
+                        const fotmobPath = path.join(this.tempDir, `failed_fotmob_${unibetLeague.id}_${ts}.json`);
+                        await fs.promises.writeFile(unibetPath, JSON.stringify(unibetLeague, null, 2), 'utf-8');
+                        await fs.promises.writeFile(fotmobPath, JSON.stringify(fotmobLeagues, null, 2), 'utf-8');
+                        console.log(`[LeagueMapping] 📁 Saved failed responses to temp: unibet + fotmob for ${unibetLeague.name} (Unibet ID: ${unibetLeague.id})`);
+                    } catch (writeErr) {
+                        console.warn(`[LeagueMapping] ⚠️ Failed to write failed mapping responses to temp:`, writeErr.message);
+                    }
+
+                    // ✅ NEW: Save unsuccessful mapping attempt to separate collection (with reason)
                     try {
                         const unibetIdNum = parseInt(unibetLeague.id);
                         const existingFailed = await FailedLeagueMappingAttempt.findOne({ 
@@ -2435,17 +2457,19 @@ class LeagueMappingAutoUpdate {
                                 mappingAttempted: true,
                                 mappingFailed: true,
                                 lastMappingAttempt: new Date(),
-                                attemptCount: 1
+                                attemptCount: 1,
+                                reason: failReason
                             });
                             
                             await failedMapping.save();
-                            console.log(`[LeagueMapping] 📝 Saved failed mapping attempt for: ${unibetLeague.name} (Unibet ID: ${unibetIdNum})`);
+                            console.log(`[LeagueMapping] 📝 Saved failed mapping attempt for: ${unibetLeague.name} (Unibet ID: ${unibetIdNum}, reason: ${failReason})`);
                         } else {
-                            // Update last attempt time and increment count
+                            // Update last attempt time, count, and reason
                             existingFailed.lastMappingAttempt = new Date();
                             existingFailed.attemptCount = (existingFailed.attemptCount || 0) + 1;
+                            existingFailed.reason = failReason;
                             await existingFailed.save();
-                            console.log(`[LeagueMapping] 📝 Updated failed mapping attempt for: ${unibetLeague.name} (Unibet ID: ${unibetIdNum}, Attempts: ${existingFailed.attemptCount})`);
+                            console.log(`[LeagueMapping] 📝 Updated failed mapping attempt for: ${unibetLeague.name} (Unibet ID: ${unibetIdNum}, Attempts: ${existingFailed.attemptCount}, reason: ${failReason})`);
                         }
                     } catch (error) {
                         console.warn(`[LeagueMapping] ⚠️ Failed to save unsuccessful mapping for ${unibetLeague.name}:`, error.message);

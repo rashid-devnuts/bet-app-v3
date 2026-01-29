@@ -35,6 +35,10 @@ const failedLeagueMappingAttemptSchema = new mongoose.Schema({
         type: Number,
         default: 1
     },
+    reason: {
+        type: String,
+        default: ''
+    },
     createdAt: {
         type: Date,
         default: Date.now
