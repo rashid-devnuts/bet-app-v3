@@ -33,11 +33,12 @@ class FinanceController {
         type,
         amount: parseFloat(amount),
         description,
-        processedBy: req.user?.id, // Assuming user info is in req.user from auth middleware
+        processedBy: req.user?.id,
       };
 
       const transaction = await financeService.createTransaction(
-        transactionData
+        transactionData,
+        req.user
       );
 
       res.status(201).json({
@@ -70,7 +71,7 @@ class FinanceController {
         sortOrder: req.query.sortOrder || "desc",
       };
 
-      const result = await financeService.getTransactions(filters);
+      const result = await financeService.getTransactions(filters, req.user);
 
       res.status(200).json({
         success: true,
@@ -99,7 +100,7 @@ class FinanceController {
         });
       }
 
-      const transaction = await financeService.getTransactionById(id);
+      const transaction = await financeService.getTransactionById(id, req.user);
 
       res.status(200).json({
         success: true,
@@ -119,7 +120,7 @@ class FinanceController {
   // Get financial summary
   async getFinancialSummary(req, res) {
     try {
-      const summary = await financeService.getFinancialSummary();
+      const summary = await financeService.getFinancialSummary(req.user);
 
       res.status(200).json({
         success: true,
@@ -145,7 +146,7 @@ class FinanceController {
         userId: req.query.userId,
       };
 
-      const summary = await financeService.getFilteredFinancialSummary(filters);
+      const summary = await financeService.getFilteredFinancialSummary(filters, req.user);
 
       res.status(200).json({
         success: true,
@@ -183,7 +184,7 @@ class FinanceController {
         sortOrder: req.query.sortOrder || "desc",
       };
 
-      const result = await financeService.getUserTransactions(userId, filters);
+      const result = await financeService.getUserTransactions(userId, filters, req.user);
 
       res.status(200).json({
         success: true,

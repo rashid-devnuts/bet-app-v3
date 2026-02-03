@@ -5,6 +5,7 @@ import SportsMonksService from "./sportsMonks.service.js";
 import FixtureOptimizationService from "./fixture.service.js";
 import BetOutcomeCalculationService from "./betOutcomeCalculation.service.js";
 import { CustomError } from "../utils/customErrors.js";
+import { getAdminScopeUserIds } from "../utils/adminScope.js";
 import agenda from "../config/agenda.js";
 import NodeCache from "node-cache";
 import mongoose from "mongoose";
@@ -3482,8 +3483,12 @@ class BetService {
     return bets;
   }
 
-  async getAllBets() {
-    const bets = await Bet.find({}).populate("userId");
+  async getAllBets(requester = null) {
+    const allowedUserIds = requester ? await getAdminScopeUserIds(requester) : null;
+    const query = allowedUserIds && allowedUserIds.length > 0
+      ? { userId: { $in: allowedUserIds } }
+      : {};
+    const bets = await Bet.find(query).populate("userId");
     const grouped = {};
     for (const bet of bets) {
       const user = bet.userId;
@@ -3501,7 +3506,7 @@ class BetService {
     return grouped;
   }
 
-  async getBetsByUserId(userId) {
+  async getBetsByUserId(userId, requester = null) {
     if (!userId) {
       throw new CustomError("User ID is required", 400, "USER_ID_REQUIRED");
     }
@@ -3509,6 +3514,23 @@ class BetService {
     // Convert string userId to ObjectId if necessary
     const userObjectId =
       typeof userId === "string" ? new mongoose.Types.ObjectId(userId) : userId;
+
+    if (requester) {
+      const allowedUserIds = await getAdminScopeUserIds(requester);
+      if (allowedUserIds && allowedUserIds.length > 0) {
+        const allowed = allowedUserIds.some(
+          (id) => id.toString() === userObjectId.toString()
+        );
+        if (!allowed) {
+          throw new CustomError(
+            "You can only view bets for users you created",
+            403,
+            "FORBIDDEN_USER_SCOPE"
+          );
+        }
+      }
+    }
+
     console.log(
       `[getBetsByUserId] Searching for bets with userId: ${userId} (as ObjectId: ${userObjectId})`
     );

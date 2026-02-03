@@ -250,7 +250,7 @@ class BetController {
 
   async getAllBets(req, res, next) {
     try {
-      const groupedBets = await BetService.getAllBets();
+      const groupedBets = await BetService.getAllBets(req.user);
       res.status(200).json({
         success: true,
         data: groupedBets,
@@ -266,7 +266,7 @@ class BetController {
       const { userId } = req.params;
       console.log(`[BetController.getBetsByUserId] Requesting bets for user ID: ${userId}`);
       
-      const bets = await BetService.getBetsByUserId(userId);
+      const bets = await BetService.getBetsByUserId(userId, req.user);
       console.log(`[BetController.getBetsByUserId] Fetched ${bets.length} bets for user ${userId}`);
       
       res.status(200).json({

@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiClient from "@/config/axios";
 import { setUser } from "@/lib/features/auth/authSlice";
+import unibetDirectService from "@/services/unibetDirect.service";
+import { isMatchFinished as isMatchFinishedLocal, markMatchAsFinished } from "@/lib/utils/finishedMatchesManager";
 
 const betSlipSlice = createSlice({
   name: "betSlip",
@@ -642,6 +644,51 @@ const checkOddsSuspension = (bet, matchData, liveMatchesState) => {
   return { suspended: false }; // Allow to proceed, server will validate
 };
 
+const isFinishedStateValue = (state) => {
+  if (state === null || state === undefined) return false;
+  if (typeof state === 'number') return state === 5;
+  if (typeof state === 'string') return state.toLowerCase() === 'finished';
+  if (typeof state === 'object') {
+    if (typeof state.id === 'number' && state.id === 5) return true;
+    const name = state.name || state.state || state.status;
+    if (typeof name === 'string' && name.toLowerCase() === 'finished') return true;
+  }
+  return false;
+};
+
+const isMatchFinishedFromLocalData = (bet, matchData, liveMatchesState) => {
+  const matchId = bet?.match?.id;
+  if (!matchId) return false;
+
+  if (bet?.match?.finished === true || bet?.match?.status?.finished === true) {
+    return true;
+  }
+
+  if (isMatchFinishedLocal(String(matchId))) {
+    return true;
+  }
+
+  const liveMatch = (liveMatchesState?.matches || []).find(m => String(m.id) === String(matchId));
+
+  const stateCandidates = [
+    bet?.match?.state,
+    bet?.match?.state_id,
+    bet?.match?.status?.state,
+    bet?.match?.status?.name,
+    matchData?.matchData?.data?.events?.[0]?.state,
+    matchData?.data?.events?.[0]?.state,
+    matchData?.data?.event?.state,
+    matchData?.data?.state,
+    matchData?.state,
+    liveMatch?.state,
+    liveMatch?.state_id,
+    liveMatch?.status?.state,
+    liveMatch?.status?.name
+  ];
+
+  return stateCandidates.some(isFinishedStateValue);
+};
+
 // Helper function to extract Unibet metadata from match data
 const extractUnibetMetadata = (bet, matchData) => {
   
@@ -749,6 +796,50 @@ export const placeBetThunk = createAsyncThunk(
     const liveMatchesState = getState().liveMatches;
     
     try {
+      const finishedMatchCache = new Map();
+      const betOffers404Cache = new Map();
+
+      const ensureMatchIsPlaceable = async (bet, matchData) => {
+        const matchId = bet?.match?.id;
+        if (!matchId) return;
+
+        if (!finishedMatchCache.has(matchId)) {
+          const isFinished = isMatchFinishedFromLocalData(bet, matchData, liveMatchesState);
+          finishedMatchCache.set(matchId, isFinished);
+        }
+
+        if (finishedMatchCache.get(matchId)) {
+          throw new Error(
+            `Match ${bet.match.team1} vs ${bet.match.team2} is finished. Please remove this bet.`
+          );
+        }
+
+        if (!betOffers404Cache.has(matchId)) {
+          const isNumeric = /^\d+$/.test(String(matchId));
+          if (!isNumeric) {
+            betOffers404Cache.set(matchId, false);
+          } else {
+            try {
+              const result = await unibetDirectService.getBetOffers(matchId);
+              const isNotFound = result?.status === 404 || result?.isFinished === true;
+              betOffers404Cache.set(matchId, isNotFound);
+              if (isNotFound) {
+                markMatchAsFinished(String(matchId), bet?.match || null);
+              }
+            } catch (error) {
+              console.warn(`⚠️ [placeBetThunk] BetOffers check failed for match ${matchId}:`, error.message);
+              betOffers404Cache.set(matchId, false);
+            }
+          }
+        }
+
+        if (betOffers404Cache.get(matchId)) {
+          throw new Error(
+            `Match ${bet.match.team1} vs ${bet.match.team2} is no longer available (bet offers 404).`
+          );
+        }
+      };
+
       const results = [];
 
       if (activeTab === "singles") {
@@ -771,6 +862,9 @@ export const placeBetThunk = createAsyncThunk(
           // Extract Unibet metadata from match data (try multiple sources)
           const matchData = getMatchDataFromState(bet.match.id, matchesState, leaguesState);
           
+          // ✅ NEW: Check if match is finished or removed (404) before placing bet
+          await ensureMatchIsPlaceable(bet, matchData);
+
           // ✅ NEW: Check if odds are suspended before placing bet
           const suspensionCheck = checkOddsSuspension(bet, matchData, liveMatchesState);
           if (suspensionCheck.suspended) {
@@ -890,11 +984,15 @@ export const placeBetThunk = createAsyncThunk(
         }
 
         // Prepare combination data for backend
-        const combinationData = bets.map(bet => {
+        const combinationData = [];
+        for (const bet of bets) {
           const label = bet.label || bet.selection;
           
           // Extract Unibet metadata from match data for each leg (try multiple sources)
           const matchData = getMatchDataFromState(bet.match.id, matchesState, leaguesState);
+
+          // ✅ NEW: Check if match is finished or removed (404) before placing bet
+          await ensureMatchIsPlaceable(bet, matchData);
           
           // ✅ NEW: Check if odds are suspended before placing combination bet
           const suspensionCheck = checkOddsSuspension(bet, matchData, liveMatchesState);
@@ -908,7 +1006,7 @@ export const placeBetThunk = createAsyncThunk(
           const currentBetState = state.bets.find(b => b.id === bet.id);
           const latestOdds = currentBetState?.odds || bet.odds; // Use current state odds, fallback to bet.odds
           
-          return {
+          combinationData.push({
             matchId: bet.match.id,
             oddId: bet.oddId || `${bet.match.id}_${label.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`,
             betOption: label, // Always use label for betOption
@@ -953,8 +1051,8 @@ export const placeBetThunk = createAsyncThunk(
               const fromUnibetMeta = unibetMetadata?.leagueName;
               return fromBetMatch || fromUnibetMeta || null;
             })()
-          };
-        });
+          });
+        }
 
         // Generate combination bet identifiers
         const combinationOddId = `combo_${Date.now()}`;

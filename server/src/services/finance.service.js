@@ -2,13 +2,25 @@ import Transaction from "../models/Transaction.js";
 import User from "../models/User.js";
 import Bet from "../models/Bet.js";
 import mongoose from "mongoose";
+import { getAdminScopeUserIds } from "../utils/adminScope.js";
 
 class FinanceService {
   // Create a new transaction
-  async createTransaction(transactionData) {
+  async createTransaction(transactionData, requester = null) {
     try {
       const { userId, type, amount, description, processedBy } =
         transactionData;
+
+      if (requester) {
+        const allowedUserIds = await getAdminScopeUserIds(requester);
+        if (allowedUserIds && allowedUserIds.length > 0) {
+          const requestedId = typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId;
+          const allowed = allowedUserIds.some((id) => id.toString() === requestedId.toString());
+          if (!allowed) {
+            throw new Error("You can only create transactions for users you created");
+          }
+        }
+      }
 
       // Get user
       const user = await User.findById(userId);
@@ -57,7 +69,7 @@ class FinanceService {
       throw error;
     }
   }
-  async getTransactions(filters = {}) {
+  async getTransactions(filters = {}, requester = null) {
     const {
       page = 1,
       limit = 10,
@@ -72,9 +84,19 @@ class FinanceService {
 
     const query = {}; // Apply filters
     if (type && type !== 'all') query.type = type;
-    if (userId) {
+
+    const allowedUserIds = requester ? await getAdminScopeUserIds(requester) : null;
+    if (allowedUserIds && allowedUserIds.length > 0) {
+      if (userId) {
+        const requestedId = typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId;
+        const allowed = allowedUserIds.some((id) => id.toString() === requestedId.toString());
+        if (!allowed) query.userId = { $in: [] }; // no access
+        else query.userId = requestedId;
+      } else {
+        query.userId = { $in: allowedUserIds };
+      }
+    } else if (userId) {
       try {
-        // Convert to ObjectId if it's a string
         if (typeof userId === 'string') {
           query.userId = new mongoose.Types.ObjectId(userId);
         } else {
@@ -82,7 +104,7 @@ class FinanceService {
         }
       } catch (error) {
         console.error(`[getTransactions] Error converting userId to ObjectId:`, error);
-        query.userId = userId; // Keep the original value
+        query.userId = userId;
       }
     }
 
@@ -202,7 +224,7 @@ class FinanceService {
   }
 
   // Get transaction by ID
-  async getTransactionById(id) {
+  async getTransactionById(id, requester = null) {
     const transaction = await Transaction.findById(id).populate([
       { path: "userId", select: "firstName lastName email balance" },
       { path: "processedBy", select: "firstName lastName" },
@@ -212,13 +234,30 @@ class FinanceService {
       throw new Error("Transaction not found");
     }
 
+    if (requester) {
+      const allowedUserIds = await getAdminScopeUserIds(requester);
+      if (allowedUserIds && allowedUserIds.length > 0) {
+        const userId = transaction.userId?._id ?? transaction.userId;
+        const allowed = userId && allowedUserIds.some((id) => id.toString() === userId.toString());
+        if (!allowed) {
+          throw new Error("Transaction not found");
+        }
+      }
+    }
+
     return transaction;
   }
 
   // Get financial summary
-  async getFinancialSummary() {
+  async getFinancialSummary(requester = null) {
+    const allowedUserIds = requester ? await getAdminScopeUserIds(requester) : null;
+    const userMatch = allowedUserIds && allowedUserIds.length > 0
+      ? [{ $match: { userId: { $in: allowedUserIds } } }]
+      : [];
+
     // Get transaction summary
     const summary = await Transaction.aggregate([
+      ...userMatch,
       {
         $group: {
           _id: "$type",
@@ -228,8 +267,12 @@ class FinanceService {
       },
     ]);
 
-    // Get current total balance of all users
+    // Get current total balance of all users (or scoped users)
+    const userBalanceMatch = allowedUserIds && allowedUserIds.length > 0
+      ? [{ $match: { _id: { $in: allowedUserIds } } }]
+      : [];
     const totalUsersBalance = await User.aggregate([
+      ...userBalanceMatch,
       {
         $group: {
           _id: null,
@@ -238,13 +281,12 @@ class FinanceService {
       },
     ]);
 
+    const betMatch = allowedUserIds && allowedUserIds.length > 0
+      ? [{ $match: { userId: { $in: allowedUserIds }, status: { $in: ["won", "lost"] } } }]
+      : [{ $match: { status: { $in: ["won", "lost"] } } }];
     // Calculate profit from betting outcomes
     const bettingProfit = await Bet.aggregate([
-      {
-        $match: {
-          status: { $in: ["won", "lost"] } // Only completed bets
-        }
-      },
+      ...betMatch,
       {
         $group: {
           _id: null,
@@ -318,13 +360,18 @@ class FinanceService {
   }
 
   // Get filtered financial summary
-  async getFilteredFinancialSummary(filters = {}) {
+  async getFilteredFinancialSummary(filters = {}, requester = null) {
     const { dateFrom, dateTo, type, userId } = filters;
-    
+
+    const allowedUserIds = requester ? await getAdminScopeUserIds(requester) : null;
+
     // Build match conditions for transactions
     const transactionMatch = {};
+    if (allowedUserIds && allowedUserIds.length > 0) {
+      transactionMatch.userId = { $in: allowedUserIds };
+    }
     if (dateFrom || dateTo) {
-      transactionMatch.createdAt = {};
+      transactionMatch.createdAt = transactionMatch.createdAt || {};
       if (dateFrom) {
         const fromDate = new Date(dateFrom);
         fromDate.setHours(0, 0, 0, 0);
@@ -340,13 +387,21 @@ class FinanceService {
       transactionMatch.type = type;
     }
     if (userId) {
-      transactionMatch.userId = new mongoose.Types.ObjectId(userId);
+      const requestedId = new mongoose.Types.ObjectId(userId);
+      if (allowedUserIds?.length && !allowedUserIds.some((id) => id.toString() === requestedId.toString())) {
+        transactionMatch.userId = { $in: [] };
+      } else {
+        transactionMatch.userId = requestedId;
+      }
     }
 
     // Build match conditions for bets
     const betMatch = {
-      status: { $in: ["won", "lost"] } // Only completed bets
+      status: { $in: ["won", "lost"] }
     };
+    if (allowedUserIds && allowedUserIds.length > 0) {
+      betMatch.userId = { $in: allowedUserIds };
+    }
     if (dateFrom || dateTo) {
       betMatch.createdAt = {};
       if (dateFrom) {
@@ -361,7 +416,12 @@ class FinanceService {
       }
     }
     if (userId) {
-      betMatch.userId = new mongoose.Types.ObjectId(userId);
+      const requestedId = new mongoose.Types.ObjectId(userId);
+      if (allowedUserIds?.length && !allowedUserIds.some((id) => id.toString() === requestedId.toString())) {
+        betMatch.userId = { $in: [] };
+      } else {
+        betMatch.userId = requestedId;
+      }
     }
 
     // Get filtered transaction summary
@@ -376,8 +436,12 @@ class FinanceService {
       },
     ]);
 
-    // Get current total balance of all users (not affected by date filters)
+    // Get current total balance of all users (or scoped users; not affected by date filters)
+    const userBalanceMatch = allowedUserIds && allowedUserIds.length > 0
+      ? [{ $match: { _id: { $in: allowedUserIds } } }]
+      : [];
     const totalUsersBalance = await User.aggregate([
+      ...userBalanceMatch,
       {
         $group: {
           _id: null,
@@ -461,7 +525,7 @@ class FinanceService {
     };
   }
   // Get user's transaction history
-  async getUserTransactions(userId, filters = {}) {
+  async getUserTransactions(userId, filters = {}, requester = null) {
     console.log(`[getUserTransactions] Called with userId: ${userId}`);
     console.log(`[getUserTransactions] Filters:`, filters);
     
@@ -495,6 +559,20 @@ class FinanceService {
         };
       }
       
+      if (requester) {
+        const allowedUserIds = await getAdminScopeUserIds(requester);
+        if (allowedUserIds && allowedUserIds.length > 0) {
+          const requestedId = new mongoose.Types.ObjectId(userId);
+          const allowed = allowedUserIds.some((id) => id.toString() === requestedId.toString());
+          if (!allowed) {
+            return {
+              transactions: [],
+              pagination: { currentPage: 1, totalPages: 0, totalItems: 0, itemsPerPage: 10 },
+            };
+          }
+        }
+      }
+      
       console.log(`[getUserTransactions] User found: ${user.firstName} ${user.lastName}`);
       
       // Check if there are any transactions for this user directly
@@ -502,7 +580,7 @@ class FinanceService {
       console.log(`[getUserTransactions] Found ${transactionCount} transactions for user ${userId}`);
       
       const userFilters = { ...filters, userId };
-      const result = await this.getTransactions(userFilters);
+      const result = await this.getTransactions(userFilters, requester);
       
       console.log(`[getUserTransactions] Result:`, {
         transactionCount: result.transactions.length,
