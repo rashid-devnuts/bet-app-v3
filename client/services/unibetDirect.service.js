@@ -69,14 +69,28 @@ class UnibetDirectService {
       const url = `${NEXT_API_BETOFFERS}/${eventId}?_=${Date.now()}`;
       const response = await unibetBetOffersClient.get(url);
       
+      // Pass through status/isFinished so slice can clear match even when API returns 200 with 404 body
+      const body = response.data;
+      if (body && (body.status === 404 || body.isFinished === true)) {
+        return {
+          success: false,
+          eventId: body.eventId ?? eventId,
+          data: body.data,
+          status: 404,
+          isFinished: true,
+          message: body.message || 'Match may be finished or no longer available',
+          timestamp: body.timestamp || new Date().toISOString()
+        };
+      }
+
       console.log(`✅ [NEXT PROXY] Successfully fetched bet offers for event: ${eventId}`);
       
       return {
-        success: response.data.success,
+        success: body?.success ?? false,
         eventId,
-        data: response.data.data,
-        timestamp: response.data.timestamp || new Date().toISOString(),
-        source: response.data.source || 'unibet-proxy-nextjs'
+        data: body?.data,
+        timestamp: body?.timestamp || new Date().toISOString(),
+        source: body?.source || 'unibet-proxy-nextjs'
       };
     } catch (error) {
       console.error(`❌ [NEXT PROXY] Error fetching bet offers:`, error);
@@ -90,6 +104,7 @@ class UnibetDirectService {
           error: 'Match not found',
           message: error.response?.data?.message || 'Match may be finished or no longer available',
           status: 404,
+          isFinished: true,
           timestamp: new Date().toISOString()
         };
       }
