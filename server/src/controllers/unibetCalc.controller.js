@@ -482,23 +482,29 @@ export class UnibetCalcController {
             console.log(`🚫 [cancelBet]    - Stake: ${bet.stake}`);
             console.log(`🚫 [cancelBet]    - User ID: ${bet.userId}`);
             console.log(`🚫 [cancelBet]    - Current Status: ${bet.status}`);
+            console.log(`🚫 [cancelBet]    - Already refunded?: ${bet.refunded === true}`);
             if (bet.combination && bet.combination.length > 0) {
                 console.log(`🚫 [cancelBet]    - Type: Combination bet with ${bet.combination.length} legs`);
             } else {
                 console.log(`🚫 [cancelBet]    - Type: Single bet`);
             }
-            
-            // Update bet status to cancelled
-            // ✅ FIX: Preserve existing result fields and add cancellation reason
+
+            // Refund only when bet was pending and not already refunded (prevent duplicate refunds)
+            const wasPending = (bet.status || '').toLowerCase() === 'pending';
+            const alreadyRefunded = bet.refunded === true;
+            const shouldRefund = wasPending && !alreadyRefunded && (bet.stake > 0);
+
+            // Update bet status to cancelled; set refunded: true only when we will apply refund
             const existingBet = await Bet.findById(betId);
             const existingResult = existingBet?.result || {};
             
             const updatedBet = await Bet.findByIdAndUpdate(
                 betId,
                 {
-                        status: 'cancelled',
-                        payout: 0,
+                    status: 'cancelled',
+                    payout: 0,
                     profit: 0,
+                    ...(shouldRefund ? { refunded: true } : {}),
                     $set: {
                         'result.actualOutcome': existingResult.actualOutcome || null,
                         'result.finalScore': existingResult.finalScore || null,
@@ -515,22 +521,27 @@ export class UnibetCalcController {
 
             if (updatedBet) {
                 console.log(`✅ [cancelBet] Bet ${betId} status updated to cancelled`);
-                
-                // Refund the stake to user's balance
-                const userUpdate = await User.findByIdAndUpdate(
-                    updatedBet.userId,
-                    { $inc: { balance: updatedBet.stake } },
-                    { new: true }
-                );
-                
-                if (userUpdate) {
-                    console.log(`✅ [cancelBet] Stake ${updatedBet.stake} refunded to user ${updatedBet.userId}`);
-                    console.log(`✅ [cancelBet] User new balance: ${userUpdate.balance}`);
+
+                if (shouldRefund) {
+                    const userUpdate = await User.findByIdAndUpdate(
+                        updatedBet.userId,
+                        { $inc: { balance: updatedBet.stake } },
+                        { new: true }
+                    );
+                    if (userUpdate) {
+                        console.log(`✅ [cancelBet] Stake ${updatedBet.stake} refunded to user ${updatedBet.userId} (was pending, refunded once). Set refunded=true.`);
+                        console.log(`✅ [cancelBet] User new balance: ${userUpdate.balance}`);
+                    } else {
+                        console.error(`❌ [cancelBet] Failed to update user balance`);
+                    }
                 } else {
-                    console.error(`❌ [cancelBet] Failed to update user balance`);
+                    if (alreadyRefunded) {
+                        console.log(`⏸️ [cancelBet] Skipping refund - bet already refunded (refunded=true). No duplicate refund.`);
+                    } else if (!wasPending) {
+                        console.log(`⏸️ [cancelBet] Skipping refund - bet was not pending (status: ${bet.status}). Balance already handled.`);
+                    }
                 }
-                
-                console.log(`✅ [cancelBet] Bet ${betId} cancelled and stake refunded`);
+                console.log(`✅ [cancelBet] Bet ${betId} cancelled.`);
             } else {
                 console.error(`❌ [cancelBet] Failed to update bet status`);
             }

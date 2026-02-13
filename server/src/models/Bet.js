@@ -115,6 +115,17 @@ const betSchema = new mongoose.Schema(
       min: 0,
       // Current retry attempt count for cancelled bets
     },
+    // Prevent duplicate balance updates: refund only once, outcome payout only once
+    refunded: {
+      type: Boolean,
+      default: false,
+      // true when stake was already refunded (cancelled/void) - skip further refunds
+    },
+    outcomeBalanceApplied: {
+      type: Boolean,
+      default: false,
+      // true when won/lost/half_won/half_lost balance was already applied - skip duplicate updates
+    },
     teams: {
       type: String,
       required: false,

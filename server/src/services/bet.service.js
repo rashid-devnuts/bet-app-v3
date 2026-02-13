@@ -3026,6 +3026,10 @@ class BetService {
       console.log(`[calculateAndUpdateBetOutcome] Calculated Status: ${outcomeResult.status}`);
       console.log(`[calculateAndUpdateBetOutcome] ========================================\n`);
 
+      // Prevent duplicate balance updates: use refunded / outcomeBalanceApplied from bet
+      const alreadyRefunded = bet.refunded === true;
+      const outcomeBalanceAlreadyApplied = bet.outcomeBalanceApplied === true;
+
       // Update bet based on the outcome
       let updateData = {
         status: outcomeResult.status,
@@ -3049,34 +3053,24 @@ class BetService {
           
           console.log(`\n[calculateAndUpdateBetOutcome] ========== WON BET BALANCE UPDATE ==========`);
           console.log(`[calculateAndUpdateBetOutcome] Bet ID: ${betId}`);
-          console.log(`[calculateAndUpdateBetOutcome] Stake: ${bet.stake}`);
-          console.log(`[calculateAndUpdateBetOutcome] Odds: ${bet.odds}`);
-          console.log(`[calculateAndUpdateBetOutcome] Payout: ${winningPayout} (stake × odds)`);
-          console.log(`[calculateAndUpdateBetOutcome] Profit: ${winningProfit} (payout - stake)`);
+          console.log(`[calculateAndUpdateBetOutcome] Outcome balance already applied?: ${outcomeBalanceAlreadyApplied}`);
           
           updateData.payout = winningPayout;
           updateData.profit = winningProfit;
           
-          // Update user balance for winning bet
-          if (bet.userId) {
+          if (!outcomeBalanceAlreadyApplied && bet.userId) {
             const userBefore = await User.findById(bet.userId);
             const balanceBefore = userBefore?.balance || 0;
-            
             console.log(`[calculateAndUpdateBetOutcome] Balance Before: ${balanceBefore}`);
             console.log(`[calculateAndUpdateBetOutcome] Adding Payout: ${winningPayout}`);
-            console.log(`[calculateAndUpdateBetOutcome] Breakdown: ${balanceBefore} + ${winningPayout} = ${balanceBefore + winningPayout}`);
-            
-            await User.findByIdAndUpdate(bet.userId, {
-              $inc: { balance: winningPayout },
-            });
-            
+            await User.findByIdAndUpdate(bet.userId, { $inc: { balance: winningPayout } });
+            updateData.outcomeBalanceApplied = true;
             const userAfter = await User.findById(bet.userId);
-            const balanceAfter = userAfter?.balance || 0;
-            
-            console.log(`[calculateAndUpdateBetOutcome] Balance After: ${balanceAfter}`);
-            console.log(`[calculateAndUpdateBetOutcome] Balance Change: ${balanceAfter - balanceBefore} (should be ${winningPayout})`);
-            console.log(`[calculateAndUpdateBetOutcome] ===========================================\n`);
+            console.log(`[calculateAndUpdateBetOutcome] Balance After: ${userAfter?.balance || 0}. Set outcomeBalanceApplied=true.`);
+          } else if (outcomeBalanceAlreadyApplied) {
+            console.log(`[calculateAndUpdateBetOutcome] Skipping balance update - outcome balance already applied. No duplicate credit.`);
           }
+          console.log(`[calculateAndUpdateBetOutcome] ===========================================\n`);
           break;
 
         case "lost":
@@ -3084,20 +3078,16 @@ class BetService {
           
           console.log(`\n[calculateAndUpdateBetOutcome] ========== LOST BET BALANCE UPDATE ==========`);
           console.log(`[calculateAndUpdateBetOutcome] Bet ID: ${betId}`);
-          console.log(`[calculateAndUpdateBetOutcome] Stake: ${bet.stake}`);
-          console.log(`[calculateAndUpdateBetOutcome] Payout: 0 (bet lost)`);
-          console.log(`[calculateAndUpdateBetOutcome] Profit: ${lostProfit} (full loss)`);
+          console.log(`[calculateAndUpdateBetOutcome] Payout: 0 (bet lost). No balance change.`);
           
           updateData.payout = 0;
           updateData.profit = lostProfit;
-          
-          // No balance update needed for lost bets (stake already deducted at bet placement)
+          updateData.outcomeBalanceApplied = true; // Mark settled so we never refund this bet later
           if (bet.userId) {
             const userCurrent = await User.findById(bet.userId);
-            const balanceCurrent = userCurrent?.balance || 0;
-            console.log(`[calculateAndUpdateBetOutcome] Current Balance: ${balanceCurrent} (no change - stake already deducted)`);
-            console.log(`[calculateAndUpdateBetOutcome] ===========================================\n`);
+            console.log(`[calculateAndUpdateBetOutcome] Current Balance: ${userCurrent?.balance || 0} (no change - stake already deducted)`);
           }
+          console.log(`[calculateAndUpdateBetOutcome] ===========================================\n`);
           break;
 
         case "half_won":
@@ -3146,19 +3136,15 @@ class BetService {
           updateData.payout = halfWinPayout;
           updateData.profit = halfWinProfit;
           
-          // Update user balance for half win
-          if (bet.userId) {
+          if (!outcomeBalanceAlreadyApplied && bet.userId) {
             const userBefore = await User.findById(bet.userId);
             const balanceBefore = userBefore?.balance || 0;
-            await User.findByIdAndUpdate(bet.userId, {
-              $inc: { balance: halfWinPayout },
-            });
+            await User.findByIdAndUpdate(bet.userId, { $inc: { balance: halfWinPayout } });
+            updateData.outcomeBalanceApplied = true;
             const userAfter = await User.findById(bet.userId);
-            const balanceAfter = userAfter?.balance || 0;
-            console.log(`[calculateAndUpdateBetOutcome] User balance updated:`);
-            console.log(`[calculateAndUpdateBetOutcome]   - Before: ${balanceBefore}`);
-            console.log(`[calculateAndUpdateBetOutcome]   - Added: ${halfWinPayout}`);
-            console.log(`[calculateAndUpdateBetOutcome]   - After: ${balanceAfter}`);
+            console.log(`[calculateAndUpdateBetOutcome] User balance updated: ${balanceBefore} → ${userAfter?.balance || 0}. Set outcomeBalanceApplied=true.`);
+          } else if (outcomeBalanceAlreadyApplied) {
+            console.log(`[calculateAndUpdateBetOutcome] Skipping balance update - outcome balance already applied.`);
           }
           break;
 
@@ -3206,61 +3192,57 @@ class BetService {
           updateData.payout = halfLossRefund;
           updateData.profit = halfLossProfit;
           
-          // Refund half stake to user
-          if (bet.userId) {
+          if (!outcomeBalanceAlreadyApplied && bet.userId) {
             const userBefore = await User.findById(bet.userId);
             const balanceBefore = userBefore?.balance || 0;
-            await User.findByIdAndUpdate(bet.userId, {
-              $inc: { balance: halfLossRefund },
-            });
+            await User.findByIdAndUpdate(bet.userId, { $inc: { balance: halfLossRefund } });
+            updateData.outcomeBalanceApplied = true;
             const userAfter = await User.findById(bet.userId);
-            const balanceAfter = userAfter?.balance || 0;
-            console.log(`[calculateAndUpdateBetOutcome] User balance updated:`);
-            console.log(`[calculateAndUpdateBetOutcome]   - Before: ${balanceBefore}`);
-            console.log(`[calculateAndUpdateBetOutcome]   - Added (refund): ${halfLossRefund}`);
-            console.log(`[calculateAndUpdateBetOutcome]   - After: ${balanceAfter}`);
+            console.log(`[calculateAndUpdateBetOutcome] User balance updated (half_lost refund): ${balanceBefore} → ${userAfter?.balance || 0}. Set outcomeBalanceApplied=true.`);
+          } else if (outcomeBalanceAlreadyApplied) {
+            console.log(`[calculateAndUpdateBetOutcome] Skipping balance update - outcome balance already applied.`);
           }
           break;
 
         case "void":
-          console.log(`[calculateAndUpdateBetOutcome] Bet voided. Refunding stake: ${bet.stake}`);
+          console.log(`[calculateAndUpdateBetOutcome] Bet voided. Refunding stake: ${bet.stake}. Already refunded?: ${alreadyRefunded}`);
           updateData.payout = bet.stake;
-          updateData.profit = 0; // No profit, no loss (void)
+          updateData.profit = 0;
           updateData.status = "void";
-          // Refund stake to user (void = push = stake returned)
-          if (bet.userId) {
-            await User.findByIdAndUpdate(bet.userId, {
-              $inc: { balance: bet.stake },
-            });
-            console.log(`[calculateAndUpdateBetOutcome] Stake refunded to user for void bet: ${bet.stake}`);
+          if (!alreadyRefunded && bet.userId) {
+            await User.findByIdAndUpdate(bet.userId, { $inc: { balance: bet.stake } });
+            updateData.refunded = true;
+            console.log(`[calculateAndUpdateBetOutcome] Stake refunded to user for void bet: ${bet.stake}. Set refunded=true.`);
+          } else if (alreadyRefunded) {
+            console.log(`[calculateAndUpdateBetOutcome] Skipping refund - already refunded. No duplicate refund.`);
           }
           break;
 
         case "cancelled":
-          console.log(`[calculateAndUpdateBetOutcome] Bet canceled. Refunding stake: ${bet.stake}`);
+          console.log(`[calculateAndUpdateBetOutcome] Bet canceled. Refunding stake: ${bet.stake}. Already refunded?: ${alreadyRefunded}`);
           updateData.payout = bet.stake;
-          updateData.profit = 0; // No profit, no loss (cancelled)
+          updateData.profit = 0;
           updateData.status = "canceled";
-          // Refund stake to user
-          if (bet.userId) {
-            await User.findByIdAndUpdate(bet.userId, {
-              $inc: { balance: bet.stake },
-            });
-            console.log(`[calculateAndUpdateBetOutcome] Stake refunded to user: ${bet.stake}`);
+          if (!alreadyRefunded && bet.userId) {
+            await User.findByIdAndUpdate(bet.userId, { $inc: { balance: bet.stake } });
+            updateData.refunded = true;
+            console.log(`[calculateAndUpdateBetOutcome] Stake refunded to user: ${bet.stake}. Set refunded=true.`);
+          } else if (alreadyRefunded) {
+            console.log(`[calculateAndUpdateBetOutcome] Skipping refund - already refunded. No duplicate refund.`);
           }
           break;
 
         default:
           console.error(`[calculateAndUpdateBetOutcome] Unknown status in outcome calculation:`, outcomeResult);
           updateData.status = "canceled";
-          updateData.payout = bet.stake; // Refund the stake
-          updateData.profit = 0; // No profit, no loss
-          // Refund stake to user
-          if (bet.userId) {
-            await User.findByIdAndUpdate(bet.userId, {
-              $inc: { balance: bet.stake },
-            });
-            console.log(`[calculateAndUpdateBetOutcome] Stake refunded to user due to unknown status: ${bet.stake}`);
+          updateData.payout = bet.stake;
+          updateData.profit = 0;
+          if (!alreadyRefunded && bet.userId) {
+            await User.findByIdAndUpdate(bet.userId, { $inc: { balance: bet.stake } });
+            updateData.refunded = true;
+            console.log(`[calculateAndUpdateBetOutcome] Stake refunded to user due to unknown status: ${bet.stake}. Set refunded=true.`);
+          } else if (alreadyRefunded) {
+            console.log(`[calculateAndUpdateBetOutcome] Skipping refund - already refunded.`);
           }
           break;
       }
@@ -3300,18 +3282,19 @@ class BetService {
     } catch (error) {
       console.error(`[calculateAndUpdateBetOutcome] Error in outcome calculation:`, error);
 
-      // Update bet status to error (using canceled since error is not in enum)
-      await Bet.findByIdAndUpdate(betId, {
+      const alreadyRefunded = bet.refunded === true;
+      const updateOnError = {
         status: "canceled",
-        payout: bet.stake, // Refund the stake due to error
-      });
+        payout: bet.stake,
+        ...(alreadyRefunded ? {} : { refunded: true }),
+      };
+      await Bet.findByIdAndUpdate(betId, updateOnError);
 
-      // Refund stake to user due to error
-      if (bet.userId) {
-        await User.findByIdAndUpdate(bet.userId, {
-          $inc: { balance: bet.stake },
-        });
-        console.log(`[calculateAndUpdateBetOutcome] Stake refunded to user due to calculation error: ${bet.stake}`);
+      if (!alreadyRefunded && bet.userId) {
+        await User.findByIdAndUpdate(bet.userId, { $inc: { balance: bet.stake } });
+        console.log(`[calculateAndUpdateBetOutcome] Stake refunded to user due to calculation error: ${bet.stake}. Set refunded=true.`);
+      } else if (alreadyRefunded) {
+        console.log(`[calculateAndUpdateBetOutcome] Skipping refund on error - already refunded.`);
       }
 
       throw new CustomError(

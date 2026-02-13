@@ -9412,50 +9412,72 @@ class BetOutcomeCalculator {
             await session.endSession();
         }
 
-        // Update user balance based on bet outcome
-        // IMPORTANT: Do NOT update balance for pending status - bet is still being processed
+        // Update user balance based on bet outcome - ONLY ONCE per outcome (no duplicate refunds/credits)
+        // originalBet was loaded before this run's update; use refunded/outcomeBalanceApplied to prevent double updates
+        const wasRefunded = originalBet.refunded === true;
+        const wasOutcomeBalanceApplied = originalBet.outcomeBalanceApplied === true;
+
         console.log(`\n💰 ========== USER BALANCE UPDATE ==========`);
         console.log(`💰 User ID: ${originalBet.userId || bet.userId}`);
         console.log(`💰 Outcome Status: ${outcome.status}`);
         console.log(`💰 Calculated Payout: ${calculatedPayout}`);
-        console.log(`💰 Calculated Profit: ${calculatedProfit}`);
-        
-        // Block balance update for pending status
+        console.log(`💰 Already refunded?: ${wasRefunded}`);
+        console.log(`💰 Outcome balance already applied?: ${wasOutcomeBalanceApplied}`);
+
         if (outcome.status === 'pending') {
             console.log(`⏸️ SKIPPING balance update - bet status is still PENDING`);
             console.log(`   - Balance will be updated when bet is processed (won/lost/void/cancelled)`);
             console.log(`💰 ===========================================\n`);
-            // Skip balance update and return early
         } else {
-        const userId = originalBet.userId || bet.userId;
-        
-        if (userId) {
-            // Import User model
-            const { default: User } = await import('../models/User.js');
-            
-            // Get user before update
-            const userBefore = await User.findById(userId);
-            const balanceBefore = userBefore?.balance || 0;
-            console.log(`💰 Balance Before: ${balanceBefore}`);
-            
-            // Update balance based on payout
-            if (calculatedPayout > 0) {
-                await User.findByIdAndUpdate(userId, {
-                    $inc: { balance: calculatedPayout }
-                });
-                console.log(`💰 Added to balance: ${calculatedPayout}`);
+            const userId = originalBet.userId || bet.userId;
+            if (!userId) {
+                console.log(`💰 No user ID found, skipping balance update`);
+                console.log(`💰 ===========================================\n`);
+            } else {
+                const { default: User } = await import('../models/User.js');
+                const isCancelledOrVoid = ['void', 'cancelled', 'canceled'].includes(outcome.status);
+                const isWonOrHalfWin = ['won', 'half_won'].includes(outcome.status);
+                const isLostOrHalfLoss = ['lost', 'half_lost'].includes(outcome.status);
+
+                if (isCancelledOrVoid) {
+                    if (wasRefunded) {
+                        console.log(`⏸️ SKIPPING refund - bet already refunded (refunded=true). No duplicate refund.`);
+                        console.log(`💰 ===========================================\n`);
+                    } else if (calculatedPayout > 0) {
+                        const userBefore = await User.findById(userId);
+                        const balanceBefore = userBefore?.balance || 0;
+                        await User.findByIdAndUpdate(userId, { $inc: { balance: calculatedPayout } });
+                        await Bet.findByIdAndUpdate(betId, { $set: { refunded: true } });
+                        const userAfter = await User.findById(userId);
+                        console.log(`💰 Refunded ${calculatedPayout} to user (cancelled/void). Set refunded=true.`);
+                        console.log(`💰 Balance ${balanceBefore} → ${userAfter?.balance || 0}`);
+                        console.log(`💰 ===========================================\n`);
+                    }
+                } else if (isWonOrHalfWin) {
+                    if (wasOutcomeBalanceApplied) {
+                        console.log(`⏸️ SKIPPING payout - outcome balance already applied. No duplicate credit.`);
+                        console.log(`💰 ===========================================\n`);
+                    } else if (calculatedPayout > 0) {
+                        const userBefore = await User.findById(userId);
+                        const balanceBefore = userBefore?.balance || 0;
+                        await User.findByIdAndUpdate(userId, { $inc: { balance: calculatedPayout } });
+                        await Bet.findByIdAndUpdate(betId, { $set: { outcomeBalanceApplied: true } });
+                        const userAfter = await User.findById(userId);
+                        console.log(`💰 Added payout ${calculatedPayout} to user. Set outcomeBalanceApplied=true.`);
+                        console.log(`💰 Balance ${balanceBefore} → ${userAfter?.balance || 0}`);
+                        console.log(`💰 ===========================================\n`);
+                    }
+                } else if (isLostOrHalfLoss) {
+                    if (!wasOutcomeBalanceApplied) {
+                        await Bet.findByIdAndUpdate(betId, { $set: { outcomeBalanceApplied: true } });
+                        console.log(`💰 No balance change (lost/half_lost). Set outcomeBalanceApplied=true to prevent later refund.`);
+                    }
+                    console.log(`💰 ===========================================\n`);
+                } else {
+                    console.log(`💰 Unknown outcome status - no balance update.`);
+                    console.log(`💰 ===========================================\n`);
+                }
             }
-            
-            // Get user after update
-            const userAfter = await User.findById(userId);
-            const balanceAfter = userAfter?.balance || 0;
-            console.log(`💰 Balance After: ${balanceAfter}`);
-            console.log(`💰 Balance Change: ${balanceAfter - balanceBefore}`);
-            console.log(`💰 ===========================================\n`);
-        } else {
-            console.log(`💰 No user ID found, skipping balance update`);
-            console.log(`💰 ===========================================\n`);
-        }
         }
         
         // ✅ REMOVED: Team restriction creation code - feature disabled
