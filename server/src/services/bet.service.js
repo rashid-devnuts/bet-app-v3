@@ -943,8 +943,8 @@ class BetService {
         combination: processedLegs, // All legs including the first one
         totalOdds,
         potentialPayout,
-        // ✅ NEW: Initialize retry counts when bet is placed
-        maxRetryCount: 3,
+        // ✅ NEW: Initialize retry counts when bet is placed (20 retries for cancelled bets)
+        maxRetryCount: 20,
         retryCount: 0,
       });
 
@@ -1823,8 +1823,8 @@ class BetService {
       selection,
       inplay,
       betDetails,
-      // ✅ NEW: Initialize retry counts when bet is placed
-      maxRetryCount: 3,
+      // ✅ NEW: Initialize retry counts when bet is placed (20 retries for cancelled bets)
+      maxRetryCount: 20,
       retryCount: 0,
       // Optional unibet parity metadata for Phase 1
       unibetMeta: this.buildUnibetMetaFromPayload(

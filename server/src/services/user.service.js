@@ -136,14 +136,8 @@ class UserService {
         user.isSuperAdmin = true;
       }
 
-      // ✅ FIX: Only check isActive for non-admin users (admins can login even if inactive)
-      if (!user.isActive && user.role !== "admin") {
-        throw new CustomError(
-          "User Authentication: Account is deactivated. Please contact support.",
-          401,
-          "UNAUTHORIZED"
-        );
-      }
+      // Inactive is for admin display only (e.g. hasn't logged in for 2 weeks). Players can always log in.
+      // Only explicit block/delete should prevent login.
 
       // Verify password
       const isPasswordValid = await user.comparePassword(password);
@@ -404,7 +398,7 @@ class UserService {
     try {
       console.log("🔍 UserService.getAllUsers called with options:", options);
       
-      const { page = 1, limit = 10, requester = null, createdBy = null } = options;
+      const { page = 1, limit = 10, requester = null, createdBy = null, role = null } = options;
       const skip = (page - 1) * limit;
       
       const query = {};
@@ -412,6 +406,10 @@ class UserService {
         query.createdBy = requester._id;
       } else if (requester && requester.role === "admin" && isSuperAdminUser(requester) && createdBy) {
         query.createdBy = createdBy;
+      }
+      // Super admin only: filter by role (e.g. role=admin for listing admins in Finance filter)
+      if (role && requester && isSuperAdminUser(requester)) {
+        query.role = role;
       }
       
       // Get total count of users

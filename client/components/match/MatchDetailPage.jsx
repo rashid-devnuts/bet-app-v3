@@ -534,10 +534,7 @@ const IMPLEMENTED_MARKETS = [
     'Correct score',
     'total goals odd even',
     'Draw no bet',
-    'Interval Winner - 30:00-59:59',
     'total goals by team 2nd half',
-    'Total Goals - 30:00-59:59',
-    'total goals by team 30:00-59:59',
     'next goal no goal no bet',
     'Method of scoring next Goal 2 - (No goal, No bet)',
     'Asian line (1-0)',
@@ -550,7 +547,6 @@ const IMPLEMENTED_MARKETS = [
     'most corners',
     'first to corners',
     // 'next corner no corner no bet',
-    'Most Corners - 50:00-59:59',
     'team given a red card',
     'given a red card',
     'to get a card',
@@ -607,6 +603,10 @@ const IMPLEMENTED_MARKETS = [
 function isMarketImplemented(marketName) {
     const name = marketName.toLowerCase();
     
+    // Hide all time-window markets (bet calculation commented out on backend; time slots can vary)
+    const timeWindowPattern = /\b\d{1,2}[:\-]\d{2}\s*[-–]\s*\d{1,2}[:\-]\d{2}\b/;
+    if (timeWindowPattern.test(name)) return false;
+    
     // Debug penalty markets specifically
     if (name.includes('penalty')) {
         console.log('🔍 Checking penalty market:', name);
@@ -654,10 +654,7 @@ function isMarketImplemented(marketName) {
     if (name.includes('2nd half total goals') || name.includes('second half total goals')) return true;
     if (name.includes('total goals') && (name.includes('odd') || name.includes('even'))) return true;
     if (name.includes('draw no bet') && !name.includes('2nd half')) return true;
-    if (name.includes('interval winner') && name.includes('30:00-59:59')) return true;
     if (name.includes('total goals by team') && name.includes('2nd half')) return true;
-    if (name.includes('total goals') && name.includes('30:00-59:59') && !name.includes('by team')) return true;
-    if (name.includes('total goals by team') && name.includes('30:00-59:59')) return true;
     if (name.includes('next goal') && name.includes('no goal') && name.includes('no bet')) return true;
     if (name.includes('method of scoring') && name.includes('next goal') && name.includes('no goal') && name.includes('no bet')) return true;
     if (name.includes('asian line') || name.includes('asian handicap')) return true;
@@ -665,10 +662,9 @@ function isMarketImplemented(marketName) {
     if (name.includes('3-way line') || name.includes('three way line')) return true;
     if (name.includes('total corners by team')) return true;
     if (name.includes('total corners') && !name.includes('by team')) return true;
-    if (name.includes('most corners') && !name.includes('50:00-59:59')) return true;
+    if (name.includes('most corners')) return true;
     if (name.includes('first to corners')) return true;
     // if (name.includes('next corner') && name.includes('no corner') && name.includes('no bet')) return true;
-    if (name.includes('most corners') && name.includes('50:00-59:59')) return true;
     if (name.includes('team given a red card')) return true;
     if (name.includes('given a red card')) return true;
     if (name.includes('to get a card')) return true;

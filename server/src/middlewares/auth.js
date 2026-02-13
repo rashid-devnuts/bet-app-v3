@@ -37,14 +37,7 @@ export const authenticateToken = async (req, res, next) => {
 
     console.log(`[AuthMiddleware] User found:`, user.email, `Role:`, user.role, `Active:`, user.isActive);
 
-    // Only check isActive for non-admin users
-    if (!user.isActive && user.role !== "admin") {
-      console.log(`[AuthMiddleware] User account not active`);
-      return res.status(401).json({
-        success: false,
-        message: "Account is not active.",
-      });
-    }
+    // Inactive is for admin display only; do not block login. Only explicit block/delete prevents access.
 
     console.log(`[AuthMiddleware] Authentication successful`);
     req.user = user;
@@ -79,7 +72,7 @@ export const optionalAuth = async (req, res, next) => {
       const decoded = verifyToken(token);
       const user = await User.findById(decoded.userId).select("-password");
 
-      if (user && user.isActive) {
+      if (user) {
         req.user = user;
       }
     }

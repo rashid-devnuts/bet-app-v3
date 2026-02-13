@@ -39,8 +39,8 @@ const getAllUsers = async (req, res) => {
     console.log("🔍 User making request:", req.user);
     console.log("📊 Query parameters:", req.query);
 
-    const { page, limit, createdBy } = req.query;
-    const result = await UserService.getAllUsers({ page, limit, createdBy, requester: req.user });
+    const { page, limit, createdBy, role } = req.query;
+    const result = await UserService.getAllUsers({ page, limit, createdBy, role, requester: req.user });
     console.log("✅ Successfully fetched users:", result);
 
     res.json(result);

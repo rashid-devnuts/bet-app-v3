@@ -1531,6 +1531,7 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData, liveScore
                     if (occurrenceMatchesNextGoal && (!currentMarket || !currentMatchesNextGoal)) {
                         playerMap[playerName].firstGoalScorer = {
                             ...option,
+                            marketDescription: option.marketDescription || section.title,
                             occurrenceNumber: occurrenceNumber || null,
                             sectionTitle: section.title || null
                         };
@@ -1538,6 +1539,7 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData, liveScore
                         // Priority 2: Update if shouldUpdate is true and market is not suspended
                         playerMap[playerName].firstGoalScorer = {
                             ...option,
+                            marketDescription: option.marketDescription || section.title,
                             occurrenceNumber: occurrenceNumber || null,
                             sectionTitle: section.title || null
                         };
@@ -1545,6 +1547,7 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData, liveScore
                         // Priority 3: Only use suspended market if we have no other option
                         playerMap[playerName].firstGoalScorer = {
                             ...option,
+                            marketDescription: option.marketDescription || section.title,
                             occurrenceNumber: occurrenceNumber || null,
                             sectionTitle: section.title || null
                         };

@@ -26,17 +26,24 @@ export const fetchFinancialSummary = createAsyncThunk(
   "finance/fetchSummary",
   async (filters = {}, { rejectWithValue }) => {
     try {
-      // If filters are provided, use the filtered endpoint
-      if (filters.dateFrom || filters.dateTo || filters.type || filters.userId) {
+      const hasFilter =
+        filters.dateFrom ||
+        filters.dateTo ||
+        filters.type ||
+        filters.userId ||
+        (filters.userIds && (Array.isArray(filters.userIds) ? filters.userIds.length : String(filters.userIds).trim())) ||
+        (filters.adminIds && (Array.isArray(filters.adminIds) ? filters.adminIds.length : String(filters.adminIds).trim()));
+      if (hasFilter) {
+        const params = { ...filters };
+        if (Array.isArray(params.userIds)) params.userIds = params.userIds.join(",");
+        if (Array.isArray(params.adminIds)) params.adminIds = params.adminIds.join(",");
         const response = await apiClient.get("/finance/summary/filtered", {
-          params: filters,
+          params,
         });
         return response.data;
-      } else {
-        // Otherwise use the regular summary endpoint
-        const response = await apiClient.get("/finance/summary");
-        return response.data;
       }
+      const response = await apiClient.get("/finance/summary");
+      return response.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data || {

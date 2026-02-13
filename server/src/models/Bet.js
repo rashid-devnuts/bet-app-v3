@@ -92,15 +92,21 @@ const betSchema = new mongoose.Schema(
       type: Number,
       required: false,
       default: 0,
-      // Tracks number of FotMob retry attempts after 2hrs 15mins (max 30 = 150 mins)
+      // Tracks number of FotMob retry attempts (legacy)
+    },
+    fetchDetailsRetryCount: {
+      type: Number,
+      required: false,
+      default: 0,
+      // Tracks failed fetch match-details attempts when match is finished; cancel after 20
     },
     maxRetryCount: {
       type: Number,
       required: false,
-      default: 3,
+      default: 20,
       min: 0,
-      max: 3,
-      // Maximum number of retry attempts for cancelled bets (max 3)
+      max: 20,
+      // Maximum number of retry attempts for cancelled bets (20)
     },
     retryCount: {
       type: Number,

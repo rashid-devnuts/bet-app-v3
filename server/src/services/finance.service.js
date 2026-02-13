@@ -4,6 +4,41 @@ import Bet from "../models/Bet.js";
 import mongoose from "mongoose";
 import { getAdminScopeUserIds } from "../utils/adminScope.js";
 
+/** Parse userIds or adminIds from query (comma-separated string or array). */
+function parseIdArray(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (typeof value === "string") return value.split(",").map((s) => s.trim()).filter(Boolean);
+  return [];
+}
+
+/**
+ * Resolve effective allowed user IDs for finance queries.
+ *
+ * - If an admin (including super admin) provides adminIds:
+ *   limit to users whose createdBy is in those adminIds.
+ * - Otherwise fall back to normal scope:
+ *   - super admin: all users (null)
+ *   - other admin: only users they created (getAdminScopeUserIds)
+ */
+async function getEffectiveAllowedUserIds(requester, adminIds) {
+  if (!requester || requester.role !== "admin") return null;
+
+  // When any adminIds are provided, ALWAYS scope by those admins' players
+  if (adminIds && adminIds.length > 0) {
+    const ids = adminIds
+      .map((id) => (mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null))
+      .filter(Boolean);
+    if (ids.length === 0) return null;
+    const users = await User.find({ createdBy: { $in: ids } }).select("_id").lean();
+    return users.map((u) => u._id);
+  }
+
+  // No adminIds: fall back to default scope helper
+  const fallback = await getAdminScopeUserIds(requester);
+  return fallback;
+}
+
 class FinanceService {
   // Create a new transaction
   async createTransaction(transactionData, requester = null) {
@@ -83,28 +118,57 @@ class FinanceService {
     } = filters;
 
     const query = {}; // Apply filters
-    if (type && type !== 'all') query.type = type;
+    if (type && type !== "all") query.type = type;
 
-    const allowedUserIds = requester ? await getAdminScopeUserIds(requester) : null;
-    if (allowedUserIds && allowedUserIds.length > 0) {
-      if (userId) {
-        const requestedId = typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId;
-        const allowed = allowedUserIds.some((id) => id.toString() === requestedId.toString());
-        if (!allowed) query.userId = { $in: [] }; // no access
-        else query.userId = requestedId;
+    // adminIds: main admin only (filter to players created by those admins)
+    const adminIds = parseIdArray(filters.adminIds);
+    const userIdsParam = parseIdArray(filters.userIds);
+    const userIdsArray = userIdsParam.length ? userIdsParam : (userId ? [userId] : []);
+
+    const allowedUserIds = await getEffectiveAllowedUserIds(requester, adminIds.length ? adminIds : null);
+
+    if (adminIds.length > 0) {
+      // Admin filter is explicitly applied (super admin or normal admin)
+      // If no users belong to the selected admins, we must match NOTHING (not whole site)
+      if (!allowedUserIds || allowedUserIds.length === 0) {
+        query.userId = { $in: [] };
+      } else if (userIdsArray.length > 0) {
+        const requestedIds = userIdsArray
+          .map((id) => (mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null))
+          .filter(Boolean);
+        const allowed = requestedIds.filter((rid) =>
+          allowedUserIds.some((aid) => aid.toString() === rid.toString())
+        );
+        query.userId = allowed.length ? { $in: allowed } : { $in: [] };
       } else {
         query.userId = { $in: allowedUserIds };
       }
-    } else if (userId) {
-      try {
-        if (typeof userId === 'string') {
-          query.userId = new mongoose.Types.ObjectId(userId);
+    } else {
+      // No admin filter: fall back to userId / userIds behaviour
+      if (allowedUserIds && allowedUserIds.length > 0) {
+        if (userIdsArray.length > 0) {
+          const requestedIds = userIdsArray
+            .map((id) => (mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null))
+            .filter(Boolean);
+          const allowed = requestedIds.filter((rid) =>
+            allowedUserIds.some((aid) => aid.toString() === rid.toString())
+          );
+          query.userId = allowed.length ? { $in: allowed } : { $in: [] };
         } else {
+          query.userId = { $in: allowedUserIds };
+        }
+      } else if (userIdsArray.length > 0) {
+        const ids = userIdsArray
+          .map((id) => (mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null))
+          .filter(Boolean);
+        query.userId = ids.length ? { $in: ids } : { $in: [] };
+      } else if (userId) {
+        try {
+          query.userId = typeof userId === "string" ? new mongoose.Types.ObjectId(userId) : userId;
+        } catch (error) {
+          console.error(`[getTransactions] Error converting userId to ObjectId:`, error);
           query.userId = userId;
         }
-      } catch (error) {
-        console.error(`[getTransactions] Error converting userId to ObjectId:`, error);
-        query.userId = userId;
       }
     }
 
@@ -362,13 +426,30 @@ class FinanceService {
   // Get filtered financial summary
   async getFilteredFinancialSummary(filters = {}, requester = null) {
     const { dateFrom, dateTo, type, userId } = filters;
+    const adminIds = parseIdArray(filters.adminIds);
+    const userIdsParam = parseIdArray(filters.userIds);
+    const userIdsArray = userIdsParam.length ? userIdsParam : (userId ? [userId] : []);
 
-    const allowedUserIds = requester ? await getAdminScopeUserIds(requester) : null;
+    const allowedUserIds = await getEffectiveAllowedUserIds(requester, adminIds.length ? adminIds : null);
+
+    const effectiveUserIds = (() => {
+      if (userIdsArray.length === 0) return allowedUserIds;
+      const requestedIds = userIdsArray
+        .map((id) => (mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null))
+        .filter(Boolean);
+      if (!allowedUserIds || allowedUserIds.length === 0) return requestedIds.length ? requestedIds : null;
+      const allowed = requestedIds.filter((rid) =>
+        allowedUserIds.some((aid) => aid.toString() === rid.toString())
+      );
+      return allowed.length ? allowed : [];
+    })();
 
     // Build match conditions for transactions
     const transactionMatch = {};
-    if (allowedUserIds && allowedUserIds.length > 0) {
-      transactionMatch.userId = { $in: allowedUserIds };
+    if (effectiveUserIds && effectiveUserIds.length > 0) {
+      transactionMatch.userId = { $in: effectiveUserIds };
+    } else if (effectiveUserIds && effectiveUserIds.length === 0) {
+      transactionMatch.userId = { $in: [] };
     }
     if (dateFrom || dateTo) {
       transactionMatch.createdAt = transactionMatch.createdAt || {};
@@ -383,24 +464,16 @@ class FinanceService {
         transactionMatch.createdAt.$lte = toDate;
       }
     }
-    if (type && type !== 'all') {
+    if (type && type !== "all") {
       transactionMatch.type = type;
-    }
-    if (userId) {
-      const requestedId = new mongoose.Types.ObjectId(userId);
-      if (allowedUserIds?.length && !allowedUserIds.some((id) => id.toString() === requestedId.toString())) {
-        transactionMatch.userId = { $in: [] };
-      } else {
-        transactionMatch.userId = requestedId;
-      }
     }
 
     // Build match conditions for bets
-    const betMatch = {
-      status: { $in: ["won", "lost"] }
-    };
-    if (allowedUserIds && allowedUserIds.length > 0) {
-      betMatch.userId = { $in: allowedUserIds };
+    const betMatch = { status: { $in: ["won", "lost"] } };
+    if (effectiveUserIds && effectiveUserIds.length > 0) {
+      betMatch.userId = { $in: effectiveUserIds };
+    } else if (effectiveUserIds && effectiveUserIds.length === 0) {
+      betMatch.userId = { $in: [] };
     }
     if (dateFrom || dateTo) {
       betMatch.createdAt = {};
@@ -413,14 +486,6 @@ class FinanceService {
         const toDate = new Date(dateTo);
         toDate.setHours(23, 59, 59, 999);
         betMatch.createdAt.$lte = toDate;
-      }
-    }
-    if (userId) {
-      const requestedId = new mongoose.Types.ObjectId(userId);
-      if (allowedUserIds?.length && !allowedUserIds.some((id) => id.toString() === requestedId.toString())) {
-        betMatch.userId = { $in: [] };
-      } else {
-        betMatch.userId = requestedId;
       }
     }
 
@@ -436,10 +501,12 @@ class FinanceService {
       },
     ]);
 
-    // Get current total balance of all users (or scoped users; not affected by date filters)
-    const userBalanceMatch = allowedUserIds && allowedUserIds.length > 0
-      ? [{ $match: { _id: { $in: allowedUserIds } } }]
-      : [];
+    // Get current total balance of filtered users (not affected by date filters)
+    // When filter is applied (effectiveUserIds is an array), scope balance to those users; empty array => 0.
+    const userBalanceMatch =
+      effectiveUserIds == null
+        ? []
+        : [{ $match: { _id: { $in: effectiveUserIds } } }];
     const totalUsersBalance = await User.aggregate([
       ...userBalanceMatch,
       {

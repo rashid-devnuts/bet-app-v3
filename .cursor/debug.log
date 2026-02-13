@@ -1,0 +1,20 @@
+{"location":"finance.controller.js:getTransactions","message":"req.query finance transactions","data":{"adminIdsType":"undefined"},"timestamp":1770738846304,"hypothesisId":"H1"}
+{"location":"finance.service.js:getTransactions","message":"parsed filters","data":{"parsedAdminIds":[],"parsedAdminIdsLength":0},"timestamp":1770738846305,"hypothesisId":"H2"}
+{"location":"finance.service.js:getEffectiveAllowedUserIds","message":"entry","data":{"adminIdsIn":null,"requesterRole":"admin"},"timestamp":1770738846308,"hypothesisId":"H3"}
+{"location":"finance.service.js:getEffectiveAllowedUserIds","message":"return fallback","data":{"fallbackIsNull":true},"timestamp":1770738846309,"hypothesisId":"H3"}
+{"location":"finance.service.js:getTransactions","message":"query built","data":{"hasUserIdFilter":false},"timestamp":1770738846309,"hypothesisId":"H4"}
+{"location":"finance.controller.js:getTransactions","message":"req.query finance transactions","data":{"adminIdsType":"undefined"},"timestamp":1770738847124,"hypothesisId":"H1"}
+{"location":"finance.service.js:getTransactions","message":"parsed filters","data":{"parsedAdminIds":[],"parsedAdminIdsLength":0},"timestamp":1770738847125,"hypothesisId":"H2"}
+{"location":"finance.service.js:getEffectiveAllowedUserIds","message":"entry","data":{"adminIdsIn":null,"requesterRole":"admin"},"timestamp":1770738847126,"hypothesisId":"H3"}
+{"location":"finance.service.js:getEffectiveAllowedUserIds","message":"return fallback","data":{"fallbackIsNull":true},"timestamp":1770738847134,"hypothesisId":"H3"}
+{"location":"finance.service.js:getTransactions","message":"query built","data":{"hasUserIdFilter":false},"timestamp":1770738847135,"hypothesisId":"H4"}
+{"location":"finance.controller.js:getTransactions","message":"req.query finance transactions","data":{"adminIdsType":"undefined"},"timestamp":1770738847285,"hypothesisId":"H1"}
+{"location":"finance.service.js:getTransactions","message":"parsed filters","data":{"parsedAdminIds":[],"parsedAdminIdsLength":0},"timestamp":1770738847288,"hypothesisId":"H2"}
+{"location":"finance.service.js:getEffectiveAllowedUserIds","message":"entry","data":{"adminIdsIn":null,"requesterRole":"admin"},"timestamp":1770738847289,"hypothesisId":"H3"}
+{"location":"finance.service.js:getEffectiveAllowedUserIds","message":"return fallback","data":{"fallbackIsNull":true},"timestamp":1770738847290,"hypothesisId":"H3"}
+{"location":"finance.service.js:getTransactions","message":"query built","data":{"hasUserIdFilter":false},"timestamp":1770738847290,"hypothesisId":"H4"}
+{"location":"finance.controller.js:getTransactions","message":"req.query finance transactions","data":{"adminIdsType":"undefined"},"timestamp":1770738847424,"hypothesisId":"H1"}
+{"location":"finance.service.js:getTransactions","message":"parsed filters","data":{"parsedAdminIds":[],"parsedAdminIdsLength":0},"timestamp":1770738847425,"hypothesisId":"H2"}
+{"location":"finance.service.js:getEffectiveAllowedUserIds","message":"entry","data":{"adminIdsIn":null,"requesterRole":"admin"},"timestamp":1770738847425,"hypothesisId":"H3"}
+{"location":"finance.service.js:getEffectiveAllowedUserIds","message":"return fallback","data":{"fallbackIsNull":true},"timestamp":1770738847432,"hypothesisId":"H3"}
+{"location":"finance.service.js:getTransactions","message":"query built","data":{"hasUserIdFilter":false},"timestamp":1770738847432,"hypothesisId":"H4"}

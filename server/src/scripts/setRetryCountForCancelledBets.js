@@ -28,21 +28,21 @@ async function setRetryCountForCancelledBets() {
         let updated = 0;
         let skipped = 0;
         
-        // Update each cancelled bet to set maxRetryCount = 3 (force update for testing)
+        // Update each cancelled bet to set maxRetryCount = 20
         for (const bet of cancelledBets) {
             try {
                 const currentMaxRetry = bet.maxRetryCount || 0;
                 
-                // Update bet with maxRetryCount = 3 (force update for testing)
+                // Update bet with maxRetryCount = 20
                 await Bet.findByIdAndUpdate(bet._id, {
                     $set: {
-                        maxRetryCount: 3,
+                        maxRetryCount: 20,
                         retryCount: 0
                     }
                 });
                 
                 updated++;
-                console.log(`✅ Updated bet ${bet._id}: maxRetryCount ${currentMaxRetry} → 3, retryCount = 0`);
+                console.log(`✅ Updated bet ${bet._id}: maxRetryCount ${currentMaxRetry} → 20, retryCount = 0`);
                 
             } catch (error) {
                 console.error(`❌ Error updating bet ${bet._id}:`, error.message);

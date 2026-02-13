@@ -82,9 +82,13 @@ import {
   clearError,
   resetFilters,
 } from "@/lib/features/finance/financeSlice";
+import { selectUser } from "@/lib/features/auth/authSlice";
+import apiClient from "@/config/axios";
 
 const FinancePage = () => {
   const dispatch = useDispatch();
+  const currentUser = useSelector(selectUser);
+  const isSuperAdmin = currentUser?.isSuperAdmin || currentUser?.email === "admin@gmail.com";
 
   // Redux state
   const { transactions, summary, pagination, loading, error, filters } =
@@ -93,31 +97,41 @@ const FinancePage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [dateRange, setDateRange] = useState({ from: null, to: null });
-  const [selectedUser, setSelectedUser] = useState("all");
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [selectedAdminIds, setSelectedAdminIds] = useState([]);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState(0);
   const [sortColumn, setSortColumn] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
+  const [playersForFilter, setPlayersForFilter] = useState([]);
+  const [adminsForFilter, setAdminsForFilter] = useState([]);
 
-  // Get unique user names for the filter
-  const uniqueUsers = useMemo(() => {
-    const users = transactions.map((t) =>
-      t.user?.firstName && t.user?.lastName
-        ? `${t.user.firstName} ${t.user.lastName}`
-        : t.user?.email || "Unknown User"
-    );
-    return [...new Set(users)];
-  }, [transactions]);
-
-  // Load data on component mount
+  // Load players list (scoped by backend) and admins list (main admin only)
   useEffect(() => {
-    dispatch(fetchFinancialSummary());
-    dispatch(fetchFinanceTransactions(filters));
-  }, [dispatch]);
+    const load = async () => {
+      try {
+        const playersRes = await apiClient.get("/users?limit=500");
+        setPlayersForFilter(playersRes.data?.users || []);
+        if (isSuperAdmin) {
+          const adminsRes = await apiClient.get("/users?role=admin&limit=100");
+          setAdminsForFilter(adminsRes.data?.users || []);
+        } else {
+          setAdminsForFilter([]);
+        }
+      } catch (e) {
+        console.error("Failed to load finance filter lists:", e);
+      }
+    };
+    load();
+  }, [isSuperAdmin]);
 
-  // Refetch transactions when filters change
-  useEffect(() => {
-    const apiFilters = {
+  // Build display label for user
+  const userLabel = (u) =>
+    u?.firstName && u?.lastName ? `${u.firstName} ${u.lastName}` : u?.email || "Unknown";
+
+  // Build API filters including userIds and adminIds (totals follow these filters)
+  const apiFilters = useMemo(
+    () => ({
       ...filters,
       type: typeFilter !== "all" ? typeFilter : "",
       search: searchQuery,
@@ -125,80 +139,67 @@ const FinancePage = () => {
       dateTo: dateRange.to ? dateRange.to.toISOString() : "",
       sortBy: sortColumn,
       sortOrder: sortDirection,
-    };
+      userIds: selectedUserIds.length ? selectedUserIds.join(",") : undefined,
+      adminIds: isSuperAdmin && selectedAdminIds.length ? selectedAdminIds.join(",") : undefined,
+    }),
+    [
+      filters,
+      typeFilter,
+      searchQuery,
+      dateRange?.from,
+      dateRange?.to,
+      sortColumn,
+      sortDirection,
+      selectedUserIds,
+      selectedAdminIds,
+      isSuperAdmin,
+    ]
+  );
 
+  // Load data on component mount
+  useEffect(() => {
+    dispatch(fetchFinancialSummary());
+    dispatch(fetchFinanceTransactions(apiFilters));
+  }, [dispatch]);
+
+  // Refetch transactions and summary when filters change (totals follow filters)
+  useEffect(() => {
     dispatch(setFilters(apiFilters));
     dispatch(fetchFinanceTransactions(apiFilters));
-
-    // Also fetch filtered financial summary when filters change
-    const summaryFilters = {
-      dateFrom: dateRange.from ? dateRange.from.toISOString() : "",
-      dateTo: dateRange.to ? dateRange.to.toISOString() : "",
-      type: typeFilter !== "all" ? typeFilter : "",
-      // Note: userId filter would need to be implemented if you want user-specific filtering
-    };
-
-    // Only fetch filtered summary if there are actual filters applied
-    if (summaryFilters.dateFrom || summaryFilters.dateTo || summaryFilters.type) {
-      dispatch(fetchFinancialSummary(summaryFilters));
-    } else {
-      // If no filters, fetch the regular summary
-      dispatch(fetchFinancialSummary());
-    }
+    dispatch(fetchFinancialSummary(apiFilters));
   }, [
     dispatch,
     typeFilter,
     searchQuery,
-    dateRange,
+    dateRange?.from,
+    dateRange?.to,
     sortColumn,
     sortDirection,
-    pagination.currentPage,
+    selectedUserIds.join(","),
+    selectedAdminIds.join(","),
+    isSuperAdmin,
   ]);
 
   // Count active filters
   useEffect(() => {
     let count = 0;
     if (typeFilter !== "all") count++;
-    if (selectedUser !== "all") count++;
+    if (selectedUserIds.length) count++;
+    if (selectedAdminIds.length) count++;
     if (dateRange.from || dateRange.to) count++;
     if (searchQuery) count++;
     setActiveFilters(count);
-  }, [typeFilter, selectedUser, dateRange, searchQuery]);
-  // Filter transactions locally for user selection (since API doesn't support user filtering yet)
-  const filteredTransactions = useMemo(() => {
-    if (selectedUser === "all") {
-      return transactions;
-    }
+  }, [typeFilter, selectedUserIds.length, selectedAdminIds.length, dateRange, searchQuery]);
 
-    return transactions.filter((transaction) => {
-      const userName =
-        transaction.user?.firstName && transaction.user?.lastName
-          ? `${transaction.user.firstName} ${transaction.user.lastName}`
-          : transaction.user?.email || "Unknown User";
-      return userName === selectedUser;
-    });
-  }, [transactions, selectedUser]);
-
-  // No need for manual sorting as it's handled by the API
-  const sortedTransactions = filteredTransactions;
-  // No need for local pagination since it's handled by the API
-  const paginatedTransactions = sortedTransactions;
+  // API returns filtered transactions when userIds/adminIds are sent
+  const paginatedTransactions = transactions;
 
   // Handle page change
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= pagination.totalPages) {
-      const apiFilters = {
-        ...filters,
-        page: newPage,
-        type: typeFilter !== "all" ? typeFilter : "",
-        search: searchQuery,
-        dateFrom: dateRange.from ? dateRange.from.toISOString() : "",
-        dateTo: dateRange.to ? dateRange.to.toISOString() : "",
-        sortBy: sortColumn,
-        sortOrder: sortDirection,
-      };
-      dispatch(setFilters(apiFilters));
-      dispatch(fetchFinanceTransactions(apiFilters));
+      const nextFilters = { ...apiFilters, page: newPage };
+      dispatch(setFilters(nextFilters));
+      dispatch(fetchFinanceTransactions(nextFilters));
     }
   };
 
@@ -254,11 +255,13 @@ const FinancePage = () => {
   const handleResetFilters = () => {
     setTypeFilter("all");
     setDateRange({ from: null, to: null });
-    setSelectedUser("all");
+    setSelectedUserIds([]);
+    setSelectedAdminIds([]);
     setSearchQuery("");
     setActiveFilters(0);
     dispatch(resetFilters());
     dispatch(fetchFinanceTransactions());
+    dispatch(fetchFinancialSummary());
   };
 
   // Apply filters
@@ -266,7 +269,9 @@ const FinancePage = () => {
     let count = 0;
     if (typeFilter !== "all") count++;
     if (dateRange.from || dateRange.to) count++;
-    if (selectedUser !== "all") count++;
+    if (selectedUserIds.length) count++;
+    if (selectedAdminIds.length) count++;
+    if (searchQuery) count++;
     setActiveFilters(count);
     setFilterDrawerOpen(false);
   };
@@ -492,88 +497,157 @@ const FinancePage = () => {
                           </div>
                         </div>
 
-                        {/* User Filter */}
+                        {/* Admins filter (main admin only) */}
+                        {isSuperAdmin && (
+                          <div className="space-y-3 pt-2 border-t border-gray-100">
+                            <div className="flex items-center justify-between">
+                              <label className="text-sm font-medium flex items-center gap-2 text-gray-700">
+                                <Users className="h-4 w-4 text-gray-500" />
+                                Admins
+                              </label>
+                              {selectedAdminIds.length > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                                  onClick={() => setSelectedAdminIds([])}
+                                >
+                                  <X className="h-3 w-3 mr-1" />
+                                  Clear
+                                </Button>
+                              )}
+                            </div>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={`w-full justify-between h-10 px-3 hover:bg-transparent min-h-10 ${
+                                    selectedAdminIds.length
+                                      ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50"
+                                      : ""
+                                  }`}
+                                >
+                                  <span className="text-left truncate">
+                                    {selectedAdminIds.length
+                                      ? `${selectedAdminIds.length} admin(s) selected`
+                                      : "Select admins..."}
+                                  </span>
+                                  <User className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-full p-0 border border-gray-200 shadow-lg rounded-lg max-h-64 overflow-auto"
+                                align="start"
+                              >
+                                <Command>
+                                  <CommandInput placeholder="Search admin..." className="h-9 px-3" />
+                                  <CommandList>
+                                    <CommandEmpty>No admin found.</CommandEmpty>
+                                    <CommandGroup>
+                                      {adminsForFilter
+                                        .filter((a) => a._id !== currentUser?.id)
+                                        .map((admin) => {
+                                          const id = admin._id;
+                                          const selected = selectedAdminIds.includes(id);
+                                          return (
+                                            <CommandItem
+                                              key={id}
+                                              value={userLabel(admin)}
+                                              onSelect={() => {
+                                                setSelectedAdminIds((prev) =>
+                                                  selected ? prev.filter((x) => x !== id) : [...prev, id]
+                                                );
+                                              }}
+                                              className="py-2 px-3"
+                                            >
+                                              <Check
+                                                className={`mr-2 h-4 w-4 ${
+                                                  selected ? "opacity-100 text-blue-600" : "opacity-0"
+                                                }`}
+                                              />
+                                              {userLabel(admin)} {admin.email && `(${admin.email})`}
+                                            </CommandItem>
+                                          );
+                                        })}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        )}
+
+                        {/* Players filter (multi-select) */}
                         <div className="space-y-3 pt-2 border-t border-gray-100">
                           <div className="flex items-center justify-between">
                             <label className="text-sm font-medium flex items-center gap-2 text-gray-700">
                               <User className="h-4 w-4 text-gray-500" />
-                              User
+                              Players
                             </label>
-                            {selectedUser !== "all" && (
+                            {selectedUserIds.length > 0 && (
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
-                                onClick={() => setSelectedUser("all")}
+                                onClick={() => setSelectedUserIds([])}
                               >
                                 <X className="h-3 w-3 mr-1" />
                                 Clear
                               </Button>
                             )}
                           </div>
-
                           <Popover>
                             <PopoverTrigger asChild>
                               <Button
                                 variant="outline"
-                                className={`w-full justify-between h-10 px-3 hover:bg-transparent ${selectedUser !== "all"
-                                  ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50"
-                                  : ""
-                                  }`}
+                                className={`w-full justify-between h-10 px-3 hover:bg-transparent min-h-10 ${
+                                  selectedUserIds.length
+                                    ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50"
+                                    : ""
+                                }`}
                               >
-                                {selectedUser !== "all" ? (
-                                  selectedUser
-                                ) : (
-                                  <span className="text-gray-500">
-                                    Select user...
-                                  </span>
-                                )}
+                                <span className="text-left truncate">
+                                  {selectedUserIds.length
+                                    ? `${selectedUserIds.length} player(s) selected`
+                                    : "Select players..."}
+                                </span>
                                 <User className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent
-                              className="w-full p-0 border border-gray-200 shadow-lg rounded-lg"
+                              className="w-full p-0 border border-gray-200 shadow-lg rounded-lg max-h-64 overflow-auto"
                               align="start"
                             >
                               <Command>
-                                <CommandInput
-                                  placeholder="Search user..."
-                                  className="h-9 px-3"
-                                />
+                                <CommandInput placeholder="Search player..." className="h-9 px-3" />
                                 <CommandList>
-                                  <CommandEmpty>No user found.</CommandEmpty>
+                                  <CommandEmpty>No player found.</CommandEmpty>
                                   <CommandGroup>
-                                    <CommandItem
-                                      value="all"
-                                      onSelect={() => setSelectedUser("all")}
-                                      className="py-2 px-3"
-                                    >
-                                      <Check
-                                        className={`mr-2 h-4 w-4 ${selectedUser === "all"
-                                          ? "opacity-100 text-blue-600"
-                                          : "opacity-0"
-                                          }`}
-                                      />
-                                      All Users
-                                    </CommandItem>
-                                    {uniqueUsers.map((user) => (
-                                      <CommandItem
-                                        key={user}
-                                        value={user}
-                                        onSelect={(currentValue) =>
-                                          setSelectedUser(currentValue)
-                                        }
-                                        className="py-2 px-3"
-                                      >
-                                        <Check
-                                          className={`mr-2 h-4 w-4 ${selectedUser === user
-                                            ? "opacity-100 text-blue-600"
-                                            : "opacity-0"
-                                            }`}
-                                        />
-                                        {user}
-                                      </CommandItem>
-                                    ))}
+                                    {playersForFilter
+                                      .filter((u) => u.role !== "admin")
+                                      .map((u) => {
+                                        const id = u._id;
+                                        const selected = selectedUserIds.includes(id);
+                                        return (
+                                          <CommandItem
+                                            key={id}
+                                            value={userLabel(u)}
+                                            onSelect={() => {
+                                              setSelectedUserIds((prev) =>
+                                                selected ? prev.filter((x) => x !== id) : [...prev, id]
+                                              );
+                                            }}
+                                            className="py-2 px-3"
+                                          >
+                                            <Check
+                                              className={`mr-2 h-4 w-4 ${
+                                                selected ? "opacity-100 text-blue-600" : "opacity-0"
+                                              }`}
+                                            />
+                                            {userLabel(u)}
+                                          </CommandItem>
+                                        );
+                                      })}
                                   </CommandGroup>
                                 </CommandList>
                               </Command>
@@ -628,10 +702,11 @@ const FinancePage = () => {
                   className="ml-1 cursor-pointer"
                   onClick={() => {
                     setTypeFilter("all");
-                    // Recalculate active filters
                     let count = 0;
                     if (dateRange.from || dateRange.to) count++;
-                    if (selectedUser !== "all") count++;
+                    if (selectedUserIds.length) count++;
+                    if (selectedAdminIds.length) count++;
+                    if (searchQuery) count++;
                     setActiveFilters(count);
                   }}
                 >
@@ -657,10 +732,11 @@ const FinancePage = () => {
                   className="ml-1 cursor-pointer"
                   onClick={() => {
                     setDateRange({ from: null, to: null });
-                    // Recalculate active filters
                     let count = 0;
                     if (typeFilter !== "all") count++;
-                    if (selectedUser !== "all") count++;
+                    if (selectedUserIds.length) count++;
+                    if (selectedAdminIds.length) count++;
+                    if (searchQuery) count++;
                     setActiveFilters(count);
                   }}
                 >
@@ -669,20 +745,38 @@ const FinancePage = () => {
               </Badge>
             )}
 
-            {selectedUser !== "all" && (
-              <Badge
-                variant="secondary"
-                className="flex items-center gap-1 py-1 px-3"
-              >
-                <span>User: {selectedUser}</span>
+            {selectedAdminIds.length > 0 && (
+              <Badge variant="secondary" className="flex items-center gap-1 py-1 px-3">
+                <span>Admins: {selectedAdminIds.length} selected</span>
                 <button
                   className="ml-1 cursor-pointer"
                   onClick={() => {
-                    setSelectedUser("all");
-                    // Recalculate active filters
+                    setSelectedAdminIds([]);
                     let count = 0;
                     if (typeFilter !== "all") count++;
                     if (dateRange.from || dateRange.to) count++;
+                    if (selectedUserIds.length) count++;
+                    if (searchQuery) count++;
+                    setActiveFilters(count);
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
+
+            {selectedUserIds.length > 0 && (
+              <Badge variant="secondary" className="flex items-center gap-1 py-1 px-3">
+                <span>Players: {selectedUserIds.length} selected</span>
+                <button
+                  className="ml-1 cursor-pointer"
+                  onClick={() => {
+                    setSelectedUserIds([]);
+                    let count = 0;
+                    if (typeFilter !== "all") count++;
+                    if (dateRange.from || dateRange.to) count++;
+                    if (selectedAdminIds.length) count++;
+                    if (searchQuery) count++;
                     setActiveFilters(count);
                   }}
                 >
@@ -954,7 +1048,7 @@ const FinancePage = () => {
           </CardContent>
 
           {/* Pagination with Entries Per Page Selector */}
-          {sortedTransactions.length > 0 && (
+          {paginatedTransactions.length > 0 && (
             <div className="flex flex-col sm:flex-row justify-between items-center mt-1 pt-4 border-t gap-4">
               <div className="flex items-center gap-4">
                 <div className="text-sm text-gray-600">

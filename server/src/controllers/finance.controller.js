@@ -63,6 +63,8 @@ class FinanceController {
         limit: req.query.limit || 10,
         type: req.query.type,
         userId: req.query.userId,
+        userIds: req.query.userIds,
+        adminIds: req.query.adminIds,
         status: req.query.status,
         dateFrom: req.query.dateFrom,
         dateTo: req.query.dateTo,
@@ -144,6 +146,8 @@ class FinanceController {
         dateTo: req.query.dateTo,
         type: req.query.type,
         userId: req.query.userId,
+        userIds: req.query.userIds,
+        adminIds: req.query.adminIds,
       };
 
       const summary = await financeService.getFilteredFinancialSummary(filters, req.user);

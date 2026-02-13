@@ -423,7 +423,7 @@ const scheduleLeagueMappingJob = async () => {
 const scheduleUserDeactivationJob = async () => {
   try {
     console.log('[Agenda] ⚙️ Scheduling automatic user deactivation job...');
-    console.log('[Agenda] ⚙️ Job will run daily at 2:00 AM to deactivate inactive users (2+ days)');
+    console.log('[Agenda] ⚙️ Job will run daily at 2:00 AM to mark inactive users (14+ days) for admin display');
     
     // Schedule daily at 2:00 AM (server timezone)
     const serverTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -951,25 +951,25 @@ agenda.define("deactivateInactiveUsers", async (job) => {
     
     const User = (await import('../models/User.js')).default;
     
-    // Calculate date 2 days ago
-    const twoDaysAgo = new Date();
-    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-    twoDaysAgo.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+    // Calculate date 14 days ago (2 weeks) - inactive label for admin display only; does not block login
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+    fourteenDaysAgo.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
     
-    console.log(`[Agenda] 📅 Checking for users inactive since: ${twoDaysAgo.toISOString()}`);
+    console.log(`[Agenda] 📅 Checking for users inactive since: ${fourteenDaysAgo.toISOString()}`);
     
     // Find users who:
     // 1. Are currently active (isActive: true)
-    // 2. Are not admin users (only deactivate regular users)
-    // 3. Have lastLogin older than 2 days OR never logged in (lastLogin is null and account is older than 2 days)
+    // 2. Are not admin users (only mark regular users as inactive for display)
+    // 3. Have lastLogin older than 14 days OR never logged in (lastLogin is null and account is older than 14 days)
     const inactiveUsers = await User.find({
       isActive: true,
       role: { $ne: 'admin' },
       $or: [
-        { lastLogin: { $lt: twoDaysAgo } }, // Last login was more than 2 days ago
+        { lastLogin: { $lt: fourteenDaysAgo } }, // Last login was more than 14 days ago
         { 
           lastLogin: null,
-          createdAt: { $lt: twoDaysAgo } // Never logged in and account created more than 2 days ago
+          createdAt: { $lt: fourteenDaysAgo } // Never logged in and account created more than 14 days ago
         }
       ]
     });

@@ -5,14 +5,13 @@ import apiClient from "@/config/axios";
 export const fetchUsers = createAsyncThunk(
   "adminUsers/fetchUsers",
   async (
-    { page = 1, limit = 10, createdBy = null } = { page: 1, limit: 10 },
+    { page = 1, limit = 10, createdBy = null, role = null } = { page: 1, limit: 10 },
     { rejectWithValue }
   ) => {
     try {
-      console.log("Fetching users with params:", { page, limit, createdBy });
+      console.log("Fetching users with params:", { page, limit, createdBy, role });
 
       // When requesting a larger limit, we're likely doing it for client-side filtering
-      // In this case, we want to get as many users as possible
       const isForFiltering = limit > 20;
 
       const query = new URLSearchParams({
@@ -20,6 +19,7 @@ export const fetchUsers = createAsyncThunk(
         limit: String(isForFiltering ? 100 : limit),
       });
       if (createdBy) query.set("createdBy", createdBy);
+      if (role) query.set("role", role);
 
       const response = await apiClient.get(`/users?${query.toString()}`);
 
