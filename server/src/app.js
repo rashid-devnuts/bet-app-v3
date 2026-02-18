@@ -75,10 +75,14 @@ app.use(
         "https://bet-app-v4.vercel.app",
         "https://bet-app-v4.vercel.app/",
         // ✅ WILDCARD FOR ALL VERCEL DEPLOYMENTS (handles preview deployments)
+              // ✅ NEW VERCEL DEPLOYMENT V5
+      "https://bet-app-v5.vercel.app",
+      "https://bet-app-v5.vercel.app/",
         /^https:\/\/bet-app-v1.*\.vercel\.app$/,
         /^https:\/\/bet-app-v2.*\.vercel\.app$/,
         /^https:\/\/bet-app-v3.*\.vercel\.app$/,
         /^https:\/\/bet-app-v4.*\.vercel\.app$/,
+        /^https:\/\/bet-app-v5.*\.vercel\.app$/,
         /^https:\/\/betting.*\.vercel\.app$/,
       ];
       
